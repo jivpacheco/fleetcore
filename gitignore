@@ -1,0 +1,41 @@
+# ================================
+# FleetCore - MERN ERP
+# ================================
+
+# Node.js
+**/node_modules/
+npm-debug.log*
+yarn-error.log
+pnpm-debug.log*
+
+# Entornos
+*.env
+.env.*
+back/.env
+front/.env
+
+# Compilados / Builds
+front/dist/
+back/dist/
+coverage/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Cache
+.cache/
+.next/
+out/
+
+# Test
+junit.xml
+coverage/
