@@ -7,12 +7,22 @@
 npm-debug.log*
 yarn-error.log
 pnpm-debug.log*
+yarn-debug.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log
+
+# Vite
+dist/
+.cache/
+.vite/
 
 # Entornos
 *.env
 .env.*
 back/.env
 front/.env
+!.env.example
 
 # Compilados / Builds
 front/dist/
@@ -23,6 +33,7 @@ coverage/
 logs/
 *.log
 npm-debug.log*
+lerna-debug.log*
 
 # OS / Editor
 .DS_Store
@@ -39,3 +50,11 @@ out/
 # Test
 junit.xml
 coverage/
+*.lcov
+jest-html-reporters-*
+
+# Build outputs
+build/
+out/
+tmp/
+temp/
