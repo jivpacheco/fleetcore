@@ -24,7 +24,8 @@ const EngineSchema = new mongoose.Schema({
 },{ _id:false });
 
 const VehicleSchema = new mongoose.Schema({
-  code: { type:String, unique:true, required:true },
+  // code: { type:String, unique:true, required:true },
+  code: { type:String, required:true },
   name: { type:String, required:true },
   plate: { type:String, index:true },
   vin: String,

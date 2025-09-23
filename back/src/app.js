@@ -17,7 +17,7 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
-import apiRoutes from './src/routes/index.js';
+import apiRoutes from './routes/index.js';
 
 
 // import rutas from "./routes/index.js";
@@ -30,7 +30,8 @@ app.use(express.json());
 // (opcional) middleware de auth que setea req.user = { uid, roles, branchIds }
 app.use('/api', apiRoutes);
 
-app.use(cors());
+// app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL || true }));
 app.use(morgan("dev"));
 app.use(testRoutes); // prueba
 

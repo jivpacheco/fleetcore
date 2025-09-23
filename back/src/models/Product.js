@@ -9,7 +9,8 @@ const DepSchema = new mongoose.Schema({
 },{ _id:false });
 
 const ProductSchema = new mongoose.Schema({
-  code: { type:String, unique:true, required:true },
+  // code: { type:String, unique:true, required:true },
+  code: { type:String, required:true },
   name: { type:String, required:true },
   category: { type:String, enum:['repuesto','consumible','herramienta','equipo'] },
   brand: String,

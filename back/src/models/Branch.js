@@ -3,7 +3,8 @@ import auditSoftDelete from '../plugins/auditSoftDelete.js';
 import paginate from '../plugins/paginate.js';
 
 const BranchSchema = new mongoose.Schema({
-  code: { type:String, unique:true, required:true },
+  // code: { type:String, unique:true, required:true },
+  code: { type:String, required:true },
   name: { type:String, required:true },
   address: String,
   city: String,
