@@ -1,0 +1,30 @@
+[
+  {
+    "system": "Motor",
+    "assembly": "OBD-II",
+    "part": "Genérico",
+    "code": "P0300",
+    "description": "Falla de encendido aleatoria/múltiple"
+  },
+  {
+    "system": "Motor",
+    "assembly": "OBD-II",
+    "part": "Cilindro 1",
+    "code": "P0301",
+    "description": "Falla de encendido en cilindro 1"
+  },
+  {
+    "system": "Motor",
+    "assembly": "OBD-II",
+    "part": "Catalizador",
+    "code": "P0420",
+    "description": "Eficiencia del catalizador por debajo del umbral (Banco 1)"
+  },
+  {
+    "system": "Transmisión",
+    "assembly": "OBD-II",
+    "part": "Caja automática",
+    "code": "P0700",
+    "description": "Malfuncionamiento sistema de transmisión (TCM)"
+  }
+]

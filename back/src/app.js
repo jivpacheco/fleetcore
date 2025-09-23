@@ -17,10 +17,19 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
+import apiRoutes from './src/routes/index.js';
+
+
 // import rutas from "./routes/index.js";
 import testRoutes from "./routes/test.routes.js"; // prueba
+
+
 const app = express();
 app.use(express.json());
+
+// (opcional) middleware de auth que setea req.user = { uid, roles, branchIds }
+app.use('/api', apiRoutes);
+
 app.use(cors());
 app.use(morgan("dev"));
 app.use(testRoutes); // prueba
