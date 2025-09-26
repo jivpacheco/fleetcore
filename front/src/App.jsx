@@ -20,7 +20,7 @@ import { useEffect } from 'react'
 
 export default function App(){
   useEffect(()=>{
-    fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/health')
+    http((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/health')
       .then(r=>r.json())
       .then(d=>console.log('health:', d))
       .catch(console.error)
@@ -45,7 +45,7 @@ export default function App(){
 //   const [pong, setPong] = useState(null);
 
 //   useEffect(() => {
-//     fetch("/api/ping")
+//     http("/api/ping")
 //       .then((r) => r.json())
 //       .then(setPong)
 //       .catch(console.error);
