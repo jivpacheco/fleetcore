@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* Paleta FleetCore opcional por ahora */
+:root{
+  --fc-primary:#003366; /* azul oscuro */
+  --fc-secondary:#0055A5; /* azul medio */
+  --fc-accent:#C8102E;    /* rojo acento */
+}
+
+/* Puedes agregar utilidades personalizadas aquí si quieres */

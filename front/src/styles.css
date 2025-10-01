@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* Paleta FleetCore opcional por ahora */
+:root{
+  --fc-primary:#003366; /* azul oscuro */
+  --fc-secondary:#0055A5; /* azul medio */
+  --fc-accent:#C8102E;    /* rojo acento */
+}
+
+/* Utilidades básicas opcionales */
+.btn{ @apply inline-flex items-center justify-center px-4 py-2 rounded font-medium; }
+.btn-primary{ background: var(--fc-secondary); color:white; }
+.btn-primary:hover{ filter: brightness(0.95); }
+.btn-ghost{ @apply px-3 py-2 rounded; color: var(--fc-secondary); }
+.input{ @apply w-full border rounded px-3 py-2; }
+.card{ @apply bg-white rounded-2xl shadow-sm; }

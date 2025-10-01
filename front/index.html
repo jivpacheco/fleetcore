@@ -1,0 +1,65 @@
+<!-- <!-- <!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#003366" />
+    <title>FleetCore Suite</title>
+
+     Favicon/Logo de la app
+         Coloca tu ícono en front/public/favicon.png (o .ico) -->
+    <!-- <link rel="icon" type="image/png" href="/favicon.png" /> -->
+
+    <!-- (Opcional) PWA / manifest si luego lo necesitas -->
+    <!-- <link rel="manifest" href="/manifest.webmanifest" /> -->
+  <!-- </head>
+  <body class="bg-gray-50">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html> -->
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#003366" />
+    <title>FleetCore Suite</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    <!-- Preamble de React Refresh (debe ir antes de tu app) -->
+    <script type="module">
+      import RefreshRuntime from '/@react-refresh'
+      RefreshRuntime.injectIntoGlobalHook(window)
+      window.$RefreshReg$ = () => {}
+      window.$RefreshSig$ = () => (type) => type
+      window.__vite_plugin_react_preamble_installed__ = true
+    </script>
+
+    <!-- Cliente de Vite (HMR) -->
+    <script type="module" src="/@vite/client"></script>
+  </head>
+  <body class="bg-gray-50">
+    <div id="root"></div>
+    <!-- Tu app (debe ir DESPUÉS del preamble y del cliente) -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
