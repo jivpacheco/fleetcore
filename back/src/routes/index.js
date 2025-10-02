@@ -1,7 +1,7 @@
 import express from 'express';
 import makeRoutes from './makeRoutes.js';
+
 import { requireAuth } from '../middleware/requireAuth.js';
-import User from '../models/User.js';
 import Person from '../models/Person.js';
 import Branch from '../models/Branch.js';
 import Location from '../models/Location.js';
@@ -25,9 +25,18 @@ import ToolLoan from '../models/ToolLoan.js';
 import Accident from '../models/Accident.js';
 import SystemConfig from '../models/SystemConfig.js';
 
+// Importa el router dedicado de usuarios
+import usersRoutes from './users.routes.js';
+import accountRoutes from './account.routes.js'
+
 const api = express.Router();
+
 api.use(requireAuth);
-api.use('/users', makeRoutes(User));
+// api.use('/users', makeRoutes(User));
+api.use('/users', usersRoutes);
+// Cuenta propia (perfil/cambio password)
+api.use('/account', accountRoutes)
+
 api.use('/people', makeRoutes(Person));
 api.use('/branches', makeRoutes(Branch));
 api.use('/locations', makeRoutes(Location));
