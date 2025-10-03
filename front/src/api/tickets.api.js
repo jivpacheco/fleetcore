@@ -63,10 +63,17 @@ export const transitionTicket = (id, data) =>
   api.patch(`${API_PREFIX}/tickets/${id}/transition`, data).then((r) => r.data)
 
 export const TicketsAPI = {
-  list: listTickets,
-  get: getTicket,
-  create: createTicket,
-  update: updateTicket,
-  remove: removeTicket,
-  transition: transitionTicket,
+  list: ({ page=1, limit=10, q='' } = {}) =>
+    api.get(`${API_PREFIX}/tickets`, { params: { page, limit, q } }),
+
+  get: (id) => api.get(`${API_PREFIX}/tickets/${id}`),
+  create: (data) => api.post(`${API_PREFIX}/tickets`, data),
+  update: (id, data) => api.patch(`${API_PREFIX}/tickets/${id}`, data),
+  remove: (id) => api.delete(`${API_PREFIX}/tickets/${id}`).then(r=>r.data),
+  // list: listTickets,
+  // get: getTicket,
+  // create: createTicket,
+  // update: updateTicket,
+  // remove: removeTicket,
+  // transition: transitionTicket,
 }

@@ -28,6 +28,10 @@ import SystemConfig from '../models/SystemConfig.js';
 // Importa el router dedicado de usuarios
 import usersRoutes from './users.routes.js';
 import accountRoutes from './account.routes.js'
+// import workorderRoutes from './workorder.routes.js'
+// import ticketRoutes from './ticket.routes.js'
+// import vehicleRoutes from './vehicle.routes.js'
+// import dashboardRoutes from './dashboard.routes.js'
 
 const api = express.Router();
 
@@ -36,6 +40,11 @@ api.use(requireAuth);
 api.use('/users', usersRoutes);
 // Cuenta propia (perfil/cambio password)
 api.use('/account', accountRoutes)
+
+// api.use('/workorders', workorderRoutes)
+// api.use('/tickets', ticketRoutes)
+// api.use('/vehicles', vehicleRoutes)
+// api.use('/dashboard', dashboardRoutes)
 
 api.use('/people', makeRoutes(Person));
 api.use('/branches', makeRoutes(Branch));
@@ -61,3 +70,4 @@ api.use('/accidents', makeRoutes(Accident));
 api.use('/system-config', makeRoutes(SystemConfig));
 
 export default api;
+

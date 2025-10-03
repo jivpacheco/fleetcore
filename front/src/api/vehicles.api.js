@@ -55,9 +55,16 @@ export const removeVehicle = (id) =>
   api.delete(`${API_PREFIX}/vehicles/${id}`).then((r) => r.data)
 
 export const VehiclesAPI = {
-  list: listVehicles,
-  get: getVehicle,
-  create: createVehicle,
-  update: updateVehicle,
-  remove: removeVehicle,
+  list: ({ page=1, limit=10, q='' } = {}) =>
+    api.get(`${API_PREFIX}/vehicles`, { params: { page, limit, q } }),
+
+  get: (id) => api.get(`${API_PREFIX}/vehicles/${id}`),
+  create: (data) => api.post(`${API_PREFIX}/vehicles`, data),
+  update: (id, data) => api.patch(`${API_PREFIX}/vehicles/${id}`, data),
+  // remove: (id) => api.delete(`${API_PREFIX}/vehicles/${id}`).then(r=>r.data),
+  // list: listVehicles,
+  // get: getVehicle,
+  // create: createVehicle,
+  // update: updateVehicle,
+  // remove: removeVehicle,
 }

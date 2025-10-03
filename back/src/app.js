@@ -23,6 +23,7 @@ import { notFound, errorHandler } from './middleware/errorHandler.js'
 
 import apiV1 from './routes/index.js'          // agregador de entidades (users, branches, etc.)
 import authRoutes from './routes/auth.routes.js' // autenticación local + Microsoft
+// import dashboardRoutes from './routes/dashboard.routes.js'
 
 const app = express()
 
@@ -52,6 +53,8 @@ app.use(requestLogger)
 // Auth (login local + Microsoft OIDC)
 // Queda montado en /api/v1/auth/*
 app.use(`${API_PREFIX}/auth`, authRoutes)
+
+// app.use(`${API_PREFIX}/dashboard`, dashboardRoutes)
 
 // API REST principal (/api/v1/<entidades>)
 // En routes/index.js montas users, branches, vehicles, etc.

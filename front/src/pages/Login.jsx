@@ -103,6 +103,7 @@ export default function Login() {
             (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/v1/auth/microsoft'
     }
 
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
             <div className="card w-full max-w-md p-8 shadow-lg">
@@ -154,7 +155,14 @@ export default function Login() {
                         {loading ? 'Ingresando…' : 'Ingresar'}
                     </button>
                 </form>
+                {/* Mini texto legal/opcional */}
+                <p className="mt-4 text-[11px] leading-relaxed text-gray-400 text-center">
+                    Al continuar acepta nuestros Términos y Política de Privacidad.
+                </p>
             </div>
         </div>
-    )
+    ) //fin return fondo Blanco
+
+
 }
+

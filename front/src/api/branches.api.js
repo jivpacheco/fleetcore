@@ -60,9 +60,17 @@ export const removeBranch = (id) =>
 
 // ===== Objeto agrupado (mismo contrato) =====
 export const BranchesAPI = {
-  list: listBranches,
-  get: getBranch,
-  create: createBranch,
-  update: updateBranch,
-  remove: removeBranch,
+
+  list: ({ page=1, limit=10, q='' } = {}) =>
+    api.get(`${API_PREFIX}/branches`, { params: { page, limit, q } }),
+
+  get: (id) => api.get(`${API_PREFIX}/branches/${id}`),
+  create: (data) => api.post(`${API_PREFIX}/branches`, data),
+  update: (id, data) => api.patch(`${API_PREFIX}/branches/${id}`, data),
+  // remove: (id) => api.delete(`${API_PREFIX}/branches/${id}`).then(r=>r.data),
+  // list: listBranches,
+  // get: getBranch,
+  // create: createBranch,
+  // update: updateBranch,
+  // remove: removeBranch,
 }
