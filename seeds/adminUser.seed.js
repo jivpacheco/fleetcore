@@ -1,52 +1,61 @@
-// seeds/adminUser.seed.js
+// // seeds/adminUser.seed.js
 // -----------------------------------------------------------------------------
-// Script para insertar un usuario administrador inicial en la colección `users`
-// Ejecutar con: `node seeds/adminUser.seed.js`
-// Asegúrate de tener tu .env configurado con MONGO_URI
+// Crea el usuario administrador inicial de FleetCore Suite
+// Adaptado para estructura con carpetas: back/, front/, seeds/
 // -----------------------------------------------------------------------------
 
-import mongoose from 'mongoose'
-import dotenv from 'dotenv'
-import bcrypt from 'bcrypt'
-import { User } from '../back/src/models/user.model.js'  // Ajusta la ruta según tu estructura
+import { createRequire } from 'module'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-dotenv.config()
+// 🔧 Habilitar require() desde aquí
+const require = createRequire(import.meta.url)
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-async function run() {
+// 🔧 Importar dependencias desde el backend
+const dotenv = require('../back/node_modules/dotenv')
+const mongoose = require('../back/node_modules/mongoose')
+const bcrypt = require('../back/node_modules/bcryptjs')
+
+// Importar el modelo de usuario
+import User from '../back/src/models/User.js'
+
+// Cargar las variables desde el .env del backend
+dotenv.config({ path: path.resolve(__dirname, '../back/.env') })
+
+async function seedAdminUser() {
     try {
-        // Conexión a Mongo
+        console.log('🔹 Conectando a MongoDB...')
         await mongoose.connect(process.env.MONGO_URI)
-        console.log('✅ Conectado a MongoDB')
 
-        // Datos del admin inicial
-        const adminEmail = 'admin@cbs.cl'
-        const adminPassword = 'Admin123!' // Se recomienda cambiar luego
-        const hashed = await bcrypt.hash(adminPassword, 10)
+        const email = process.env.ADMIN_EMAIL || 'admin@cbs.cl'
+        const password = process.env.ADMIN_PASSWORD || 'FleetCore#2025'
+        const role = 'admin'
 
-        // Buscar si ya existe
-        let user = await User.findOne({ email: adminEmail })
-
-        if (user) {
-            console.log('⚠️ Usuario admin ya existe:', user.email)
-        } else {
-            user = new User({
-                name: 'Administrador',
-                email: adminEmail,
-                password: hashed,
-                role: 'admin',
-                isActive: true,
-                createdAt: new Date(),
-            })
-            await user.save()
-            console.log('🎉 Usuario admin creado:', adminEmail)
-            console.log('ℹ️ Contraseña temporal:', adminPassword)
+        const existing = await User.findOne({ email })
+        if (existing) {
+            console.log(`⚠️ El usuario administrador (${email}) ya existe.`)
+            return process.exit(0)
         }
 
+        const hashed = await bcrypt.hash(password, 10)
+        await User.create({
+            email,
+            password: hashed,
+            name: 'Administrador FleetCore',
+            role,
+            isActive: true,
+            providers: {}
+        })
+
+        console.log('✅ Usuario administrador creado con éxito:')
+        console.log(`   Email: ${email}`)
+        console.log(`   Contraseña temporal: ${password}`)
         process.exit(0)
     } catch (err) {
-        console.error('❌ Error creando usuario admin', err)
+        console.error('❌ Error al crear usuario administrador:', err)
         process.exit(1)
     }
 }
 
-run()
+seedAdminUser()
