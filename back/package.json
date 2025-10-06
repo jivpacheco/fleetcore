@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "seed:admin": "node ../seeds/adminUser.seed.js",
+    "seed:admin:fix": "node ../seeds/fixAdminPassword.js",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js"
   },
