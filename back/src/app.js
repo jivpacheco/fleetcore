@@ -18,6 +18,7 @@ import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 
+
 import { requestLogger } from './middleware/requestLogger.js'
 import { notFound, errorHandler } from './middleware/errorHandler.js'
 
@@ -55,6 +56,8 @@ app.use(requestLogger)
 app.use(`${API_PREFIX}/auth`, authRoutes)
 
 // app.use(`${API_PREFIX}/dashboard`, dashboardRoutes)
+
+
 
 // API REST principal (/api/v1/<entidades>)
 // En routes/index.js montas users, branches, vehicles, etc.
