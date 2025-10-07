@@ -272,47 +272,104 @@ async function getOidcClient() {
 // -----------------------------------------------------------------------------
 // LOGIN LOCAL (para cuentas con contraseña encriptada en local.passwordHash)
 // -----------------------------------------------------------------------------
-r.post('/login', async (req, res) => {
+
+// **** omitido temporalmente
+// r.post('/login', async (req, res) => {
+//   const { email, password } = req.body || {}
+//   if (!email || !password)
+//     return res.status(400).json({ message: 'Faltan credenciales' })
+
+//   const normEmail = String(email).trim().toLowerCase()
+//   const userDoc = await User.findOne({ email: normEmail })
+//   if (!userDoc)
+//     return res.status(403).json({ message: 'Usuario no autorizado o inexistente' })
+
+//   if (!userDoc.isActive)
+//     return res.status(403).json({ message: 'Usuario desactivado' })
+
+//   // ⚠️ Verificar si la cuenta tiene login local habilitado
+//   if (!userDoc.local?.allowLocalLogin)
+//     return res.status(401).json({
+//       message: 'Esta cuenta no permite login local. Use Microsoft o contacte al administrador.'
+//     })
+
+//   // ⚠️ Si no existe passwordHash => fue creada por Microsoft
+//   if (!userDoc.local?.passwordHash)
+//     return res.status(401).json({
+//       message: 'Esta cuenta no tiene contraseña local. Ingrese con Microsoft o pida restablecer clave.'
+//     })
+
+// *** hasta aqui
+
+//* adicionado
+// back/src/routes/auth.routes.js
+// --- DEV ONLY: comprobar contraseña contra hash guardado ---
+// r.post('/_dev_check_password', async (req, res) => {
+//   if (process.env.NODE_ENV === 'production') {
+//     return res.status(404).end()
+//   }
+//   let { email, password } = req.body || {}
+//   if (!email || !password) return res.status(400).json({ ok:false, msg:'faltan email/password' })
+
+//   const userDoc = await User.findOne({ email: String(email).trim().toLowerCase() })
+//   if (!userDoc) return res.status(404).json({ ok:false, msg:'user not found' })
+
+//   const ok = await userDoc.checkPassword(String(password).trim())
+//   return res.json({
+//     ok,
+//     info: {
+//       hasLocal: !!userDoc.local,
+//       hasHash: !!userDoc.local?.passwordHash,
+//       hashPrefix: userDoc.local?.passwordHash?.slice(0, 7) || null
+//     }
+//   })
+// })
+
+// back/src/routes/auth.routes.js
+// DEV: Comprobar contraseña vs hash (BORRAR antes de producción)
+r.post('/_dev_check_password', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') return res.status(404).end()
   const { email, password } = req.body || {}
-  if (!email || !password)
-    return res.status(400).json({ message: 'Faltan credenciales' })
+  if (!email || !password) return res.status(400).json({ ok:false, msg:'faltan email/password' })
 
-  const normEmail = String(email).trim().toLowerCase()
-  const userDoc = await User.findOne({ email: normEmail })
-  if (!userDoc)
-    return res.status(403).json({ message: 'Usuario no autorizado o inexistente' })
+  const user = await User.findOne({ email: String(email).trim().toLowerCase() })
+  if (!user) return res.status(404).json({ ok:false, msg:'user not found' })
 
-  if (!userDoc.isActive)
-    return res.status(403).json({ message: 'Usuario desactivado' })
+  // usa el método del modelo (asegura lógica pepper, salt rounds)
+  const ok = await user.checkPassword(String(password).trim())
+  return res.json({
+    ok,
+    email: user.email,
+    hasHash: !!user.local?.passwordHash,
+    hashStart: user.local?.passwordHash?.slice(0,7) || null
+  })
+})
 
-  // ⚠️ Verificar si la cuenta tiene login local habilitado
-  if (!userDoc.local?.allowLocalLogin)
-    return res.status(401).json({
-      message: 'Esta cuenta no permite login local. Use Microsoft o contacte al administrador.'
-    })
 
-  // ⚠️ Si no existe passwordHash => fue creada por Microsoft
-  if (!userDoc.local?.passwordHash)
-    return res.status(401).json({
-      message: 'Esta cuenta no tiene contraseña local. Ingrese con Microsoft o pida restablecer clave.'
-    })
+  
+// fin adicionado
+
+
 
   // --- Comparar hash ---
-  const match = await bcrypt.compare(password, userDoc.local.passwordHash)
-  if (!match)
-    return res.status(401).json({ message: 'Credenciales inválidas' })
+// **** omitido temporalmente
+//   const match = await bcrypt.compare(password, userDoc.local.passwordHash)
+//   if (!match)
+//     return res.status(401).json({ message: 'Credenciales inválidas' })
 
-  // --- Generar token ---
-  const user = {
-    uid: String(userDoc._id),
-    email: userDoc.email,
-    name: userDoc.name,
-    roles: userDoc.roles || ['user'],
-    branchIds: userDoc.branchIds || [],
-  }
-  const token = signToken(user)
-  return res.json({ user, token })
-})
+//   // --- Generar token ---
+//   const user = {
+//     uid: String(userDoc._id),
+//     email: userDoc.email,
+//     name: userDoc.name,
+//     roles: userDoc.roles || ['user'],
+//     branchIds: userDoc.branchIds || [],
+//   }
+//   const token = signToken(user)
+//   return res.json({ user, token })
+// })
+
+// *** hasta aqui
 
 // -----------------------------------------------------------------------------
 // MICROSOFT (OIDC + PKCE)
