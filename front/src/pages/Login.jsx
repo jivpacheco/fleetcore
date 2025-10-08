@@ -215,8 +215,8 @@ export default function Login() {
       console.error('[loginLocal]', err)
       setError(
         err.response?.data?.message ||
-          err.message ||
-          'Error al iniciar sesión'
+        err.message ||
+        'Error al iniciar sesión'
       )
     } finally {
       setLoading(false)
@@ -256,7 +256,7 @@ export default function Login() {
         {/* BOTÓN MICROSOFT */}
         <button
           onClick={loginMicrosoft}
-          className="btn w-full mb-4 flex items-center justify-center gap-2"
+          className="btn w-full mb-4 flex items-center justify-center gap-2 cursor-pointer"
           style={{
             background: 'white',
             border: '1px solid #e5e7eb',
