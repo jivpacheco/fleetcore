@@ -1,113 +1,52 @@
-// front/src/pages/Vehicles/List.jsx
-// -----------------------------------------------------------------------------
-// Listado de Vehículos (mismo patrón que Branches)
-// -----------------------------------------------------------------------------
+import { useEffect, useState } from 'react';
+export default function VehiclesList(){
+  const [items,setItems]=useState([]),[page,setPage]=useState(1),[limit,setLimit]=useState(10),
+        [pages,setPages]=useState(1),[q,setQ]=useState('');
+  async function fetchList(){
+    const params=new URLSearchParams({page,limit,q});
+    const res=await fetch(`/api/v1/vehicles?${params}`,{credentials:'include'});
+    const data=await res.json();
+    setItems(data.items||[]); setPages(data.pages||1);
+  }
+  useEffect(()=>{fetchList();},[page,limit,q]);
 
-import { useEffect } from 'react'
-import { useTableState } from '../../store/useTableState'
-import { usePagedQuery } from '../../hooks/usePagedQuery'
-import { VehiclesAPI } from '../../api/vehicles.api'
-import Paginator from '../../components/table/Paginator'
-import LimitSelect from '../../components/table/LimitSelect'
-
-const KEY = 'vehicles'
-
-export default function VehiclesList() {
-  const getState = useTableState((s) => s.getState)
-  const setPage = useTableState((s) => s.setPage)
-  const setLimit = useTableState((s) => s.setLimit)
-  const setQuery = useTableState((s) => s.setQuery)
-  const { page, limit, q } = getState(KEY)
-
-  const { data, isLoading, error, refetch } = usePagedQuery(
-    KEY,
-    { page, limit, q },
-    VehiclesAPI.list
-  )
-
-  useEffect(() => {
-    refetch()
-  }, [page, limit, q, refetch])
-
-  return (
-    <div>
-      {/* Franja superior */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-        <div>
-          <h1 className="text-xl font-bold">Vehículos</h1>
-          <p className="text-gray-500 text-sm">Inventario de material mayor</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            className="input border rounded px-3 py-2"
-            placeholder="Buscar por patente/modelo"
-            defaultValue={q}
-            onChange={(e) => setQuery(KEY, e.target.value)}
-          />
-          <LimitSelect value={limit} onChange={(val) => setLimit(KEY, val)} />
-          <button className="btn btn-primary px-3 py-2 rounded text-white" onClick={() => { }}>
-            Nuevo
-          </button>
-        </div>
-      </div>
-
-      {/* Tabla */}
-      <div className="bg-white rounded-2xl shadow-sm border">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="text-left px-4 py-2">Patente</th>
-                <th className="text-left px-4 py-2">Modelo</th>
-                <th className="text-left px-4 py-2">Año</th>
-                <th className="text-left px-4 py-2">Sucursal</th>
-                <th className="text-right px-4 py-2">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
-                    Cargando…
-                  </td>
-                </tr>
-              )}
-              {error && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-red-600">
-                    Error al cargar
-                  </td>
-                </tr>
-              )}
-              {data?.docs?.map((v) => (
-                <tr key={v._id} className="border-t hover:bg-gray-50">
-                  <td className="px-4 py-2">{v.plate || '-'}</td>
-                  <td className="px-4 py-2">{v.model || '-'}</td>
-                  <td className="px-4 py-2">{v.year || '-'}</td>
-                  <td className="px-4 py-2">{v.branchName || '-'}</td>
-                  <td className="px-4 py-2 text-right">
-                    <button className="text-[var(--fc-primary)] mr-2">Editar</button>
-                    <button className="text-red-600">Eliminar</button>
-                  </td>
-                </tr>
-              ))}
-              {!isLoading && !error && (data?.docs?.length ?? 0) === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-gray-500">
-                    Sin resultados
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pie de tabla: paginación */}
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="text-xs text-gray-500">Total: {data?.total ?? 0}</div>
-          <Paginator page={data?.page ?? page} pages={data?.pages ?? 1} onPage={(p) => setPage(KEY, p)} />
-        </div>
+  return(
+  <div className="space-y-4">
+    <div className="flex items-center justify-between">
+      <h1 className="text-xl font-semibold">Vehículos</h1>
+      <div className="flex gap-2">
+        <input className="border rounded px-3 py-1.5" placeholder="Buscar..." value={q} onChange={e=>{setQ(e.target.value);setPage(1);}}/>
+        <a href="/vehicles/new" className="px-3 py-2 bg-blue-600 text-white rounded">Nuevo</a>
       </div>
     </div>
-  )
+
+    <div className="bg-white border rounded">
+      <table className="w-full text-sm">
+        <thead className="bg-gray-50"><tr>
+          <th className="px-3 py-2 text-left">Patente</th>
+          <th className="px-3 py-2 text-left">Código interno</th>
+          <th className="px-3 py-2 text-left">Tipo</th>
+          <th className="px-3 py-2 text-left">Sucursal</th>
+        </tr></thead>
+        <tbody>
+          {items.length?items.map(v=>(
+            <tr key={v._id} className="hover:bg-gray-50">
+              <td className="px-3 py-2">{v.plate}</td>
+              <td className="px-3 py-2">{v.internalCode||'-'}</td>
+              <td className="px-3 py-2">{v.type||'-'}</td>
+              <td className="px-3 py-2">{v.branch||'-'}</td>
+            </tr>
+          )):<tr><td colSpan={4} className="text-center py-6 text-gray-500">Sin resultados</td></tr>}
+        </tbody>
+      </table>
+      <div className="flex justify-between p-3">
+        <button disabled={page<=1} onClick={()=>setPage(p=>p-1)} className="border px-3 py-1.5 rounded">Anterior</button>
+        <span>Página {page} de {pages}</span>
+        <button disabled={page>=pages} onClick={()=>setPage(p=>p+1)} className="border px-3 py-1.5 rounded">Siguiente</button>
+        <select value={limit} onChange={e=>{setLimit(+e.target.value);setPage(1);}} className="border rounded px-2 py-1">
+          <option value={10}>10</option><option value={25}>25</option><option value={50}>50</option>
+        </select>
+      </div>
+    </div>
+  </div>);
 }

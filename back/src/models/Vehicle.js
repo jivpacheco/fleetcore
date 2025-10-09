@@ -1,44 +1,89 @@
+// Modelo Vehicle con trazabilidad completa y soporte Cloudinary
 import mongoose from 'mongoose';
-import auditSoftDelete from '../plugins/auditSoftDelete.js';
-import paginate from '../plugins/paginate.js';
-import { normPlate } from '../utils/normalize.js';
+const { Schema, model } = mongoose;
 
-const MeterSchema = new mongoose.Schema({
-  name: String,
-  value: Number,
-  unit: { type:String, enum:['km','hr'] }
-},{ _id:false });
+const BranchRef = { type: Schema.Types.ObjectId, ref: 'Branch' };
 
-const DocumentSchema = new mongoose.Schema({
-  type: { type:String, enum:['revision','permiso','seguro'] },
-  issuer: String,
-  issueDate: Date,
-  expiryDate: Date,
-  fileUrl: String
-},{ _id:false });
+const AssignmentSchema = new Schema({
+  branch: BranchRef,
+  codeInternal: String, // B:10, B:18R, BX-2
+  reason: String,       // ASIGNACION, APOYO, TRASPASO
+  fromBranch: BranchRef,
+  toBranch: BranchRef,
+  note: String,
+  at: { type: Date, default: Date.now },
+}, { _id: false });
 
-const EngineSchema = new mongoose.Schema({
-  number: String,
+const MediaSchema = new Schema({
+  kind: { type: String, enum: ['photo','doc','manual'], required: true },
+  title: String,
+  url: String,
+  publicId: String,
+  bytes: Number,
+  format: String,
+  uploadedAt: { type: Date, default: Date.now },
+}, { _id: false });
+
+const ComponentSchema = new Schema({
+  type: String,
   brand: String,
-  model: String
-},{ _id:false });
+  model: String,
+  serial: String,
+  description: String,
+  media: [MediaSchema]
+}, { _id: false });
 
-const VehicleSchema = new mongoose.Schema({
-  // code: { type:String, unique:true, required:true },
-  code: { type:String, required:true },
-  name: { type:String, required:true },
-  plate: { type:String, index:true },
+const LegalSchema = new Schema({
+  padron: { number: String, issuer: String, validFrom: Date, validTo: Date },
+  soap: { policy: String, issuer: String, validFrom: Date, validTo: Date },
+  insurance: { policy: String, issuer: String, validFrom: Date, validTo: Date },
+  tag: { number: String, issuer: String },
+  fuelCard: { issuer: String, number: String, validTo: Date, quota: Number }
+}, { _id: false });
+
+const MetersSchema = new Schema({
+  odometerKm: Number,
+  engineHours: Number,
+  ladderHours: Number,
+  generatorHours: Number,
+  pumpHours: Number,
+}, { _id: false });
+
+const TyreAxleSchema = new Schema({
+  axle: String, // delantero, trasero1, trasero2
+  positionCount: Number,
+  application: String,
+  reference: String,
+}, { _id: false });
+
+const VehicleSchema = new Schema({
+  plate: { type: String, required: true, unique: true },
+  internalCode: String,
+  type: String,
+  brand: String,
+  model: String,
+  year: Number,
   vin: String,
-  chassis: String,
-  engine: EngineSchema,
-  meters: [MeterSchema],
-  documents: [DocumentSchema],
-  status: { type:String, enum:['available','in_maintenance','out_of_service'], default:'available' },
-  branchId: { type:mongoose.Schema.Types.ObjectId, ref:'Branch' }
-},{ timestamps:true });
+  engineNumber: String,
+  engineBrand: String,
+  engineModel: String,
+  color: String,
+  branch: BranchRef,
+  assignments: [AssignmentSchema],
+  legal: LegalSchema,
+  components: [ComponentSchema],
+  tyres: [TyreAxleSchema],
+  meters: MetersSchema,
+  media: [MediaSchema],
+  isActive: { type: Boolean, default: true },
+  createdBy: String,
+  updatedBy: String,
+  deletedAt: Date,
+  deletedBy: String
+}, { timestamps: true });
 
-VehicleSchema.pre('save', function(){ if(this.isModified('plate') && this.plate){ this.plate = normPlate(this.plate); } });
-VehicleSchema.index({ code:1 },{ unique:true });
-VehicleSchema.index({ branchId:1, status:1 });
-VehicleSchema.plugin(auditSoftDelete); VehicleSchema.plugin(paginate);
-export default mongoose.model('Vehicle', VehicleSchema);
+VehicleSchema.index({ plate: 1 }, { unique: true });
+VehicleSchema.index({ internalCode: 1 });
+VehicleSchema.index({ branch: 1 });
+
+export default model('Vehicle', VehicleSchema);
