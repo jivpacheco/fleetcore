@@ -15,14 +15,14 @@ const AssignmentSchema = new Schema({
 }, { _id: false });
 
 const MediaSchema = new Schema({
-  kind: { type: String, enum: ['photo','doc','manual'], required: true },
-  title: String,
+  kind: { type: String, enum: ['photo', 'doc', 'manual', 'video'], required: true },
+  title: { type: String, default: '' },
   url: String,
   publicId: String,
   bytes: Number,
   format: String,
   uploadedAt: { type: Date, default: Date.now },
-}, { _id: false });
+}, { _id: true });
 
 const ComponentSchema = new Schema({
   type: String,
@@ -56,6 +56,24 @@ const TyreAxleSchema = new Schema({
   reference: String,
 }, { _id: false });
 
+const PhotoSchema = new Schema({
+  url: String,
+  publicId: String,
+  bytes: Number,
+  format: String,
+  createdAt: { type: Date, default: Date.now }
+}, { _id: true });
+
+const DocumentSchema = new Schema({
+  url: String,
+  publicId: String,
+  category: { type: String, default: 'legal' }, // legal|manuals|parts
+  label: { type: String, default: '' },
+  bytes: Number,
+  format: String,
+  createdAt: { type: Date, default: Date.now }
+}, { _id: true });
+
 const VehicleSchema = new Schema({
   plate: { type: String, required: true, unique: true },
   internalCode: String,
@@ -75,6 +93,8 @@ const VehicleSchema = new Schema({
   tyres: [TyreAxleSchema],
   meters: MetersSchema,
   media: [MediaSchema],
+  photos: [PhotoSchema],
+  documents: [DocumentSchema],
   isActive: { type: Boolean, default: true },
   createdBy: String,
   updatedBy: String,
