@@ -7,6 +7,7 @@
   "scripts": {
     "seed:admin": "node ../seeds/adminUser.seed.js",
     "seed:admin:fix": "node ../seeds/fixAdminPassword.js",
+    "fix:indexes:vehicles": "node ./scripts/fixes/20251010_drop_legacy_indexes.js",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js"
   },
