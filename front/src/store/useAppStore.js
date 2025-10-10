@@ -1,9 +1,50 @@
+//*** FUNCIONAL
+
 // front/src/store/useAppStore.js
 // -----------------------------------------------------------
 // Store global (Zustand) con persistencia del user y bootstrapping.
 // - guardamos user (no el token, ya que va en cookie httpOnly).
 // - flag authBootstrapped: evita redirección temprana en refresh.
 // -----------------------------------------------------------
+// import { create } from 'zustand'
+// import { persist } from 'zustand/middleware'
+
+// export const useAppStore = create(
+//   persist(
+//     (set, get) => ({
+//       // sesión
+//       user: null,
+//       token: null, // opcional si usas Bearer además de cookie
+//       setUser: (user) => set({ user }),
+//       setToken: (token) => set({ token }),
+
+//       // bootstrap de auth
+//       authBootstrapped: false,
+//       setAuthBootstrapped: (v) => set({ authBootstrapped: Boolean(v) }),
+
+//       // logout local
+//       clearSession: () => set({ user: null, token: null }),
+//     }),
+//     {
+//       name: 'fc-app', // clave en localStorage
+//       partialize: (state) => ({
+//         user: state.user,
+//         token: state.token,               // si prefieres no persistir token, bórralo
+//       }),
+//     }
+//   )
+// )
+
+////NUEVA
+
+// front/src/store/useAppStore.js
+// -----------------------------------------------------------
+// Store global (Zustand) con persistencia del user y bootstrapping.
+// - Guardamos user (no el token, ya que va en cookie httpOnly).
+// - flag authBootstrapped: evita redirección temprana en refresh.
+// - Agrega control de sidebar (abrir/cerrar en modo responsive).
+// -----------------------------------------------------------
+
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -22,16 +63,21 @@ export const useAppStore = create(
 
       // logout local
       clearSession: () => set({ user: null, token: null }),
+
+      // ⬇️ NUEVO: control de sidebar
+      sidebarOpen: true,
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
     }),
     {
       name: 'fc-app', // clave en localStorage
       partialize: (state) => ({
         user: state.user,
-        token: state.token,               // si prefieres no persistir token, bórralo
+        token: state.token, // si prefieres no persistir token, bórralo
       }),
     }
   )
 )
+
 
 
 
