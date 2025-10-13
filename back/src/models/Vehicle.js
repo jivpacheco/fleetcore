@@ -1,33 +1,33 @@
 // back/src/models/Vehicle.js
 // -----------------------------------------------------------------------------
-// Modelo Vehicle con trazabilidad completa y soporte Cloudinary.
-// Reglas clave:
-//  • plate: requerido, único, uppercase
-//  • internalCode: requerido, único, uppercase (sigla institucional)
-//  • Plugin findPaged para paginación estándar
+// Modelo Vehicle con trazabilidad, estado, transmisión y soporte de media.
+// Nota: todos los campos "básicos" pasan a ser obligatorios.
 // -----------------------------------------------------------------------------
 import mongoose from 'mongoose'
 import findPagedPlugin from '../plugins/findPaged.plugin.js'
 
 const { Schema, model } = mongoose
 
-// -----------------------------------------------------------------------------
-// Referencias y subesquemas
-// -----------------------------------------------------------------------------
-const BranchRef = { type: Schema.Types.ObjectId, ref: 'Branch' }
+const BranchRef = { type: Schema.Types.ObjectId, ref: 'Branch', required: true }
 
+// --- Subdocs -----------------------------------------------------------------
 const AssignmentSchema = new Schema({
   branch: BranchRef,
-  codeInternal: String, // legado histórico (mantener si hay datos antiguos)
-  reason: String,       // ASIGNACION | APOYO | TRASPASO
-  fromBranch: BranchRef,
-  toBranch: BranchRef,
+  codeInternal: String,               // ej: B:10, BX-2
+  reason: {                           // ASIGNACION|APOYO|TRASPASO
+    type: String,
+    enum: ['ASIGNACION', 'APOYO', 'TRASPASO'],
+    default: 'ASIGNACION'
+  },
+  fromBranch: { type: Schema.Types.ObjectId, ref: 'Branch' },
+  toBranch:   { type: Schema.Types.ObjectId, ref: 'Branch' },
   note: String,
-  at: { type: Date, default: Date.now },
+  startAt: { type: Date, default: Date.now },
+  endAt:   { type: Date, default: null },
 }, { _id: false })
 
 const MediaSchema = new Schema({
-  kind: { type: String, enum: ['photo', 'doc', 'manual'], required: true },
+  kind: { type: String, enum: ['photo', 'doc', 'manual', 'video'], required: true },
   title: String,
   url: String,
   publicId: String,
@@ -54,11 +54,11 @@ const LegalSchema = new Schema({
 }, { _id: false })
 
 const MetersSchema = new Schema({
-  odometerKm: Number,
-  engineHours: Number,
-  ladderHours: Number,
+  odometerKm:     Number,
+  engineHours:    Number,
+  ladderHours:    Number,
   generatorHours: Number,
-  pumpHours: Number,
+  pumpHours:      Number,
 }, { _id: false })
 
 const TyreAxleSchema = new Schema({
@@ -79,73 +79,76 @@ const PhotoSchema = new Schema({
 const DocumentSchema = new Schema({
   url: String,
   publicId: String,
-  category: { type: String, default: 'legal' }, // legal | manuals | parts | videos
+  category: { type: String, default: 'legal' }, // legal|manuals|parts|videos
   label: { type: String, default: '' },
   bytes: Number,
   format: String,
   createdAt: { type: Date, default: Date.now }
 }, { _id: true })
 
-// -----------------------------------------------------------------------------
-// Esquema principal
-// -----------------------------------------------------------------------------
+const TransmissionSchema = new Schema({
+  type:  { type: String, enum: ['manual','automatic','amt','cvt'], required: true },
+  brand: { type: String, required: true },
+  model: { type: String, required: true },
+  serial: String,
+  gears: { type: Number, min: 1, max: 18 }
+}, { _id: false })
+
+// --- Vehicle -----------------------------------------------------------------
 const VehicleSchema = new Schema({
-  plate: {
-    type: String,
-    required: [true, 'La placa es obligatoria'],
-    unique: true,
-    trim: true,
-    uppercase: true,
-  },
+  // Básicos (OBLIGATORIOS)
+  plate:        { type: String, required: true, unique: true },
+  internalCode: { type: String, required: true, index: true },
+  type:         { type: String, required: true },
+  brand:        { type: String, required: true },
+  model:        { type: String, required: true },
+  year:         { type: Number, required: true, min: 1900, max: 2100 },
+  color:        { type: String, required: true },
 
-  // ← Sigla institucional
-  internalCode: {
-    type: String,
-    required: [true, 'El código interno (sigla institucional) es obligatorio'],
-    unique: true,
-    trim: true,
-    uppercase: true,
-  },
-
-  type: String,
-  brand: String,
-  model: String,
-  year: Number,
-  vin: String,
+  // Identificación extendida
+  vin:          String,
   engineNumber: String,
-  engineBrand: String,
-  engineModel: String,
-  color: String,
+  engineBrand:  String,
+  engineModel:  String,
 
-  branch: BranchRef, // opcional por ahora
+  // Estado operativo
+  status: {
+    type: String,
+    enum: ['active','support','in_repair','out_of_service','retired'],
+    default: 'active',
+    index: true
+  },
+
+  // Relación con sucursal (OBLIGATORIO)
+  branch: BranchRef,
+
+  // Transmisión (OBLIGATORIO)
+  transmission: { type: TransmissionSchema, required: true },
+
+  // Subcolecciones
   assignments: [AssignmentSchema],
-  legal: LegalSchema,
-  components: [ComponentSchema],
-  tyres: [TyreAxleSchema],
-  meters: MetersSchema,
-  media: [MediaSchema],
-  photos: [PhotoSchema],
+  legal:       LegalSchema,
+  components:  [ComponentSchema],
+  tyres:       [TyreAxleSchema],
+  meters:      MetersSchema,
+
+  // Media (ambas listas siguen disponibles)
+  media:     [MediaSchema],   // opcional
+  photos:    [PhotoSchema],
   documents: [DocumentSchema],
 
-  isActive: { type: Boolean, default: true },
+  // Auditoría / soft delete
+  isActive:  { type: Boolean, default: true },
   createdBy: String,
   updatedBy: String,
   deletedAt: Date,
-  deletedBy: String
+  deletedBy: String,
 }, { timestamps: true })
 
-// -----------------------------------------------------------------------------
-// Índices y plugin
-// -----------------------------------------------------------------------------
-
-// ❗ IMPORTANTE: evita duplicar índices. Como `internalCode` y `plate` ya son
-// `unique` en el campo, NO declares VehicleSchema.index({ internalCode: 1 })
-// ni VehicleSchema.index({ plate: 1 }) de nuevo.
-
-// Mantén otros índices útiles:
+// Índices (no duplicar el único de plate)
+VehicleSchema.index({ internalCode: 1 })
 VehicleSchema.index({ branch: 1 })
 
-// Plugin de paginación estándar
 VehicleSchema.plugin(findPagedPlugin)
 
 export default model('Vehicle', VehicleSchema)
