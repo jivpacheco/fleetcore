@@ -1,52 +1,73 @@
+// front/src/components/Vehicle/VehicleMediaUploader.jsx
+// -----------------------------------------------------------
+// Uploader genérico para fotos / documentos / videos.
+// - Acepta: imágenes (jpg/png/webp), PDF y videos (mp4/webm/mov).
+// - Convierte título/etiqueta a MAYÚSCULAS.
+// - onUpload({ file, category, title|label }) la define el padre.
+// -----------------------------------------------------------
 import { useState } from 'react'
 
 export default function VehicleMediaUploader({
-    vehicleId,
-    mode = 'photo', // 'photo' | 'doc' | 'video'
-    onUploaded,
-    uploadFn,
-    accept,
-    category,
-    label,
+  onUpload,
+  accept = 'image/*,application/pdf,video/*',
+  category,                 // 'photos' | 'legal' | 'manuals' | 'parts' | 'videos'
+  titleLabel = 'Título',
+  labelLabel = 'Etiqueta',
+  mode = 'photo',           // 'photo' | 'doc'
 }) {
-    const [busy, setBusy] = useState(false)
-    const [error, setError] = useState('')
+  const [file, setFile] = useState(null)
+  const [title, setTitle] = useState('')
+  const [label, setLabel] = useState('')
 
-    async function onChange(e) {
-        const file = e.target.files?.[0]
-        if (!file) return
-        setBusy(true)
-        setError('')
-        try {
-            const v = await uploadFn(vehicleId, file, category ? { category, label } : {})
-            onUploaded?.(v)
-        } catch (err) {
-            setError(err?.response?.data?.message || err?.message || 'Error al subir archivo')
-        } finally {
-            setBusy(false)
-            e.target.value = ''
-        }
+  async function handleUpload() {
+    if (!file) return
+    try {
+      if (mode === 'photo') {
+        await onUpload({ file, category, title: title.toUpperCase() })
+      } else {
+        await onUpload({ file, category, label: label.toUpperCase() })
+      }
+      setFile(null)
+      setTitle('')
+      setLabel('')
+      alert('Archivo subido correctamente')
+    } catch (e) {
+      alert(e?.response?.data?.message || e.message || 'Error al subir el archivo')
     }
+  }
 
-    const acceptMap = {
-        photo: 'image/jpeg,image/png,image/webp',
-        doc: 'application/pdf,image/jpeg,image/png',
-        video: 'video/mp4,video/webm,video/quicktime',
-    }
+  return (
+    <div className="border rounded-lg p-3 flex flex-col gap-2 bg-white">
+      <input
+        type="file"
+        accept={accept}
+        onChange={(e) => setFile(e.target.files?.[0] || null)}
+      />
 
-    return (
-        <div className="flex items-center gap-3">
-            <label className="btn btn-primary cursor-pointer">
-                {busy ? 'Subiendo…' : 'Subir archivo'}
-                <input
-                    type="file"
-                    className="hidden"
-                    accept={accept || acceptMap[mode]}
-                    onChange={onChange}
-                    disabled={busy}
-                />
-            </label>
-            {error && <span className="text-red-600 text-sm">{error}</span>}
-        </div>
-    )
+      {mode === 'photo' ? (
+        <input
+          placeholder={titleLabel}
+          value={title}
+          onChange={(e) => setTitle(e.target.value.toUpperCase())}
+          className="border p-2 rounded"
+        />
+      ) : (
+        <input
+          placeholder={labelLabel}
+          value={label}
+          onChange={(e) => setLabel(e.target.value.toUpperCase())}
+          className="border p-2 rounded"
+        />
+      )}
+
+      <button
+        type="button"
+        className="px-3 py-2 bg-blue-600 text-white rounded w-max"
+        onClick={handleUpload}
+        disabled={!file}
+      >
+        Subir
+      </button>
+    </div>
+  )
 }
