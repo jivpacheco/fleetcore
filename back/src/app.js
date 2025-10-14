@@ -16,6 +16,7 @@ import { notFound, errorHandler } from './middleware/errorHandler.js'
 
 import apiV1 from './routes/index.js'  // agregador de entidades (users, branches, etc.)
 import authRoutes from './routes/auth.routes.js' // autenticación local + Microsoft
+import catalogsRoutes from './routes/catalogs.routes.js'
 // import dashboardRoutes from './routes/dashboard.routes.js'
 
 const app = express()
@@ -35,6 +36,7 @@ app.use(cors({
 app.use(express.json()) // JSON body parser
 app.use(cookieParser()) // lee/escribe cookies (ej. fc_token, fc_pkce)
 
+
 // 3) (Opcional) Logger por request
 if (requestLogger) app.use(requestLogger)
 // app.use(requestLogger)
@@ -42,6 +44,7 @@ if (requestLogger) app.use(requestLogger)
 // 4) Rutas
 app.use(`${API_PREFIX}/auth`, authRoutes)  // /api/v1/auth/*
 app.use(`${API_PREFIX}`, apiV1)            // /api/v1/<resto>
+app.use(`${API_PREFIX}/catalogs`, catalogsRoutes)  
 
 // Healthcheck
 app.get('/api/health', (req, res) => {

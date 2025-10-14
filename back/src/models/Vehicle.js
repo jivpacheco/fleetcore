@@ -49,11 +49,11 @@ const ComponentSchema = new Schema({
 }, { _id: false })
 
 const LegalSchema = new Schema({
-  padron:    { number: {type:String,set:toUpper}, issuer: {type:String,set:toUpper}, validFrom: Date, validTo: Date },
-  soap:      { policy: {type:String,set:toUpper}, issuer: {type:String,set:toUpper}, validFrom: Date, validTo: Date },
-  insurance: { policy: {type:String,set:toUpper}, issuer: {type:String,set:toUpper}, validFrom: Date, validTo: Date },
-  tag:       { number: {type:String,set:toUpper}, issuer: {type:String,set:toUpper} },
-  fuelCard:  { issuer: {type:String,set:toUpper}, number: {type:String,set:toUpper}, validTo: Date, quota: Number }
+  padron: { number: { type: String, set: toUpper }, issuer: { type: String, set: toUpper }, validFrom: Date, validTo: Date },
+  soap: { policy: { type: String, set: toUpper }, issuer: { type: String, set: toUpper }, validFrom: Date, validTo: Date },
+  insurance: { policy: { type: String, set: toUpper }, issuer: { type: String, set: toUpper }, validFrom: Date, validTo: Date },
+  tag: { number: { type: String, set: toUpper }, issuer: { type: String, set: toUpper } },
+  fuelCard: { issuer: { type: String, set: toUpper }, number: { type: String, set: toUpper }, validTo: Date, quota: Number }
 }, { _id: false })
 
 const MetersSchema = new Schema({
@@ -65,16 +65,16 @@ const MetersSchema = new Schema({
 }, { _id: false })
 
 const TyreAxleSchema = new Schema({
-  axle: { type:String, set: toUpper }, // FRONT, REAR1, REAR2
+  axle: { type: String, set: toUpper }, // FRONT, REAR1, REAR2
   positionCount: Number,
-  application: { type:String, set: toUpper },
-  reference: { type:String, set: toUpper },
+  application: { type: String, set: toUpper },
+  reference: { type: String, set: toUpper },
   tires: [{
-    role: { type:String, set: toUpper }, // DIRECTIONAL|TRACTION|MIXED
-    brand: { type:String, set: toUpper },
-    model: { type:String, set: toUpper },
-    size:  { type:String, set: toUpper },
-    serial:{ type:String, set: toUpper },
+    role: { type: String, set: toUpper }, // DIRECTIONAL|TRACTION|MIXED
+    brand: { type: String, set: toUpper },
+    model: { type: String, set: toUpper },
+    size: { type: String, set: toUpper },
+    serial: { type: String, set: toUpper },
     media: [MediaSchema]
   }]
 }, { _id: false })
@@ -100,21 +100,26 @@ const DocumentSchema = new Schema({
 }, { _id: true })
 
 const TransmissionSchema = new Schema({
-  type:   { type:String, enum:['MANUAL','AUTOMATIC','AMT','CVT'], set: toUpper, required: false },
-  brand:  { type:String, set: toUpper },
-  model:  { type:String, set: toUpper },
-  serial: { type:String, set: toUpper },
-  gears:  Number,
-}, { _id:false })
+  // type:   { type:String, enum:['MANUAL','AUTOMATIC','AMT','CVT'], set: toUpper, required: false },
+  type: {
+    type: String,
+    enum: ['MANUAL', 'AUTOMATIC', 'AMT', 'CVT'],
+    set: (v) => (v ? v.toUpperCase() : undefined) // <--- ESTA LÍNEA ES LA CLAVE
+  },
+  brand: { type: String, set: toUpper },
+  model: { type: String, set: toUpper },
+  serial: { type: String, set: toUpper },
+  gears: Number,
+}, { _id: false })
 
 const BatteriesSchema = new Schema({
-  brand: { type:String, set: toUpper },
-  model: { type:String, set: toUpper },
+  brand: { type: String, set: toUpper },
+  model: { type: String, set: toUpper },
   capacityAh: Number,
   voltageV: Number,
   qty: Number,
-  notes: { type:String, set: toUpper },
-}, { _id:false })
+  notes: { type: String, set: toUpper },
+}, { _id: false })
 
 // ---------- Schema principal ----------
 
@@ -122,23 +127,24 @@ const VehicleSchema = new Schema({
   // Básico (OBLIGATORIO)
   plate: { type: String, required: true, unique: true, set: toUpper },
   internalCode: { type: String, required: true, unique: true, set: toUpper },
-  status: { type: String, required: true, enum: ['ACTIVE','SUPPORT','IN_REPAIR','OUT_OF_SERVICE','RETIRED'], set: toUpper },
+  // status: { type: String, required: true, enum: ['ACTIVE','SUPPORT','IN_REPAIR','OUT_OF_SERVICE','RETIRED'], set: toUpper },
+  status: { type: String, required: true, set: (v) => (v ? v.toUpperCase() : v) },
 
-  type: { type:String, required:true, set: toUpper },
-  brand: { type:String, required:true, set: toUpper },
-  model: { type:String, required:true, set: toUpper },
-  year:  { type:Number, required:true },
-  color: { type:String, required:true, set: toUpper },
+  type: { type: String, required: true, set: toUpper },
+  brand: { type: String, required: true, set: toUpper },
+  model: { type: String, required: true, set: toUpper },
+  year: { type: Number, required: true },
+  color: { type: String, required: true, set: toUpper },
 
   // Relaciones
   branch: { ...BranchRef, required: true },
 
   // Técnico
-  vin: { type:String, set: toUpper },
-  engineNumber: { type:String, set: toUpper },
-  engineBrand:  { type:String, set: toUpper },
-  engineModel:  { type:String, set: toUpper },
-  fuelType:     { type:String, set: toUpper },
+  vin: { type: String, set: toUpper },
+  engineNumber: { type: String, set: toUpper },
+  engineBrand: { type: String, set: toUpper },
+  engineModel: { type: String, set: toUpper },
+  fuelType: { type: String, set: toUpper },
 
   transmission: TransmissionSchema,
   batteries: [BatteriesSchema],
@@ -146,15 +152,15 @@ const VehicleSchema = new Schema({
 
   // Equipos técnicos específicos (generador/motobomba/cuerpo de bomba)
   generator: {
-    brand:{type:String,set:toUpper}, model:{type:String,set:toUpper}, serial:{type:String,set:toUpper},
+    brand: { type: String, set: toUpper }, model: { type: String, set: toUpper }, serial: { type: String, set: toUpper },
     media: [MediaSchema]
   },
   pump: { // motobomba
-    brand:{type:String,set:toUpper}, model:{type:String,set:toUpper}, serial:{type:String,set:toUpper},
+    brand: { type: String, set: toUpper }, model: { type: String, set: toUpper }, serial: { type: String, set: toUpper },
     media: [MediaSchema]
   },
   body: { // cuerpo de bomba
-    brand:{type:String,set:toUpper}, model:{type:String,set:toUpper}, serial:{type:String,set:toUpper},
+    brand: { type: String, set: toUpper }, model: { type: String, set: toUpper }, serial: { type: String, set: toUpper },
     media: [MediaSchema]
   },
 
@@ -177,7 +183,7 @@ const VehicleSchema = new Schema({
 }, { timestamps: true })
 
 // Índices
-VehicleSchema.index({ internalCode: 1 }, { unique: true })
+// VehicleSchema.index({ internalCode: 1 }, { unique: true })
 VehicleSchema.index({ branch: 1 })
 VehicleSchema.index({ status: 1 })
 VehicleSchema.plugin(findPagedPlugin)
