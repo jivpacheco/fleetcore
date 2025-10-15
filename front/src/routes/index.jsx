@@ -332,6 +332,8 @@ import BranchesList from '../pages/Branches/List'
 import VehiclesList from '../pages/Vehicles/List'
 import VehiclesForm from '../pages/Vehicles/Form'
 import TicketsList from '../pages/Tickets/List'
+import VehicleStatusesCatalog from '../pages/Config/Catalogs/VehicleStatuses'
+
 
 // Pantalla de carga
 function Splash() {
@@ -355,7 +357,7 @@ function AuthGate({ children }) {
     setRunning(true)
     api.get('/api/v1/auth/me')
       .then(({ data }) => setUser(data.user))
-      .catch(() => {}) // si 401, deja user en null
+      .catch(() => { }) // si 401, deja user en null
       .finally(() => {
         setAuthBootstrapped(true)
         setRunning(false)
@@ -399,6 +401,7 @@ export default function AppRoutes() {
           <Route path="vehicles" element={<VehiclesList />} />
           <Route path="vehicles/new" element={<VehiclesForm />} />
           <Route path="vehicles/:id" element={<VehiclesForm />} />
+          <Route path="config/catalogs/vehicle-statuses" element={<VehicleStatusesCatalog />} />
 
           <Route path="tickets" element={<TicketsList />} />
 
