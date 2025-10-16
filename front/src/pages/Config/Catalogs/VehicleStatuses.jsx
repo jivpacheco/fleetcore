@@ -98,14 +98,15 @@
 //     )
 // }
 
-
 // front/src/pages/Config/Catalogs/VehicleStatuses.jsx
 // -----------------------------------------------------------------------------
-// Catálogo: Estados de Vehículo
+// Catálogo: Estados de Vehículo (VEHICLE_STATUSES)
 // - Muestra columnas: Orden, Código, Nombre, Activo, Acciones.
-// - Evita duplicados por key+label y key+code (el back ya lo garantiza).
-// - Bordes superiores redondeados corregidos.
+// - Evita errores al estar vacío (no muestra "Recurso no encontrado").
+// - Permite agregar (POST) y eliminar (DELETE) correctamente.
+// - Orden visual por `order` y luego `label`.
 // -----------------------------------------------------------------------------
+
 import { useEffect, useState } from 'react';
 import { api } from '../../../services/http';
 
@@ -117,27 +118,27 @@ export default function VehicleStatusesCatalog() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
 
+  function update(k, v) {
+    setForm((f) => ({ ...f, [k]: typeof v === 'string' ? v.toUpperCase() : v }));
+  }
+
   async function load() {
     setLoading(true);
     setErr('');
     try {
       const { data } = await api.get('/api/v1/catalogs', { params: { key: KEY, limit: 200 } });
-      const list = data?.items || data?.data || [];
-      // Orden natural por order asc, luego label
-      list.sort((a,b)=> (a.order ?? 0) - (b.order ?? 0) || a.label.localeCompare(b.label));
+      const list = data?.items || [];
+      list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.label.localeCompare(b.label));
       setItems(list);
-    } catch (e) {
-      setErr(e?.response?.data?.message || 'No se pudo cargar el catálogo');
+    } catch (_) {
+      // Catálogo vacío o error: no mostramos 404 al usuario
+      setItems([]);
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(()=>{ load(); }, []);
-
-  function update(k, v) {
-    setForm(f => ({ ...f, [k]: typeof v === 'string' ? v.toUpperCase() : v }));
-  }
+  useEffect(() => { load(); }, []);
 
   async function addItem(e) {
     e.preventDefault();
@@ -146,12 +147,11 @@ export default function VehicleStatusesCatalog() {
       const payload = {
         key: KEY,
         order: Number(form.order) || 0,
-        code: form.code?.trim() || '',   // opcional, pero si lo colocan se valida unicidad
-        label: form.label?.trim(),
-        active: Boolean(form.active),
+        code: (form.code || '').toUpperCase(),
+        label: (form.label || '').toUpperCase(),
+        active: !!form.active,
       };
       if (!payload.label) throw new Error('El nombre (label) es obligatorio.');
-
       await api.post('/api/v1/catalogs', payload);
       setForm({ order: 0, code: '', label: '', active: true });
       await load();
@@ -187,30 +187,47 @@ export default function VehicleStatusesCatalog() {
         <div className="p-4 grid grid-cols-1 sm:grid-cols-6 gap-3">
           <div>
             <label className="block text-sm mb-1 text-slate-600">Orden</label>
-            <input type="number" className="w-full border rounded p-2"
-              value={form.order} onChange={e=>update('order', e.target.value)} />
+            <input
+              type="number"
+              className="w-full border rounded p-2"
+              value={form.order}
+              onChange={(e) => update('order', e.target.value)}
+              placeholder="0"
+            />
           </div>
           <div className="sm:col-span-2">
             <label className="block text-sm mb-1 text-slate-600">Código (opcional)</label>
-            <input className="w-full border rounded p-2"
+            <input
+              className="w-full border rounded p-2"
               placeholder="ACTIVE"
-              value={form.code} onChange={e=>update('code', e.target.value)} />
+              value={form.code}
+              onChange={(e) => update('code', e.target.value)}
+            />
           </div>
           <div className="sm:col-span-2">
             <label className="block text-sm mb-1 text-slate-600">Nombre (label)</label>
-            <input className="w-full border rounded p-2"
+            <input
+              className="w-full border rounded p-2"
               placeholder="ACTIVO"
               required
-              value={form.label} onChange={e=>update('label', e.target.value)} />
+              value={form.label}
+              onChange={(e) => update('label', e.target.value)}
+            />
           </div>
           <div className="flex items-center gap-2">
-            <input id="active" type="checkbox" checked={!!form.active}
-              onChange={e=>update('active', e.target.checked)} />
+            <input
+              id="active"
+              type="checkbox"
+              checked={!!form.active}
+              onChange={(e) => update('active', e.target.checked)}
+            />
             <label htmlFor="active">Activo</label>
           </div>
         </div>
         <div className="p-4 border-t flex justify-end">
-          <button type="submit" className="px-3 py-2 bg-blue-600 text-white rounded">Agregar</button>
+          <button type="submit" className="px-3 py-2 bg-blue-600 text-white rounded">
+            Agregar
+          </button>
         </div>
       </form>
 
@@ -228,19 +245,25 @@ export default function VehicleStatusesCatalog() {
               </tr>
             </thead>
             <tbody>
-              {items.map(it=>(
+              {items.map((it) => (
                 <tr key={it._id} className="border-t">
                   <td className="px-3 py-2">{it.order ?? 0}</td>
                   <td className="px-3 py-2">{it.code || '—'}</td>
                   <td className="px-3 py-2">{it.label}</td>
                   <td className="px-3 py-2">{it.active ? 'Sí' : 'No'}</td>
                   <td className="px-3 py-2">
-                    <button onClick={()=>remove(it._id)} className="text-red-600 hover:underline">Eliminar</button>
+                    <button onClick={() => remove(it._id)} className="text-red-600 hover:underline">
+                      Eliminar
+                    </button>
                   </td>
                 </tr>
               ))}
               {!items.length && (
-                <tr><td className="px-3 py-4 text-slate-500" colSpan={5}>Sin registros</td></tr>
+                <tr>
+                  <td className="px-3 py-4 text-slate-500" colSpan={5}>
+                    {loading ? 'Cargando…' : 'Sin registros'}
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
