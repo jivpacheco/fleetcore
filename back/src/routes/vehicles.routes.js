@@ -1,47 +1,3 @@
-// // back/src/routes/vehicles.routes.js
-// // -----------------------------------------------------------------------------
-// // Rutas de Vehículos (CRUD + transfer + media).
-// // -----------------------------------------------------------------------------
-// import { Router } from 'express';
-// import { uploadSingle } from '../middleware/upload.middleware.js';
-// import * as ctrl from '../controllers/vehicles.controller.js';
-// import { requirePermission } from '../middleware/requirePermission.js';
-
-// const r = Router();
-
-// // CRUD
-// r.get('/',    requirePermission('vehicles:read'),   ctrl.list);
-// r.post('/',   requirePermission('vehicles:create'), ctrl.create);
-// r.get('/:id', requirePermission('vehicles:read'),   ctrl.getOne);
-// r.patch('/:id', requirePermission('vehicles:update'), ctrl.update);
-// r.delete('/:id', requirePermission('vehicles:delete'), ctrl.remove);
-
-// // Transfer
-// r.post('/:id/transfer', requirePermission('vehicles:transfer'), ctrl.transfer);
-
-// // Media
-// r.post('/:id/photos',
-//   requirePermission('vehicles:media'),
-//   uploadSingle,
-//   ctrl.addVehiclePhoto
-// );
-// r.delete('/:id/photos/:photoId',
-//   requirePermission('vehicles:media'),
-//   ctrl.deleteVehiclePhoto
-// );
-
-// r.post('/:id/documents',
-//   requirePermission('vehicles:media'),
-//   uploadSingle,
-//   ctrl.addVehicleDocument
-// );
-// r.delete('/:id/documents/:documentId',
-//   requirePermission('vehicles:media'),
-//   ctrl.deleteVehicleDocument
-// );
-
-// export default r;
-
 
 // // back/src/routes/vehicles.routes.js
 // // -----------------------------------------------------------------------------
@@ -54,37 +10,54 @@
 // import express from 'express';
 // import { requireAuth } from '../middleware/requireAuth.js';
 // import { requirePermission } from '../middleware/requirePermission.js';
-// import upload from '../middleware/upload.middleware.js';
+// // ✅ Corregido: import nombrado, no default
+// import { uploadSingle } from '../middleware/upload.middleware.js';
 // import * as ctrl from '../controllers/vehicles.controller.js';
 
 // const router = express.Router();
 
-// // 📌 Listar vehículos (con populate sucursal)
-// router.get('/', requireAuth, requirePermission('vehicles.view'), ctrl.list);
+// // ====================== CRUD ======================
 
-// // 📌 Obtener uno
-// router.get('/:id', requireAuth, requirePermission('vehicles.view'), ctrl.getOne);
+// // 📋 Listar vehículos (con populate sucursal)
+// router.get('/', requireAuth, requirePermission('vehicles:read'), ctrl.list);
 
-// // 📌 Crear nuevo
-// router.post('/', requireAuth, requirePermission('vehicles.create'), ctrl.create);
+// // 📄 Obtener uno
+// router.get('/:id', requireAuth, requirePermission('vehicles:read'), ctrl.getOne);
 
-// // 📌 Actualizar
-// router.patch('/:id', requireAuth, requirePermission('vehicles.update'), ctrl.update);
+// // ➕ Crear nuevo
+// router.post('/', requireAuth, requirePermission('vehicles:create'), ctrl.create);
 
-// // 📌 Eliminar
-// router.delete('/:id', requireAuth, requirePermission('vehicles.delete'), ctrl.remove);
+// // ✏️ Actualizar
+// router.patch('/:id', requireAuth, requirePermission('vehicles:update'), ctrl.update);
 
-// // 📌 Transferir (cambio de sucursal / reemplazo)
-// router.post('/:id/transfer', requireAuth, requirePermission('vehicles.transfer'), ctrl.transfer);
+// // ❌ Eliminar
+// router.delete('/:id', requireAuth, requirePermission('vehicles:delete'), ctrl.remove);
+
+// // ====================== TRANSFER / APOYO ======================
+// // Body esperado: { reason: 'TRASPASO'|'APOYO', toBranch, replaceVehicleId?, note }
+// // Si reason === 'APOYO' y viene replaceVehicleId → se aplicará sufijo 'R' a internalCode
+// router.post(
+//   '/:id/transfer',
+//   requireAuth,
+//   requirePermission('vehicles:transfer'),
+//   ctrl.transfer
+// );
 
 // // ====================== MEDIA ======================
+// // Subidas de medios con campo 'file' en FormData
+// // Front (axios):
+// // const fd = new FormData();
+// // fd.append('file', archivo);
+// // fd.append('category', 'BASIC');
+// // fd.append('title', 'FRENOS');
+// // await api.post(`/api/v1/vehicles/${id}/photos`, fd)
 
-// // 📸 Subir foto (usa Cloudinary)
+// // 📸 Subir foto
 // router.post(
 //   '/:id/photos',
 //   requireAuth,
-//   requirePermission('vehicles.media'),
-//   upload.single('file'),
+//   requirePermission('vehicles:media'),
+//   uploadSingle,
 //   ctrl.addVehiclePhoto
 // );
 
@@ -92,7 +65,7 @@
 // router.delete(
 //   '/:id/photos/:photoId',
 //   requireAuth,
-//   requirePermission('vehicles.media'),
+//   requirePermission('vehicles:media'),
 //   ctrl.deleteVehiclePhoto
 // );
 
@@ -100,8 +73,8 @@
 // router.post(
 //   '/:id/documents',
 //   requireAuth,
-//   requirePermission('vehicles.media'),
-//   upload.single('file'),
+//   requirePermission('vehicles:media'),
+//   uploadSingle,
 //   ctrl.addVehicleDocument
 // );
 
@@ -109,99 +82,196 @@
 // router.delete(
 //   '/:id/documents/:documentId',
 //   requireAuth,
-//   requirePermission('vehicles.media'),
+//   requirePermission('vehicles:media'),
 //   ctrl.deleteVehicleDocument
 // );
 
 // export default router;
 
+///***** penultima actualizacion */
+
+// // back/src/routes/vehicles.routes.js
+// // -----------------------------------------------------------------------------
+// // Rutas dedicadas a Vehículos
+// // - CRUD (GET/POST/PATCH/DELETE) gestionado por vehicles.controller.js
+// // - Transferencia / Apoyo (start/finish) para reemplazos temporales
+// // - Endpoints específicos para subir/eliminar fotos y documentos (Cloudinary)
+// // - Protegidas por requireAuth + requirePermission (esquema con ':')
+// // -----------------------------------------------------------------------------
+
+// import express from 'express'
+// import { requireAuth } from '../middleware/requireAuth.js'
+// import { requirePermission } from '../middleware/requirePermission.js'
+// // ✅ Import correcto según tu base estable: export nombrado
+// import { uploadSingle } from '../middleware/upload.middleware.js'
+// import * as ctrl from '../controllers/vehicles.controller.js'
+
+// const router = express.Router()
+
+// // ====================== CRUD ======================
+
+// // 📋 Listar vehículos (con populate sucursal)
+// router.get(
+//   '/',
+//   requireAuth,
+//   requirePermission('vehicles:read'),
+//   ctrl.list
+// )
+
+// // 📄 Obtener uno
+// router.get(
+//   '/:id',
+//   requireAuth,
+//   requirePermission('vehicles:read'),
+//   ctrl.getOne
+// )
+
+// // ➕ Crear nuevo
+// router.post(
+//   '/',
+//   requireAuth,
+//   requirePermission('vehicles:create'),
+//   ctrl.create
+// )
+
+// // ✏️ Actualizar
+// router.patch(
+//   '/:id',
+//   requireAuth,
+//   requirePermission('vehicles:update'),
+//   ctrl.update
+// )
+
+// // ❌ Eliminar
+// router.delete(
+//   '/:id',
+//   requireAuth,
+//   requirePermission('vehicles:delete'),
+//   ctrl.remove
+// )
+
+// // ====================== TRANSFERENCIA / APOYO ======================
+// // Body esperado en /transfer: { reason: 'TRASPASO'|'APOYO', toBranch, replaceVehicleId?, note }
+// // Si reason === 'APOYO' y viene replaceVehicleId → se aplicará sufijo 'R' a internalCode
+// router.post(
+//   '/:id/transfer',
+//   requireAuth,
+//   requirePermission('vehicles:transfer'),
+//   ctrl.transfer
+// )
+
+// // Opcional: flujo explícito de apoyo (si ya tienes implementado en controller)
+// // startSupport: inicia reemplazo; finishSupport: finaliza reemplazo
+// router.post(
+//   '/:id/support/start',
+//   requireAuth,
+//   requirePermission('vehicles:transfer'),
+//   ctrl.startSupport // <-- Asegúrate de tener esta función en el controller
+// )
+
+// router.post(
+//   '/:id/support/finish',
+//   requireAuth,
+//   requirePermission('vehicles:transfer'),
+//   ctrl.finishSupport // <-- Asegúrate de tener esta función en el controller
+// )
+
+// // ====================== MEDIA ======================
+// // Subidas de medios con campo 'file' en FormData
+// // Front (axios) ejemplo:
+// // const fd = new FormData()
+// // fd.append('file', archivo)
+// // fd.append('category', 'BASIC')
+// // fd.append('title', 'FRENOS')
+// // await api.post(`/api/v1/vehicles/${id}/photos`, fd)
+
+// // 📸 Subir foto
+// router.post(
+//   '/:id/photos',
+//   requireAuth,
+//   requirePermission('vehicles:media'),
+//   uploadSingle, // 👈 usa el middleware correcto
+//   ctrl.addVehiclePhoto
+// )
+
+// // 📸 Eliminar foto
+// router.delete(
+//   '/:id/photos/:photoId',
+//   requireAuth,
+//   requirePermission('vehicles:media'),
+//   ctrl.deleteVehiclePhoto
+// )
+
+// // 📄 Subir documento
+// router.post(
+//   '/:id/documents',
+//   requireAuth,
+//   requirePermission('vehicles:media'),
+//   uploadSingle, // 👈 usa el middleware correcto
+//   ctrl.addVehicleDocument
+// )
+
+// // 📄 Eliminar documento
+// router.delete(
+//   '/:id/documents/:documentId',
+//   requireAuth,
+//   requirePermission('vehicles:media'),
+//   ctrl.deleteVehicleDocument
+// )
+
+// export default router
+
 
 // back/src/routes/vehicles.routes.js
 // -----------------------------------------------------------------------------
 // Rutas dedicadas a Vehículos
-// - CRUD (GET/POST/PATCH/DELETE) gestionado por vehicles.controller.js
-// - Endpoints específicos para subir/eliminar fotos y documentos
-// - Protegidas por requireAuth + requirePermission
+// - CRUD + Transferencia / Apoyo + Media (Cloudinary)
+// - Protegidas por requireAuth + requirePermission (esquema con ':')
 // -----------------------------------------------------------------------------
 
-import express from 'express';
-import { requireAuth } from '../middleware/requireAuth.js';
-import { requirePermission } from '../middleware/requirePermission.js';
-// ✅ Corregido: import nombrado, no default
-import { uploadSingle } from '../middleware/upload.middleware.js';
-import * as ctrl from '../controllers/vehicles.controller.js';
+import express from 'express'
+import { requireAuth } from '../middleware/requireAuth.js'
+import { requirePermission } from '../middleware/requirePermission.js'
+import { uploadSingle } from '../middleware/upload.middleware.js'
+import * as ctrl from '../controllers/vehicles.controller.js'
 
-const router = express.Router();
+const router = express.Router()
 
 // ====================== CRUD ======================
+router.get('/',    requireAuth, requirePermission('vehicles:read'),   ctrl.list)
+router.get('/:id', requireAuth, requirePermission('vehicles:read'),   ctrl.getOne)
+router.post('/',   requireAuth, requirePermission('vehicles:create'), ctrl.create)
+router.patch('/:id', requireAuth, requirePermission('vehicles:update'), ctrl.update)
+router.delete('/:id', requireAuth, requirePermission('vehicles:delete'), ctrl.remove)
 
-// 📋 Listar vehículos (con populate sucursal)
-router.get('/', requireAuth, requirePermission('vehicles:read'), ctrl.list);
+// ====================== TRANSFERENCIA / APOYO ======================
+// /transfer (modo legacy compatible): { reason:'TRASPASO'|'APOYO', toBranch, replaceVehicleId?, note }
+router.post('/:id/transfer',
+  requireAuth, requirePermission('vehicles:transfer'), ctrl.transfer)
 
-// 📄 Obtener uno
-router.get('/:id', requireAuth, requirePermission('vehicles:read'), ctrl.getOne);
+// Flujo explícito Apoyo (UI nuevo)
+router.post('/:id/support/start',
+  requireAuth, requirePermission('vehicles:transfer'), ctrl.startSupport)
 
-// ➕ Crear nuevo
-router.post('/', requireAuth, requirePermission('vehicles:create'), ctrl.create);
-
-// ✏️ Actualizar
-router.patch('/:id', requireAuth, requirePermission('vehicles:update'), ctrl.update);
-
-// ❌ Eliminar
-router.delete('/:id', requireAuth, requirePermission('vehicles:delete'), ctrl.remove);
-
-// ====================== TRANSFER / APOYO ======================
-// Body esperado: { reason: 'TRASPASO'|'APOYO', toBranch, replaceVehicleId?, note }
-// Si reason === 'APOYO' y viene replaceVehicleId → se aplicará sufijo 'R' a internalCode
-router.post(
-  '/:id/transfer',
-  requireAuth,
-  requirePermission('vehicles:transfer'),
-  ctrl.transfer
-);
+router.post('/:id/support/finish',
+  requireAuth, requirePermission('vehicles:transfer'), ctrl.finishSupport)
 
 // ====================== MEDIA ======================
-// Subidas de medios con campo 'file' en FormData
-// Front (axios):
-// const fd = new FormData();
-// fd.append('file', archivo);
-// fd.append('category', 'BASIC');
-// fd.append('title', 'FRENOS');
-// await api.post(`/api/v1/vehicles/${id}/photos`, fd)
+// El campo del archivo en FormData debe llamarse 'file'
+router.post('/:id/photos',
+  requireAuth, requirePermission('vehicles:media'),
+  uploadSingle, ctrl.addVehiclePhoto)
 
-// 📸 Subir foto
-router.post(
-  '/:id/photos',
-  requireAuth,
-  requirePermission('vehicles:media'),
-  uploadSingle,
-  ctrl.addVehiclePhoto
-);
+router.delete('/:id/photos/:photoId',
+  requireAuth, requirePermission('vehicles:media'),
+  ctrl.deleteVehiclePhoto)
 
-// 📸 Eliminar foto
-router.delete(
-  '/:id/photos/:photoId',
-  requireAuth,
-  requirePermission('vehicles:media'),
-  ctrl.deleteVehiclePhoto
-);
+router.post('/:id/documents',
+  requireAuth, requirePermission('vehicles:media'),
+  uploadSingle, ctrl.addVehicleDocument)
 
-// 📄 Subir documento
-router.post(
-  '/:id/documents',
-  requireAuth,
-  requirePermission('vehicles:media'),
-  uploadSingle,
-  ctrl.addVehicleDocument
-);
+router.delete('/:id/documents/:documentId',
+  requireAuth, requirePermission('vehicles:media'),
+  ctrl.deleteVehicleDocument)
 
-// 📄 Eliminar documento
-router.delete(
-  '/:id/documents/:documentId',
-  requireAuth,
-  requirePermission('vehicles:media'),
-  ctrl.deleteVehicleDocument
-);
-
-export default router;
-
+export default router
