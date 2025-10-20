@@ -1,3 +1,108 @@
+// ///**** VERISION ESTABLE 20/10/2025 */
+
+// // front/src/pages/Vehicles/List.jsx
+// // -----------------------------------------------------------------------------
+// // Lista de vehículos mostrando Sucursal y ordenando por Sucursal → Código interno.
+// // -----------------------------------------------------------------------------
+// import { useEffect, useState } from 'react';
+// import { listVehicles } from '../../api/vehicles.api';
+// import { Link } from 'react-router-dom';
+
+// function naturalCode(a) {
+//   // convierte '1' -> 1, '10' -> 10, 'A' -> NaN; sirve para sort natural
+//   const n = Number(a);
+//   return Number.isFinite(n) ? n : Infinity;
+// }
+
+// export default function VehiclesList() {
+//   const [rows, setRows] = useState([]);
+//   const [q, setQ] = useState('');
+//   const [loading, setLoading] = useState(false);
+
+//   async function load() {
+//     setLoading(true);
+//     try {
+//       const data = await listVehicles({ page: 1, limit: 100, q });
+//       const items = data.items || data.data || [];
+//       // sort: branch.name/code asc, luego internalCode asc (natural)
+//       items.sort((A,B)=>{
+//         const aB = (A.branch?.name || A.branch?.code || '').toString();
+//         const bB = (B.branch?.name || B.branch?.code || '').toString();
+//         const cmpB = aB.localeCompare(bB, 'es', { numeric: true });
+//         if (cmpB !== 0) return cmpB;
+//         // natural por internalCode numérico si aplica
+//         const na = naturalCode(A.internalCode);
+//         const nb = naturalCode(B.internalCode);
+//         if (na !== nb) return na - nb;
+//         return (A.internalCode || '').localeCompare(B.internalCode || '', 'es', { numeric: true });
+//       });
+//       setRows(items);
+//     } finally {
+//       setLoading(false);
+//     }
+//   }
+
+//   useEffect(()=>{ load(); }, []); // carga inicial
+
+//   return (
+//     <div className="space-y-3">
+//       <header className="flex items-center justify-between">
+//         <h2 className="text-xl font-semibold">Vehículos</h2>
+//         <div className="flex items-center gap-2">
+//           <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar…" className="border rounded p-2" />
+//           <button onClick={load} className="px-3 py-2 border rounded">Buscar</button>
+//           <Link to="/vehicles/new" className="px-3 py-2 bg-blue-600 text-white rounded">Nuevo</Link>
+//         </div>
+//       </header>
+
+//       <div className="bg-white border rounded-xl shadow overflow-hidden">
+//         <div className="px-4 py-2 border-b bg-slate-50 rounded-t-xl font-medium">Listado</div>
+//         <div className="overflow-x-auto">
+//           <table className="min-w-full text-sm">
+//             <thead className="bg-slate-100">
+//               <tr>
+//                 <th className="text-left px-3 py-2">Placa</th>
+//                 <th className="text-left px-3 py-2">Código</th>
+//                 <th className="text-left px-3 py-2">Sucursal</th>
+//                 <th className="text-left px-3 py-2">Tipo</th>
+//                 <th className="text-left px-3 py-2">Marca/Modelo</th>
+//                 <th className="text-left px-3 py-2">Año</th>
+//                 <th className="text-left px-3 py-2">Estado</th>
+//                 <th className="text-left px-3 py-2">Acciones</th>
+//               </tr>
+//             </thead>
+//             <tbody>
+//               {rows.map(v=>(
+//                 <tr key={v._id} className="border-t">
+//                   <td className="px-3 py-2">{v.plate}</td>
+//                   <td className="px-3 py-2">{v.internalCode}</td>
+//                   <td className="px-3 py-2">
+//                     {v.branch?.code ? `${v.branch.code} — ${v.branch.name}` : (v.branch?.name || '—')}
+//                   </td>
+//                   <td className="px-3 py-2">{v.type}</td>
+//                   <td className="px-3 py-2">{v.brand} {v.model}</td>
+//                   <td className="px-3 py-2">{v.year ?? '—'}</td>
+//                   <td className="px-3 py-2">{v.status}</td>
+//                   <td className="px-3 py-2">
+//                     <Link to={`/vehicles/${v._id}`} className="text-blue-600 hover:underline">Editar</Link>
+//                   </td>
+//                 </tr>
+//               ))}
+//               {!rows.length && (
+//                 <tr><td className="px-3 py-4 text-slate-500" colSpan={8}>{loading ? 'Cargando…' : 'Sin registros'}</td></tr>
+//               )}
+//             </tbody>
+//           </table>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+
+
+
+
 // import { useEffect, useState } from 'react';
 // export default function VehiclesList(){
 //   const [items,setItems]=useState([]),[page,setPage]=useState(1),[limit,setLimit]=useState(10),
@@ -170,99 +275,463 @@
 //   )
 // }
 
+
+
+//// ACTUALIZACION 20/10/2025 //////
+
+// // front/src/pages/Vehicles/List.jsx
+// // -----------------------------------------------------------------------------
+// // Listado de Vehículos
+// // - Búsqueda por q
+// // - Filtro por Sucursal
+// // - Paginación
+// // - Status con ETIQUETA (desde catálogo VEHICLE_STATUSES)
+// // - Indicador "(REEMPLAZO)" en rojo y negrita junto a internalCode si support.active === true
+// // - Acciones: Ver/Editar (ajusta las rutas si usas otras)
+// // -----------------------------------------------------------------------------
+// import { useEffect, useMemo, useState } from 'react';
+// import { Link, useNavigate } from 'react-router-dom';
+// import { api } from '../../services/http';
+
+// function naturalSortBranches(list){
+//   return [...list].sort((a,b)=>{
+//     const an = Number(a.code); const bn = Number(b.code);
+//     const aIsNum = Number.isFinite(an), bIsNum = Number.isFinite(bn);
+//     if (aIsNum && bIsNum) return an - bn;
+//     if (aIsNum) return -1;
+//     if (bIsNum) return 1;
+//     return (a.name || '').localeCompare(b.name || '', 'es', { numeric:true });
+//   });
+// }
+
+// export default function VehiclesList() {
+//   const navigate = useNavigate();
+
+//   // Catálogos
+//   const [statuses, setStatuses] = useState([]); // [{code,label}]
+//   const statusMap = useMemo(() => {
+//     const m = new Map();
+//     (statuses || []).forEach(s => m.set(String(s.code).toUpperCase(), s.label || s.code));
+//     return m;
+//   }, [statuses]);
+
+//   // Sucursales
+//   const [branches, setBranches] = useState([]);
+
+//   // Tabla
+//   const [items, setItems] = useState([]);
+//   const [page, setPage] = useState(1);
+//   const [limit, setLimit] = useState(10);
+//   const [total, setTotal] = useState(0);
+
+//   // Filtros
+//   const [q, setQ] = useState('');
+//   const [branch, setBranch] = useState('');
+
+//   const pages = Math.max(Math.ceil(total / limit), 1);
+
+//   // Catálogo de estados
+//   useEffect(() => {
+//     api.get('/api/v1/catalogs', { params: { key: 'VEHICLE_STATUSES', limit: 200 } })
+//       .then(({ data }) => {
+//         const items = data?.items || [];
+//         setStatuses(items.map(it => ({ code: it.code, label: it.label })));
+//       })
+//       .catch(() => setStatuses([]));
+//   }, []);
+
+//   // Sucursales
+//   useEffect(() => {
+//     api.get('/api/v1/branches', { params: { page: 1, limit: 500 } })
+//       .then(({ data }) => {
+//         const payload = data?.items || data?.data?.items || data?.data || data?.list || [];
+//         setBranches(naturalSortBranches(payload));
+//       })
+//       .catch(() => setBranches([]));
+//   }, []);
+
+//   // Cargar tabla
+//   const load = async (_page = page, _limit = limit, _q = q, _branch = branch) => {
+//     const { data } = await api.get('/api/v1/vehicles', {
+//       params: { page: _page, limit: _limit, q: _q || undefined, branch: _branch || undefined }
+//     });
+//     const list = data?.items || data?.data?.items || data?.data || data?.list || [];
+//     setItems(list);
+//     setTotal(data?.total ?? list.length);
+//     setPage(data?.page ?? _page);
+//     setLimit(data?.limit ?? _limit);
+//   };
+
+//   useEffect(() => { load().catch(()=>{}); /* eslint-disable-next-line */ }, []);
+
+//   const applyFilters = () => load(1, limit, q, branch);
+//   const clearFilters = () => { setQ(''); setBranch(''); load(1, limit, '', ''); };
+
+//   return (
+//     <div className="max-w-6xl mx-auto">
+//       <header className="flex items-center justify-between mb-4">
+//         <h2 className="text-xl font-semibold">Vehículos</h2>
+//         <div className="flex gap-2">
+//           <button
+//             onClick={() => navigate('/vehicles/new')}
+//             className="px-3 py-2 bg-blue-600 text-white rounded"
+//           >
+//             Nuevo vehículo
+//           </button>
+//         </div>
+//       </header>
+
+//       {/* Filtros */}
+//       <div className="bg-white border rounded-xl shadow p-4 mb-4">
+//         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+//           <div className="sm:col-span-2">
+//             <label className="block text-sm font-medium text-slate-600 mb-1">Buscar</label>
+//             <input
+//               value={q}
+//               onChange={(e)=>setQ(e.target.value)}
+//               placeholder="Placa, código, marca, modelo..."
+//               className="w-full border p-2 rounded"
+//             />
+//           </div>
+
+//           <div className="sm:col-span-2">
+//             <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal</label>
+//             <select
+//               value={branch}
+//               onChange={(e)=>setBranch(e.target.value)}
+//               className="w-full border p-2 rounded bg-white"
+//             >
+//               <option value="">Todas</option>
+//               {branches.map(b => (
+//                 <option key={b._id} value={b._id}>
+//                   {b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}
+//                 </option>
+//               ))}
+//             </select>
+//           </div>
+//         </div>
+
+//         <div className="mt-3 flex gap-2">
+//           <button onClick={applyFilters} className="px-3 py-2 bg-slate-800 text-white rounded">Aplicar</button>
+//           <button onClick={clearFilters} className="px-3 py-2 border rounded">Limpiar</button>
+//         </div>
+//       </div>
+
+//       {/* Tabla */}
+//       <div className="bg-white border rounded-xl shadow overflow-x-auto">
+//         <table className="min-w-full text-sm">
+//           <thead className="bg-slate-50 text-slate-600">
+//             <tr>
+//               <th className="text-left px-3 py-2">Código</th>
+//               <th className="text-left px-3 py-2">Placa</th>
+//               <th className="text-left px-3 py-2">Sucursal</th>
+//               <th className="text-left px-3 py-2">Estado</th>
+//               <th className="text-left px-3 py-2">Marca/Modelo</th>
+//               <th className="text-left px-3 py-2 w-28">Acciones</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {items.length === 0 && (
+//               <tr>
+//                 <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
+//                   No hay vehículos para mostrar.
+//                 </td>
+//               </tr>
+//             )}
+//             {items.map(v => {
+//               const label = statusMap.get(String(v.status || '').toUpperCase()) || (v.status || '');
+//               const isSupport = v.support?.active === true;
+//               return (
+//                 <tr key={v._id} className="border-t">
+//                   <td className="px-3 py-2 whitespace-nowrap">
+//                     <span className="font-medium">{v.internalCode}</span>{' '}
+//                     {isSupport && (
+//                       <span className="text-red-600 font-bold">(REEMPLAZO)</span>
+//                     )}
+//                   </td>
+//                   <td className="px-3 py-2">{v.plate}</td>
+//                   <td className="px-3 py-2">
+//                     {v.branch?.code ? `${v.branch.code} — ${v.branch.name}` : (v.branch?.name || '—')}
+//                   </td>
+//                   <td className="px-3 py-2">
+//                     <span className="inline-block px-2 py-0.5 rounded bg-slate-100 border text-slate-700">
+//                       {label}
+//                     </span>
+//                   </td>
+//                   <td className="px-3 py-2">
+//                     <div className="text-slate-700">{v.brand} {v.model}</div>
+//                     <div className="text-slate-400">{v.year || '—'}</div>
+//                   </td>
+//                   <td className="px-3 py-2">
+//                     <div className="flex gap-2">
+//                       <Link to={`/vehicles/${v._id}`} className="text-blue-600 hover:underline">Ver</Link>
+//                       <Link to={`/vehicles/${v._id}/edit`} className="text-slate-700 hover:underline">Editar</Link>
+//                     </div>
+//                   </td>
+//                 </tr>
+//               );
+//             })}
+//           </tbody>
+//         </table>
+
+//         {/* Paginación */}
+//         <div className="px-3 py-2 border-t flex items-center justify-between">
+//           <div className="text-sm text-slate-600">
+//             Página {page} de {pages} — {total} registros
+//           </div>
+//           <div className="flex items-center gap-2">
+//             <button
+//               className="px-2 py-1 border rounded disabled:opacity-40"
+//               onClick={() => { const np = Math.max(page-1, 1); setPage(np); load(np, limit, q, branch); }}
+//               disabled={page <= 1}
+//             >
+//               ‹ Anterior
+//             </button>
+//             <select
+//               value={limit}
+//               onChange={(e)=>{ const nl = parseInt(e.target.value,10)||10; setLimit(nl); load(1, nl, q, branch); }}
+//               className="border rounded px-2 py-1"
+//             >
+//               {[10,20,50,100].map(n => <option key={n} value={n}>{n}/pág</option>)}
+//             </select>
+//             <button
+//               className="px-2 py-1 border rounded disabled:opacity-40"
+//               onClick={() => { const np = Math.min(page+1, pages); setPage(np); load(np, limit, q, branch); }}
+//               disabled={page >= pages}
+//             >
+//               Siguiente ›
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
+
+
 // front/src/pages/Vehicles/List.jsx
 // -----------------------------------------------------------------------------
-// Lista de vehículos mostrando Sucursal y ordenando por Sucursal → Código interno.
+// Listado de Vehículos
+// - Búsqueda por q
+// - Filtro por Sucursal
+// - Paginación
+// - Status con ETIQUETA (desde catálogo VEHICLE_STATUSES)
+// - Indicador "(REEMPLAZO)" en rojo y negrita junto a internalCode si support.active === true
+// - Acciones: Ver/Editar (ajusta las rutas si usas otras)
 // -----------------------------------------------------------------------------
-import { useEffect, useState } from 'react';
-import { listVehicles } from '../../api/vehicles.api';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { api } from '../../services/http';
 
-function naturalCode(a) {
-  // convierte '1' -> 1, '10' -> 10, 'A' -> NaN; sirve para sort natural
-  const n = Number(a);
-  return Number.isFinite(n) ? n : Infinity;
+function naturalSortBranches(list){
+  return [...list].sort((a,b)=>{
+    const an = Number(a.code); const bn = Number(b.code);
+    const aIsNum = Number.isFinite(an), bIsNum = Number.isFinite(bn);
+    if (aIsNum && bIsNum) return an - bn;
+    if (aIsNum) return -1;
+    if (bIsNum) return 1;
+    return (a.name || '').localeCompare(b.name || '', 'es', { numeric:true });
+  });
 }
 
 export default function VehiclesList() {
-  const [rows, setRows] = useState([]);
+  const navigate = useNavigate();
+
+  // Catálogos
+  const [statuses, setStatuses] = useState([]); // [{code,label}]
+  const statusMap = useMemo(() => {
+    const m = new Map();
+    (statuses || []).forEach(s => m.set(String(s.code).toUpperCase(), s.label || s.code));
+    return m;
+  }, [statuses]);
+
+  // Sucursales
+  const [branches, setBranches] = useState([]);
+
+  // Tabla
+  const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
+
+  // Filtros
   const [q, setQ] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [branch, setBranch] = useState('');
 
-  async function load() {
-    setLoading(true);
-    try {
-      const data = await listVehicles({ page: 1, limit: 100, q });
-      const items = data.items || data.data || [];
-      // sort: branch.name/code asc, luego internalCode asc (natural)
-      items.sort((A,B)=>{
-        const aB = (A.branch?.name || A.branch?.code || '').toString();
-        const bB = (B.branch?.name || B.branch?.code || '').toString();
-        const cmpB = aB.localeCompare(bB, 'es', { numeric: true });
-        if (cmpB !== 0) return cmpB;
-        // natural por internalCode numérico si aplica
-        const na = naturalCode(A.internalCode);
-        const nb = naturalCode(B.internalCode);
-        if (na !== nb) return na - nb;
-        return (A.internalCode || '').localeCompare(B.internalCode || '', 'es', { numeric: true });
-      });
-      setRows(items);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const pages = Math.max(Math.ceil(total / limit), 1);
 
-  useEffect(()=>{ load(); }, []); // carga inicial
+  // Catálogo de estados
+  useEffect(() => {
+    api.get('/api/v1/catalogs', { params: { key: 'VEHICLE_STATUSES', limit: 200 } })
+      .then(({ data }) => {
+        const items = data?.items || [];
+        setStatuses(items.map(it => ({ code: it.code, label: it.label })));
+      })
+      .catch(() => setStatuses([]));
+  }, []);
+
+  // Sucursales
+  useEffect(() => {
+    api.get('/api/v1/branches', { params: { page: 1, limit: 500 } })
+      .then(({ data }) => {
+        const payload = data?.items || data?.data?.items || data?.data || data?.list || [];
+        setBranches(naturalSortBranches(payload));
+      })
+      .catch(() => setBranches([]));
+  }, []);
+
+  // Cargar tabla
+  const load = async (_page = page, _limit = limit, _q = q, _branch = branch) => {
+    const { data } = await api.get('/api/v1/vehicles', {
+      params: { page: _page, limit: _limit, q: _q || undefined, branch: _branch || undefined }
+    });
+    const list = data?.items || data?.data?.items || data?.data || data?.list || [];
+    setItems(list);
+    setTotal(data?.total ?? list.length);
+    setPage(data?.page ?? _page);
+    setLimit(data?.limit ?? _limit);
+  };
+
+  useEffect(() => { load().catch(()=>{}); /* eslint-disable-next-line */ }, []);
+
+  const applyFilters = () => load(1, limit, q, branch);
+  const clearFilters = () => { setQ(''); setBranch(''); load(1, limit, '', ''); };
 
   return (
-    <div className="space-y-3">
-      <header className="flex items-center justify-between">
+    <div className="max-w-6xl mx-auto">
+      <header className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold">Vehículos</h2>
-        <div className="flex items-center gap-2">
-          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar…" className="border rounded p-2" />
-          <button onClick={load} className="px-3 py-2 border rounded">Buscar</button>
-          <Link to="/vehicles/new" className="px-3 py-2 bg-blue-600 text-white rounded">Nuevo</Link>
+        <div className="flex gap-2">
+          <button
+            onClick={() => navigate('/vehicles/new')}
+            className="px-3 py-2 bg-blue-600 text-white rounded"
+          >
+            Nuevo vehículo
+          </button>
         </div>
       </header>
 
-      <div className="bg-white border rounded-xl shadow overflow-hidden">
-        <div className="px-4 py-2 border-b bg-slate-50 rounded-t-xl font-medium">Listado</div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-100">
+      {/* Filtros */}
+      <div className="bg-white border rounded-xl shadow p-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-slate-600 mb-1">Buscar</label>
+            <input
+              value={q}
+              onChange={(e)=>setQ(e.target.value)}
+              placeholder="Placa, código, marca, modelo..."
+              className="w-full border p-2 rounded"
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal</label>
+            <select
+              value={branch}
+              onChange={(e)=>setBranch(e.target.value)}
+              className="w-full border p-2 rounded bg-white"
+            >
+              <option value="">Todas</option>
+              {branches.map(b => (
+                <option key={b._id} value={b._id}>
+                  {b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-3 flex gap-2">
+          <button onClick={applyFilters} className="px-3 py-2 bg-slate-800 text-white rounded">Aplicar</button>
+          <button onClick={clearFilters} className="px-3 py-2 border rounded">Limpiar</button>
+        </div>
+      </div>
+
+      {/* Tabla */}
+      <div className="bg-white border rounded-xl shadow overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead className="bg-slate-50 text-slate-600">
+            <tr>
+              <th className="text-left px-3 py-2">Código</th>
+              <th className="text-left px-3 py-2">Placa</th>
+              <th className="text-left px-3 py-2">Sucursal</th>
+              <th className="text-left px-3 py-2">Estado</th>
+              <th className="text-left px-3 py-2">Marca/Modelo</th>
+              <th className="text-left px-3 py-2 w-28">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 && (
               <tr>
-                <th className="text-left px-3 py-2">Placa</th>
-                <th className="text-left px-3 py-2">Código</th>
-                <th className="text-left px-3 py-2">Sucursal</th>
-                <th className="text-left px-3 py-2">Tipo</th>
-                <th className="text-left px-3 py-2">Marca/Modelo</th>
-                <th className="text-left px-3 py-2">Año</th>
-                <th className="text-left px-3 py-2">Estado</th>
-                <th className="text-left px-3 py-2">Acciones</th>
+                <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
+                  No hay vehículos para mostrar.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {rows.map(v=>(
+            )}
+            {items.map(v => {
+              const label = statusMap.get(String(v.status || '').toUpperCase()) || (v.status || '');
+              const isSupport = v.support?.active === true;
+              return (
                 <tr key={v._id} className="border-t">
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    <span className="font-medium">{v.internalCode}</span>{' '}
+                    {isSupport && (
+                      <span className="text-red-600 font-bold">(REEMPLAZO)</span>
+                    )}
+                  </td>
                   <td className="px-3 py-2">{v.plate}</td>
-                  <td className="px-3 py-2">{v.internalCode}</td>
                   <td className="px-3 py-2">
                     {v.branch?.code ? `${v.branch.code} — ${v.branch.name}` : (v.branch?.name || '—')}
                   </td>
-                  <td className="px-3 py-2">{v.type}</td>
-                  <td className="px-3 py-2">{v.brand} {v.model}</td>
-                  <td className="px-3 py-2">{v.year ?? '—'}</td>
-                  <td className="px-3 py-2">{v.status}</td>
                   <td className="px-3 py-2">
-                    <Link to={`/vehicles/${v._id}`} className="text-blue-600 hover:underline">Editar</Link>
+                    <span className="inline-block px-2 py-0.5 rounded bg-slate-100 border text-slate-700">
+                      {label}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="text-slate-700">{v.brand} {v.model}</div>
+                    <div className="text-slate-400">{v.year || '—'}</div>
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="flex gap-2">
+                      <Link to={`/vehicles/${v._id}`} className="text-blue-600 hover:underline">Ver</Link>
+                      <Link to={`/vehicles/${v._id}/edit`} className="text-slate-700 hover:underline">Editar</Link>
+                    </div>
                   </td>
                 </tr>
-              ))}
-              {!rows.length && (
-                <tr><td className="px-3 py-4 text-slate-500" colSpan={8}>{loading ? 'Cargando…' : 'Sin registros'}</td></tr>
-              )}
-            </tbody>
-          </table>
+              );
+            })}
+          </tbody>
+        </table>
+
+        {/* Paginación */}
+        <div className="px-3 py-2 border-t flex items-center justify-between">
+          <div className="text-sm text-slate-600">
+            Página {page} de {pages} — {total} registros
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              className="px-2 py-1 border rounded disabled:opacity-40"
+              onClick={() => { const np = Math.max(page-1, 1); setPage(np); load(np, limit, q, branch); }}
+              disabled={page <= 1}
+            >
+              ‹ Anterior
+            </button>
+            <select
+              value={limit}
+              onChange={(e)=>{ const nl = parseInt(e.target.value,10)||10; setLimit(nl); load(1, nl, q, branch); }}
+              className="border rounded px-2 py-1"
+            >
+              {[10,20,50,100].map(n => <option key={n} value={n}>{n}/pág</option>)}
+            </select>
+            <button
+              className="px-2 py-1 border rounded disabled:opacity-40"
+              onClick={() => { const np = Math.min(page+1, pages); setPage(np); load(np, limit, q, branch); }}
+              disabled={page >= pages}
+            >
+              Siguiente ›
+            </button>
+          </div>
         </div>
       </div>
     </div>

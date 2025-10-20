@@ -1,4 +1,4 @@
-
+// ///*************** vERSION ESTABLE 20/10/2025 */
 // // back/src/routes/vehicles.routes.js
 // // -----------------------------------------------------------------------------
 // // Rutas dedicadas a Vehículos
@@ -88,7 +88,13 @@
 
 // export default router;
 
-///***** penultima actualizacion */
+
+
+
+
+
+
+// /***** penultima actualizacion */
 
 // // back/src/routes/vehicles.routes.js
 // // -----------------------------------------------------------------------------
@@ -222,56 +228,104 @@
 // export default router
 
 
+
+
+
+// ///*************  */
+// // back/src/routes/vehicles.routes.js
+// // -----------------------------------------------------------------------------
+// // Rutas dedicadas a Vehículos
+// // - CRUD + Transferencia / Apoyo + Media (Cloudinary)
+// // - Protegidas por requireAuth + requirePermission (esquema con ':')
+// // -----------------------------------------------------------------------------
+
+// import express from 'express'
+// import { requireAuth } from '../middleware/requireAuth.js'
+// import { requirePermission } from '../middleware/requirePermission.js'
+// import { uploadSingle } from '../middleware/upload.middleware.js'
+// import * as ctrl from '../controllers/vehicles.controller.js'
+
+// const router = express.Router()
+
+// // ====================== CRUD ======================
+// router.get('/',    requireAuth, requirePermission('vehicles:read'),   ctrl.list)
+// router.get('/:id', requireAuth, requirePermission('vehicles:read'),   ctrl.getOne)
+// router.post('/',   requireAuth, requirePermission('vehicles:create'), ctrl.create)
+// router.patch('/:id', requireAuth, requirePermission('vehicles:update'), ctrl.update)
+// router.delete('/:id', requireAuth, requirePermission('vehicles:delete'), ctrl.remove)
+
+// // ====================== TRANSFERENCIA / APOYO ======================
+// // /transfer (modo legacy compatible): { reason:'TRASPASO'|'APOYO', toBranch, replaceVehicleId?, note }
+// router.post('/:id/transfer',
+//   requireAuth, requirePermission('vehicles:transfer'), ctrl.transfer)
+
+// // Flujo explícito Apoyo (UI nuevo)
+// router.post('/:id/support/start',
+//   requireAuth, requirePermission('vehicles:transfer'), ctrl.startSupport)
+
+// router.post('/:id/support/finish',
+//   requireAuth, requirePermission('vehicles:transfer'), ctrl.finishSupport)
+
+// // ====================== MEDIA ======================
+// // El campo del archivo en FormData debe llamarse 'file'
+// router.post('/:id/photos',
+//   requireAuth, requirePermission('vehicles:media'),
+//   uploadSingle, ctrl.addVehiclePhoto)
+
+// router.delete('/:id/photos/:photoId',
+//   requireAuth, requirePermission('vehicles:media'),
+//   ctrl.deleteVehiclePhoto)
+
+// router.post('/:id/documents',
+//   requireAuth, requirePermission('vehicles:media'),
+//   uploadSingle, ctrl.addVehicleDocument)
+
+// router.delete('/:id/documents/:documentId',
+//   requireAuth, requirePermission('vehicles:media'),
+//   ctrl.deleteVehicleDocument)
+
+// export default router
+
+
+
+
+//// ACTUALIZACION 20/10/2025 //////
+
 // back/src/routes/vehicles.routes.js
 // -----------------------------------------------------------------------------
-// Rutas dedicadas a Vehículos
-// - CRUD + Transferencia / Apoyo + Media (Cloudinary)
-// - Protegidas por requireAuth + requirePermission (esquema con ':')
+// Rutas de Vehículos (CRUD + transfer + media + support + auditoría)
 // -----------------------------------------------------------------------------
+import express from 'express';
+import { requireAuth } from '../middleware/requireAuth.js';
+import { requirePermission } from '../middleware/requirePermission.js';
+// ✅ Import nombrado que ya tienes estable
+import { uploadSingle } from '../middleware/upload.middleware.js';
+import * as ctrl from '../controllers/vehicles.controller.js';
 
-import express from 'express'
-import { requireAuth } from '../middleware/requireAuth.js'
-import { requirePermission } from '../middleware/requirePermission.js'
-import { uploadSingle } from '../middleware/upload.middleware.js'
-import * as ctrl from '../controllers/vehicles.controller.js'
-
-const router = express.Router()
+const router = express.Router();
 
 // ====================== CRUD ======================
-router.get('/',    requireAuth, requirePermission('vehicles:read'),   ctrl.list)
-router.get('/:id', requireAuth, requirePermission('vehicles:read'),   ctrl.getOne)
-router.post('/',   requireAuth, requirePermission('vehicles:create'), ctrl.create)
-router.patch('/:id', requireAuth, requirePermission('vehicles:update'), ctrl.update)
-router.delete('/:id', requireAuth, requirePermission('vehicles:delete'), ctrl.remove)
+router.get('/',       requireAuth, requirePermission('vehicles:read'),    ctrl.list);
+router.get('/:id',    requireAuth, requirePermission('vehicles:read'),    ctrl.getOne);
+router.post('/',      requireAuth, requirePermission('vehicles:create'),  ctrl.create);
+router.patch('/:id',  requireAuth, requirePermission('vehicles:update'),  ctrl.update);
+router.delete('/:id', requireAuth, requirePermission('vehicles:delete'),  ctrl.remove);
 
-// ====================== TRANSFERENCIA / APOYO ======================
-// /transfer (modo legacy compatible): { reason:'TRASPASO'|'APOYO', toBranch, replaceVehicleId?, note }
-router.post('/:id/transfer',
-  requireAuth, requirePermission('vehicles:transfer'), ctrl.transfer)
+// ====================== TRANSFER ======================
+router.post('/:id/transfer', requireAuth, requirePermission('vehicles:transfer'), ctrl.transfer);
 
-// Flujo explícito Apoyo (UI nuevo)
-router.post('/:id/support/start',
-  requireAuth, requirePermission('vehicles:transfer'), ctrl.startSupport)
-
-router.post('/:id/support/finish',
-  requireAuth, requirePermission('vehicles:transfer'), ctrl.finishSupport)
+// ====================== APOYO ======================
+router.post('/:id/support/start',  requireAuth, requirePermission('vehicles:transfer'), ctrl.startSupport);
+router.post('/:id/support/finish', requireAuth, requirePermission('vehicles:transfer'), ctrl.finishSupport);
 
 // ====================== MEDIA ======================
-// El campo del archivo en FormData debe llamarse 'file'
-router.post('/:id/photos',
-  requireAuth, requirePermission('vehicles:media'),
-  uploadSingle, ctrl.addVehiclePhoto)
+router.post('/:id/photos',            requireAuth, requirePermission('vehicles:media'), uploadSingle, ctrl.addVehiclePhoto);
+router.delete('/:id/photos/:photoId', requireAuth, requirePermission('vehicles:media'), ctrl.deleteVehiclePhoto);
 
-router.delete('/:id/photos/:photoId',
-  requireAuth, requirePermission('vehicles:media'),
-  ctrl.deleteVehiclePhoto)
+router.post('/:id/documents',               requireAuth, requirePermission('vehicles:media'), uploadSingle, ctrl.addVehicleDocument);
+router.delete('/:id/documents/:documentId', requireAuth, requirePermission('vehicles:media'), ctrl.deleteVehicleDocument);
 
-router.post('/:id/documents',
-  requireAuth, requirePermission('vehicles:media'),
-  uploadSingle, ctrl.addVehicleDocument)
+// ====================== AUDITORÍA ======================
+router.get('/:id/audit', requireAuth, requirePermission('vehicles:read'), ctrl.listAudit);
 
-router.delete('/:id/documents/:documentId',
-  requireAuth, requirePermission('vehicles:media'),
-  ctrl.deleteVehicleDocument)
-
-export default router
+export default router;
