@@ -3409,26 +3409,56 @@ export default function VehiclesForm() {
       })
   }, [supportBranch])
 
+  // reemplazar
+  // async function startSupport() {
+  //   if (!id || !supportBranch || !supportTarget) return alert('Selecciona sucursal y vehículo objetivo.')
+  //   setSupportBusy(true)
+  //   try {
+  //     await api.post(`/api/v1/vehicles/${id}/support/start`, {
+  //       targetBranchId: supportBranch,
+  //       targetVehicleId: supportTarget,
+  //     })
+  
+  //     const { data } = await api.get(`/api/v1/vehicles/${id}`)
+  //     setVehicle(data)
+  //     // marca UI
+  //     setSupportActiveInfo({ from: new Date().toISOString(), code: (data.internalCode || '') })
+  //     alert('Reemplazo iniciado')
+  //   } catch (e) {
+  //     alert(e?.response?.data?.message || 'No se pudo iniciar el reemplazo')
+  //   } finally {
+  //     setSupportBusy(false)
+  //   }
+  // }
+
   async function startSupport() {
-    if (!id || !supportBranch || !supportTarget) return alert('Selecciona sucursal y vehículo objetivo.')
-    setSupportBusy(true)
-    try {
-      await api.post(`/api/v1/vehicles/${id}/support/start`, {
-        targetBranchId: supportBranch,
-        targetVehicleId: supportTarget,
-      })
-      const { data } = await api.get(`/api/v1/vehicles/${id}`)
-      setVehicle(data)
-      // marca UI
-      setSupportActiveInfo({ from: new Date().toISOString(), code: (data.internalCode || '') })
-      alert('Reemplazo iniciado')
-    } catch (e) {
-      alert(e?.response?.data?.message || 'No se pudo iniciar el reemplazo')
-    } finally {
-      setSupportBusy(false)
-    }
+  if (!id || !supportBranch || !supportTarget) {
+    return alert('Selecciona sucursal y vehículo objetivo.');
+  }
+  // protección básica en UI (también validado en back)
+  if (supportTarget === id) {
+    return alert('Un vehículo no puede reemplazarse a sí mismo.');
   }
 
+  setSupportBusy(true);
+  try {
+    // ⚠️ NOMBRES ALINEADOS CON EL BACK: targetBranch / targetVehicle
+    await api.post(`/api/v1/vehicles/${id}/support/start`, {
+      targetBranch: supportBranch,
+      targetVehicle: supportTarget,
+    });
+    alert('Reemplazo iniciado');
+    // volver al listado como pediste
+    navigate('/vehicles');
+  } catch (e) {
+    alert(e?.response?.data?.message || 'No se pudo iniciar el reemplazo');
+  } finally {
+    setSupportBusy(false);
+  }
+}
+    
+  
+  // fin Reemplazo
   async function finishSupport() {
     if (!id) return
     setSupportBusy(true)

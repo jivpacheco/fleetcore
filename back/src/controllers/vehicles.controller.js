@@ -1668,21 +1668,36 @@ export async function transfer(req, res) {
 
 // ====================== APOYO (start/finish) ======================
 export async function startSupport(req, res) {
+  // Espera body: { targetBranch, targetVehicle }  (nombres exactos)
   const { id } = req.params;
   const { targetBranch, targetVehicle } = req.body || {};
 
   const v = await Vehicle.findById(id);
-  if (!v) return res.status(404).json({ message: 'No encontrado' });
+  if (!v) return res.status(404).json({ message: 'Vehículo origen no encontrado' });
+
+  if (!targetBranch || !targetVehicle) {
+    return res.status(400).json({ message: 'Sucursal y vehículo objetivo son requeridos' });
+  }
+  if (String(targetVehicle) === String(id)) {
+    return res.status(400).json({ message: 'Un vehículo no puede reemplazarse a sí mismo' });
+  }
+  if (v.support?.active) {
+    return res.status(400).json({ message: 'Este vehículo ya está en reemplazo activo' });
+  }
 
   const target = await Vehicle.findById(targetVehicle);
   if (!target) return res.status(404).json({ message: 'Vehículo a reemplazar no encontrado' });
+  if (target.support?.active) {
+    return res.status(400).json({ message: 'No se puede reemplazar un vehículo que ya está en reemplazo' });
+  }
 
-  // Estado del target → OUT_OF_SERVICE (si no lo está)
-  const targetPrevStatus = target.status;
-  if (U(target.status) !== 'OUT_OF_SERVICE') target.status = 'OUT_OF_SERVICE';
+  // Estado objetivo OUT_OF_SERVICE (si no lo está)
+  if ((target.status || '').toUpperCase() !== 'OUT_OF_SERVICE') {
+    target.status = 'OUT_OF_SERVICE';
+  }
 
-  // Siglas
-  const prevCode = v.internalCode;
+  // El actual toma sigla target + 'R'
+  const originalInternal = v.internalCode;
   const replacement = `${target.internalCode}R`;
 
   v.support = {
@@ -1690,29 +1705,18 @@ export async function startSupport(req, res) {
     targetBranch,
     targetVehicle,
     replacementCode: replacement,
-    originalInternalCode: prevCode,
+    originalInternalCode: originalInternal,
     startedAt: new Date(),
     endedAt: null,
   };
   v.internalCode = replacement;
-  const prevStatus = v.status;
   v.status = 'SUPPORT';
 
-  auditPush(
-    v,
-    'SUPPORT_START',
-    {
-      fromCode: prevCode,
-      toCode: replacement,
-      fromStatus: prevStatus,
-      toStatus: v.status,
-      targetVehicle: target._id,
-      targetInternalCode: target.internalCode,
-      targetPrevStatus,
-      targetNewStatus: target.status,
-    },
-    req.user?.email || req.user?.id
-  );
+  auditPush(v, 'SUPPORT_START', {
+    detail: `${originalInternal} → ${replacement}`,
+    targetVehicle,
+    targetBranch,
+  }, req.user?.email || req.user?.id);
 
   await target.save();
   await v.save();
@@ -1724,40 +1728,124 @@ export async function finishSupport(req, res) {
   const { id } = req.params;
 
   const v = await Vehicle.findById(id);
-  if (!v) return res.status(404).json({ message: 'No encontrado' });
-
+  if (!v) return res.status(404).json({ message: 'Vehículo no encontrado' });
   if (!v.support?.active) {
     return res.status(400).json({ message: 'Este vehículo no está en apoyo activo' });
   }
 
   const { targetVehicle, originalInternalCode, replacementCode } = v.support || {};
-  const prevCode = v.internalCode;
-  const prevStatus = v.status;
+  const fromCode = replacementCode || v.internalCode;
+  const toCode   = originalInternalCode || v.internalCode;
 
-  // Restaurar sigla original
+  // Restaurar sigla/status
   if (originalInternalCode) v.internalCode = originalInternalCode;
   v.status = 'ACTIVE';
   v.support.active = false;
   v.support.endedAt = new Date();
 
-  auditPush(
-    v,
-    'SUPPORT_FINISH',
-    {
-      fromCode: prevCode,
-      toCode: v.internalCode,
-      fromStatus: prevStatus,
-      toStatus: v.status,
-      targetVehicle,
-      replacementCode,
-      endedAt: v.support.endedAt,
-    },
-    req.user?.email || req.user?.id
-  );
+  auditPush(v, 'SUPPORT_FINISH', {
+    detail: `${fromCode} → ${toCode}`,
+    targetVehicle,
+    endedAt: v.support.endedAt,
+  }, req.user?.email || req.user?.id);
 
   await v.save();
   res.json(v.toObject());
 }
+
+// ====================== APOYO (start/finish) ======================
+
+// export async function startSupport(req, res) {
+//   const { id } = req.params;
+//   const { targetBranch, targetVehicle } = req.body || {};
+
+//   const v = await Vehicle.findById(id);
+//   if (!v) return res.status(404).json({ message: 'No encontrado' });
+
+//   const target = await Vehicle.findById(targetVehicle);
+//   if (!target) return res.status(404).json({ message: 'Vehículo a reemplazar no encontrado' });
+
+//   // Estado del target → OUT_OF_SERVICE (si no lo está)
+//   const targetPrevStatus = target.status;
+//   if (U(target.status) !== 'OUT_OF_SERVICE') target.status = 'OUT_OF_SERVICE';
+
+//   // Siglas
+//   const prevCode = v.internalCode;
+//   const replacement = `${target.internalCode}R`;
+
+//   v.support = {
+//     active: true,
+//     targetBranch,
+//     targetVehicle,
+//     replacementCode: replacement,
+//     originalInternalCode: prevCode,
+//     startedAt: new Date(),
+//     endedAt: null,
+//   };
+//   v.internalCode = replacement;
+//   const prevStatus = v.status;
+//   v.status = 'SUPPORT';
+
+//   auditPush(
+//     v,
+//     'SUPPORT_START',
+//     {
+//       fromCode: prevCode,
+//       toCode: replacement,
+//       fromStatus: prevStatus,
+//       toStatus: v.status,
+//       targetVehicle: target._id,
+//       targetInternalCode: target.internalCode,
+//       targetPrevStatus,
+//       targetNewStatus: target.status,
+//     },
+//     req.user?.email || req.user?.id
+//   );
+
+//   await target.save();
+//   await v.save();
+
+//   res.json(v.toObject());
+// }
+
+// export async function finishSupport(req, res) {
+//   const { id } = req.params;
+
+//   const v = await Vehicle.findById(id);
+//   if (!v) return res.status(404).json({ message: 'No encontrado' });
+
+//   if (!v.support?.active) {
+//     return res.status(400).json({ message: 'Este vehículo no está en apoyo activo' });
+//   }
+
+//   const { targetVehicle, originalInternalCode, replacementCode } = v.support || {};
+//   const prevCode = v.internalCode;
+//   const prevStatus = v.status;
+
+//   // Restaurar sigla original
+//   if (originalInternalCode) v.internalCode = originalInternalCode;
+//   v.status = 'ACTIVE';
+//   v.support.active = false;
+//   v.support.endedAt = new Date();
+
+//   auditPush(
+//     v,
+//     'SUPPORT_FINISH',
+//     {
+//       fromCode: prevCode,
+//       toCode: v.internalCode,
+//       fromStatus: prevStatus,
+//       toStatus: v.status,
+//       targetVehicle,
+//       replacementCode,
+//       endedAt: v.support.endedAt,
+//     },
+//     req.user?.email || req.user?.id
+//   );
+
+//   await v.save();
+//   res.json(v.toObject());
+// }
 
 // ====================== MEDIA: FOTOS ======================
 export async function addVehiclePhoto(req, res) {
