@@ -3118,6 +3118,7 @@ import {
   deleteVehiclePhoto,
   deleteVehicleDocument
 } from '../../api/vehicles.api'
+import UnsavedChangesGuard from '../../hooks/UnsavedChangesGuard';
 
 const U = (v) => (typeof v === 'string' ? v.toUpperCase() : v)
 function ymd(d) {
@@ -3198,6 +3199,13 @@ export default function VehiclesForm() {
     },
   })
 
+  // adicion para controlar la salida cuando se tienen cambios
+  // --- Control de auditoría de cambios ---
+  const [initialForm, setInitialForm] = useState(null);
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm || form);
+
+  // fin adicion
+
   // --------- Cargar catálogo de estados ----------
   useEffect(() => {
     setStatusLoading(true)
@@ -3261,7 +3269,7 @@ export default function VehiclesForm() {
         }
         setSupportActiveInfo(supportInfo)
 
-        setForm({
+        const loadedForm = ({
           ...form,
           plate: v.plate || '',
           internalCode: v.internalCode || '',
@@ -3302,6 +3310,10 @@ export default function VehiclesForm() {
             fuelCard:  { issuer: v.legal?.fuelCard?.issuer || '', number: v.legal?.fuelCard?.number || '', validTo: ymd(v.legal?.fuelCard?.validTo) },
           }
         })
+        
+        // --- Actualiza formulario visible y versión inicial para comparación ---
+      setForm(loadedForm);
+      setInitialForm(loadedForm); // ← esta es la clave para controlar cambios
       })
       .catch((err) => setError(err?.response?.data?.message || 'No se pudo cargar el vehículo'))
       .finally(() => setLoading(false))
