@@ -2219,6 +2219,7 @@ import {
   deleteVehiclePhoto,
   deleteVehicleDocument
 } from '../../api/vehicles.api'
+import UnsavedChangesGuard from '../../hooks/UnsavedChangesGuard';
 
 // ===================== Helpers generales =====================
 const U = (v) => (typeof v === 'string' ? v.toUpperCase() : v)
@@ -2445,6 +2446,13 @@ export default function VehiclesForm() {
     }
   })
 
+  // adicion para controlar la salida cuando se tienen cambios
+  // --- Control de auditoría de cambios ---
+  const [initialForm, setInitialForm] = useState(null);
+  const isDirty = JSON.stringify(form) !== JSON.stringify(initialForm || form);
+
+  // fin adicion
+
   // Para detectar cambios
   const [initialForm, setInitialForm] = useState(null)
   const isDirty = !readOnly && !deepEqual(form, initialForm || form)
@@ -2500,7 +2508,7 @@ export default function VehiclesForm() {
         }
         setSupportActiveInfo(supportInfo)
 
-        const newForm = {
+        setForm({
           ...form,
           plate: v.plate || '',
           internalCode: v.internalCode || '',
@@ -2534,47 +2542,13 @@ export default function VehiclesForm() {
             pumpHours: v.meters?.pumpHours ?? '',
           },
           legal: {
-            padron: {
-              number: v.legal?.padron?.number || '',
-              issuer: v.legal?.padron?.issuer || 'SERVICIO DE REGISTRO CIVIL E IDENTIFICACION',
-              acquisitionDate: ymd(v.legal?.padron?.acquisitionDate),
-              inscriptionDate: ymd(v.legal?.padron?.inscriptionDate),
-              issueDate: ymd(v.legal?.padron?.issueDate),
-              // Compat legacy si venían poblados:
-              validFrom: ymd(v.legal?.padron?.validFrom),
-              validTo: ymd(v.legal?.padron?.validTo)
-            },
-            soap: {
-              policy: v.legal?.soap?.policy || '',
-              issuer: v.legal?.soap?.issuer || '',
-              validFrom: ymd(v.legal?.soap?.validFrom),
-              validTo: ymd(v.legal?.soap?.validTo),
-            },
-            insurance: {
-              policy: v.legal?.insurance?.policy || '',
-              issuer: v.legal?.insurance?.issuer || '',
-              validFrom: ymd(v.legal?.insurance?.validFrom),
-              validTo: ymd(v.legal?.insurance?.validTo),
-            },
-            tag: { number: v.legal?.tag?.number || '', issuer: v.legal?.tag?.issuer || '' },
-            fuelCard: { issuer: v.legal?.fuelCard?.issuer || '', number: v.legal?.fuelCard?.number || '', validTo: ymd(v.legal?.fuelCard?.validTo) },
-            technicalReview: {
-              number: v.legal?.technicalReview?.number || '',
-              issuer: v.legal?.technicalReview?.issuer || '',
-              reviewedAt: ymd(v.legal?.technicalReview?.reviewedAt),
-              validTo: ymd(v.legal?.technicalReview?.validTo)
-            },
-            circulationPermit: {
-              number: v.legal?.circulationPermit?.number || '',
-              issuer: v.legal?.circulationPermit?.issuer || '',
-              reviewedAt: ymd(v.legal?.circulationPermit?.reviewedAt),
-              validTo: ymd(v.legal?.circulationPermit?.validTo)
-            }
+            padron:    { number: v.legal?.padron?.number || '', issuer: v.legal?.padron?.issuer || 'SERVICIO DE REGISTRO CIVIL E IDENTIFICACION', validFrom: ymd(v.legal?.padron?.validFrom), validTo: ymd(v.legal?.padron?.validTo) },
+            soap:      { policy: v.legal?.soap?.policy || '', issuer: v.legal?.soap?.issuer || '', validFrom: ymd(v.legal?.soap?.validFrom), validTo: ymd(v.legal?.soap?.validTo) },
+            insurance: { policy: v.legal?.insurance?.policy || '', issuer: v.legal?.insurance?.issuer || '', validFrom: ymd(v.legal?.insurance?.validFrom), validTo: ymd(v.legal?.insurance?.validTo) },
+            tag:       { number: v.legal?.tag?.number || '', issuer: v.legal?.tag?.issuer || '' },
+            fuelCard:  { issuer: v.legal?.fuelCard?.issuer || '', number: v.legal?.fuelCard?.number || '', validTo: ymd(v.legal?.fuelCard?.validTo) },
           }
-        }
-
-        setForm(newForm)
-        setInitialForm(newForm) // snapshot para isDirty
+        })
       })
       .catch((err) => setError(err?.response?.data?.message || 'No se pudo cargar el vehículo'))
       .finally(() => setLoading(false))
