@@ -6249,8 +6249,7 @@ useEffect(() => {
 
           
 
-              {/* Auditoría (mixta) */}
-              {id && <AuditBlock vehicleId={id} />}
+              
 
               {/* Botonera adaptativa Volver/Cancelar + Guardar */}
               <div className="flex justify-end gap-3 pb-4">
@@ -6267,6 +6266,10 @@ useEffect(() => {
                   </>
                 )}
               </div>
+
+              {/* Auditoría (mixta) */}
+              {id && <AuditBlock vehicleId={id} />}
+              
             </div>
           )}
 

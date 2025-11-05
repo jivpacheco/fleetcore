@@ -28,12 +28,12 @@ export default function VehiclesList() {
   const navigate = useNavigate();
 
   // Catálogo de estados (code → label)
-  const [statuses, setStatuses] = useState([]);
-  const statusMap = useMemo(() => {
-    const m = new Map();
-    (statuses || []).forEach(s => m.set(String(s.code).toUpperCase(), s.label || s.code));
-    return m;
-  }, [statuses]);
+  const [statuses, setStatuses] = useState({});
+  // const statusMap = useMemo(() => {
+  //   const m = new Map();
+  //   (statuses || []).forEach(s => m.set(String(s.code).toUpperCase(), s.label || s.code));
+  //   return m;
+  // }, [statuses]);
 
   // Sucursales
   const [branches, setBranches] = useState([]);
@@ -61,16 +61,37 @@ export default function VehiclesList() {
   //     .catch(() => setStatuses([]));
   // }, []);
 
+  // useEffect(() => {
+  //   api.get('/api/v1/catalogs', { params: { key: 'VEHICLE_STATUSES', limit: 200 } })
+  //     .then(({ data }) => {
+  //       const list = data?.items || data?.data || [];
+  //       const map = {};
+  //       for (const it of list) map[it.code || it.label] = it.label;
+  //       setStatuses(map);
+  //     });
+  // }, []);
+  // const stateLabel = (code) => statuses[code] || code;
+
   useEffect(() => {
-    api.get('/api/v1/catalogs', { params: { key: 'VEHICLE_STATUSES', limit: 200 } })
-      .then(({ data }) => {
-        const list = data?.items || data?.data || [];
-        const map = {};
-        for (const it of list) map[it.code || it.label] = it.label;
-        setStatusMap(map);
-      });
-  }, []);
-  const stateLabel = (code) => statusMap[code] || code;
+  api.get('/api/v1/catalogs', { params: { key: 'VEHICLE_STATUSES', limit: 200 } })
+    .then(({ data }) => {
+      const list = data?.items || data?.data || [];
+      const map = {};
+      for (const it of list) {
+        const code = String(it.code ?? it.value ?? it.label ?? '').toUpperCase();
+        const label = it.label ?? it.name ?? code;
+        map[code] = label;
+      }
+      setStatuses(map); // ✅ ahora se guarda como objeto consistente
+    })
+    .catch(err => console.error('Error VEHICLE_STATUSES:', err));
+}, []);
+
+// Helper para mostrar texto legible
+const stateLabel = (code) => {
+  if (!code) return '';
+  return statuses[String(code).toUpperCase()] || code;
+};
 
 
   // Sucursales
@@ -165,10 +186,10 @@ export default function VehiclesList() {
           <thead className="bg-slate-50 text-slate-600">
             <tr>
               <th className="text-left px-3 py-2">Código</th>
-              <th className="text-left px-3 py-2">Placa</th>
               <th className="text-left px-3 py-2">Sucursal</th>
+              <th className="text-left px-3 py-2">Placa</th>
+               <th className="text-left px-3 py-2">Marca/Modelo</th>
               <th className="text-left px-3 py-2">Estado</th>
-              <th className="text-left px-3 py-2">Marca/Modelo</th>
               <th className="text-left px-3 py-2 w-28">Acciones</th>
             </tr>
           </thead>
@@ -228,10 +249,10 @@ export default function VehiclesList() {
                       )}
                     </div>
                   </td>
+                  <td className="p-2">{v.branch?.code ? `${v.branch.code} — ${v.branch.name}` : (v.branch?.name || '—')}</td>
                   <td className="p-2">{v.plate || '—'}</td>
                   <td className="p-2">{v.brand} {v.model}</td>
-                  <td className="p-2">{v.branch?.code ? `${v.branch.code} — ${v.branch.name}` : (v.branch?.name || '—')}</td>
-                  <td className="p-2">{stateLabel(v.status)}</td>
+                  <td className="p-2">{stateLabel(items.status)}</td>
                   <td className="p-2 text-right">
                     <div className="inline-flex gap-2">
                       {/* Ver (solo lectura) */}

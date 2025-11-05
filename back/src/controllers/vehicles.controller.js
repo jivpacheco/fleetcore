@@ -1697,10 +1697,11 @@ export async function startSupport(req, res) {
     target.status = 'OUT_OF_SERVICE';
   }
 
-  // El actual toma sigla target + 'R'
+    // El actual toma sigla target + 'R'
   const originalInternal = v.internalCode;
   const replacement = `${target.internalCode}R`;
 
+  // Inicializa soporte en v
   v.support = {
     active: true,
     targetBranch,
@@ -1709,11 +1710,17 @@ export async function startSupport(req, res) {
     originalInternalCode: originalInternal,
     startedAt: new Date(),
     endedAt: null,
-    totalMsServed: vehicle.support?.totalMsServed || 0,
+    totalMsServed: v.support?.totalMsServed || 0,
   };
-  // v.internalCode = replacement;
+
+  // Marcar estados v.internalCode = replacement;
   v.internalCode = originalInternal;
   v.status = 'SUPPORT';
+
+  // Guarda quién lo dejó así (para restaurar solo si corresponde a este apoyo)
+  target.supportReplacedBy = v._id;
+  target.supportReplacedAt = v.support.startedAt;
+
 
   auditPush(v, 'SUPPORT_START', {
     detail: `${originalInternal} → ${replacement}`,
@@ -1742,39 +1749,57 @@ export async function finishSupport(req, res) {
 
   // ========= NUEVO: cálculo de tramo y acumulado =========
   const now = new Date();
-  const from = v.support?.from || v.support?.startedAt || v.support?.beganAt || v.support?.initAt || null;
+  // const from = v.support?.from || v.support?.startedAt || v.support?.beganAt || v.support?.initAt || null;
+  const from = v.support?.startedAt || v.support?.from || null;
 
   // ms del tramo actual (si no hay 'from', consideramos 0)
   const tramoMs = from ? Math.max(0, now - new Date(from)) : 0;
 
   // acumular total en support.totalMsServed (si el campo no existe, lo iniciamos)
+  // if (typeof v.support.totalMsServed !== 'number') v.support.totalMsServed = 0;
+  // v.support.totalMsServed += tramoMs;
+  if (!v.support) v.support = {};
   if (typeof v.support.totalMsServed !== 'number') v.support.totalMsServed = 0;
   v.support.totalMsServed += tramoMs;
+
 
   const tramoHuman = humanizeDuration(from || now, now);
   const totalHuman = humanizeMs(v.support.totalMsServed);
   // ========= FIN NUEVO =========
 
-  // Restaurar sigla/status
+  // Restaurar sigla/status del que apoya
   if (originalInternalCode) v.internalCode = originalInternalCode;
   v.status = 'ACTIVE';
   v.support.active = false;
   // v.support.endedAt = new Date();
   v.support.endedAt = now;
 
+  // 🔁 Restaurar el objetivo si este apoyo lo dejó OUT_OF_SERVICE
+  if (targetVehicle) {
+    const target = await Vehicle.findById(targetVehicle);
+    if (target && String(target.supportReplacedBy) === String(v._id)) {
+      target.status = 'ACTIVE';
+      target.supportReplacedBy = undefined;
+      target.supportReplacedAt = undefined;
+      await target.save();
+    }
+  }
+  
   auditPush(v, 'SUPPORT_FINISH', {
-    detail: `${fromCode} → ${toCode}`,
+    // detail: `${fromCode} → ${toCode}`,
+    // detail: `${fromCode} → ${toCode} — tramo=${tramoHuman}, total=${totalHuman}`,  
+    detail: `${fromCode} → ${toCode} — Tiempo Total: ${tramoHuman}`,
     targetVehicle,
     endedAt: v.support.endedAt,
   }, req.user?.email || req.user?.id);
 
   // ========= NUEVO: auditoría adicional con notas humanizadas =========
-  v.audit.push({
-    at: now,
-    action: 'support.finish',
-    notes: `Fin apoyo → tramo=${tramoHuman}, total_acumulado=${totalHuman}; ` +
-      `reemplazó a ${v.support.replacementCode}; original=${v.support.originalInternalCode}`,
-  });
+  // v.audit.push({
+  //   at: now,
+  //   action: 'support.finish',
+  //   notes: `Fin apoyo → tramo=${tramoHuman}, total_acumulado=${totalHuman}; ` +
+  //     `reemplazó a ${v.support.replacementCode}; original=${v.support.originalInternalCode}`,
+  // });
   // ========= FIN NUEVO =========
 
   await v.save();
