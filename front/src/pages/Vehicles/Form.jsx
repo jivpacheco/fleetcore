@@ -319,7 +319,7 @@
 //   //       targetBranchId: supportBranch,
 //   //       targetVehicleId: supportTarget,
 //   //     })
-  
+
 //   //     const { data } = await api.get(`/api/v1/vehicles/${id}`)
 //   //     setVehicle(data)
 //   //     // marca UI
@@ -357,8 +357,8 @@
 //     setSupportBusy(false);
 //   }
 // }
-    
-  
+
+
 //   // fin Reemplazo
 //   async function finishSupport() {
 //     if (!id) return
@@ -589,9 +589,9 @@
 //         </div>
 //       )}
 
-      
 
-      
+
+
 
 //       {/* ====================== TECNICO ====================== */}
 //       {tab==='TECNICO' && (
@@ -3789,7 +3789,7 @@
 //   const [supportTarget, setSupportTarget] = useState('')
 //   const [supportBusy, setSupportBusy] = useState(false)
 //   const [supportActiveInfo, setSupportActiveInfo] = useState(null) // {from: ISO, code:'XXR'}
-  
+
 
 //   // Carrusel de medios
 //   const [viewerOpen, setViewerOpen] = useState(false)
@@ -4255,7 +4255,7 @@
 //       setSupportBusy(false)
 //     }
 //   }
-  
+
 
 //   // ===================== Carrusel de imágenes/videos =====================
 //   function openViewer(idx) { setViewerIndex(idx); setViewerOpen(true) }
@@ -5060,7 +5060,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { api } from '../../services/http'
-import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom'
 import MediaUploader from '../../components/Vehicle/VehicleMediaUploader'
 import {
   uploadVehiclePhoto,
@@ -5412,7 +5412,10 @@ export default function VehiclesForm() {
   const readOnly = mode === 'view'
 
   // Tabs
-  const [tab, setTab] = useState('BASICO')
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Estado de pestaña inicial: si hay ?tab= úsalo; si no, BASICO
+  const [tab, setTab] = useState(searchParams.get('tab') || 'BASICO');
+  // const [tab, setTab] = useState('BASICO')
 
   // Catálogos y sucursales
   const [branches, setBranches] = useState([])
@@ -5433,7 +5436,7 @@ export default function VehiclesForm() {
   const [supportTarget, setSupportTarget] = useState('')
   const [supportBusy, setSupportBusy] = useState(false)
   const [supportActiveInfo, setSupportActiveInfo] = useState(null) // {from: ISO, code:'XXR'}
-  
+
 
   // Carrusel de medios
   const [viewerOpen, setViewerOpen] = useState(false)
@@ -5470,10 +5473,10 @@ export default function VehiclesForm() {
         validFrom: '',         // legacy (no se usa, mantenido por compat)
         validTo: ''            // legacy (no se usa, mantenido por compat)
       },
-      soap:      { policy: '', issuer: '', validFrom: '', validTo: '' },
+      soap: { policy: '', issuer: '', validFrom: '', validTo: '' },
       insurance: { policy: '', issuer: '', validFrom: '', validTo: '' },
-      tag:       { number: '', issuer: '' },
-      fuelCard:  { issuer: '', number: '', validTo: '' },
+      tag: { number: '', issuer: '' },
+      fuelCard: { issuer: '', number: '', validTo: '' },
       // NUEVOS BLOQUES
       technicalReview: { number: '', issuer: '', reviewedAt: '', validTo: '' }, // revisión técnica
       circulationPermit: { number: '', issuer: '', reviewedAt: '', validTo: '' } // permiso circulación
@@ -5488,6 +5491,26 @@ export default function VehiclesForm() {
   // Este contenedor hará que el contenido interno scrollee sin afectar el menú lateral
   const scrollContainerClass =
     'max-w-6xl mx-auto h-[calc(100vh-140px)] overflow-y-auto px-1 sm:px-0'
+  const contentWrap = 'max-w-6xl mx-auto'
+  const scrollBox = 'h-[calc(100vh-140px)] overflow-y-auto px-3'
+  
+
+  /// ============= Manejo de pestañas ==========================
+
+  // Cambiar pestaña + actualizar la URL
+function handleChangeTab(code) {
+  setTab(code);
+  setSearchParams({ tab: code }); // (si prefieres no apilar historial: setSearchParams({ tab: code }, { replace: true })
+}
+
+// Ref al contenedor con scroll (tu form con `${scrollBox}`)
+const scrollRef = useRef(null);
+
+// Al cambiar de pestaña, sube el scroll del contenedor
+useEffect(() => {
+  scrollRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' }); // 'smooth' si quieres animación
+}, [tab]);
+
 
   // ===================== Cargar catálogos =====================
   useEffect(() => {
@@ -5505,7 +5528,7 @@ export default function VehiclesForm() {
         for (const o of opts) map[o.value] = o.label
         setStatusMap(map)
       })
-      // .finally(() => setStatusLoading(false)) 
+    // .finally(() => setStatusLoading(false)) 
   }, [])
 
   // ===================== Cargar sucursales =====================
@@ -5545,7 +5568,7 @@ export default function VehiclesForm() {
           setSupportActiveInfo({
             from: v.support.startedAt,
             code: v.support.replacementCode,
-            targetCode: (v.support.replacementCode || '').replace(/R$/,'') // ej Q-12
+            targetCode: (v.support.replacementCode || '').replace(/R$/, '') // ej Q-12
           })
         } else {
           setSupportActiveInfo(null)
@@ -5576,8 +5599,8 @@ export default function VehiclesForm() {
             gears: v.transmission?.gears || '',
           },
           generator: { brand: v.generator?.brand || '', model: v.generator?.model || '', serial: v.generator?.serial || '' },
-          pump:      { brand: v.pump?.brand || '',      model: v.pump?.model || '',      serial: v.pump?.serial || '' },
-          body:      { brand: v.body?.brand || '',      model: v.body?.model || '',      serial: v.body?.serial || '' },
+          pump: { brand: v.pump?.brand || '', model: v.pump?.model || '', serial: v.pump?.serial || '' },
+          body: { brand: v.body?.brand || '', model: v.body?.model || '', serial: v.body?.serial || '' },
           meters: {
             odometerKm: v.meters?.odometerKm ?? '',
             engineHours: v.meters?.engineHours ?? '',
@@ -5684,18 +5707,18 @@ export default function VehiclesForm() {
       // Parseo de fechas (Documentos y Padrón extendido)
       payload.legal.padron.acquisitionDate = parseYMD(form.legal.padron.acquisitionDate)
       payload.legal.padron.inscriptionDate = parseYMD(form.legal.padron.inscriptionDate)
-      payload.legal.padron.issueDate       = parseYMD(form.legal.padron.issueDate)
+      payload.legal.padron.issueDate = parseYMD(form.legal.padron.issueDate)
 
-      payload.legal.soap.validFrom         = parseYMD(form.legal.soap.validFrom)
-      payload.legal.soap.validTo           = parseYMD(form.legal.soap.validTo)
-      payload.legal.insurance.validFrom    = parseYMD(form.legal.insurance.validFrom)
-      payload.legal.insurance.validTo      = parseYMD(form.legal.insurance.validTo)
-      payload.legal.fuelCard.validTo       = parseYMD(form.legal.fuelCard.validTo)
+      payload.legal.soap.validFrom = parseYMD(form.legal.soap.validFrom)
+      payload.legal.soap.validTo = parseYMD(form.legal.soap.validTo)
+      payload.legal.insurance.validFrom = parseYMD(form.legal.insurance.validFrom)
+      payload.legal.insurance.validTo = parseYMD(form.legal.insurance.validTo)
+      payload.legal.fuelCard.validTo = parseYMD(form.legal.fuelCard.validTo)
 
       payload.legal.technicalReview.reviewedAt = parseYMD(form.legal.technicalReview.reviewedAt)
-      payload.legal.technicalReview.validTo    = parseYMD(form.legal.technicalReview.validTo)
+      payload.legal.technicalReview.validTo = parseYMD(form.legal.technicalReview.validTo)
       payload.legal.circulationPermit.reviewedAt = parseYMD(form.legal.circulationPermit.reviewedAt)
-      payload.legal.circulationPermit.validTo    = parseYMD(form.legal.circulationPermit.validTo)
+      payload.legal.circulationPermit.validTo = parseYMD(form.legal.circulationPermit.validTo)
 
       // Uppercase inteligente (excepto branch y fechas)
       const up = (obj) => {
@@ -5763,7 +5786,7 @@ export default function VehiclesForm() {
   // }
 
 
-   const canUpload = useMemo(() => Boolean(id), [id])
+  const canUpload = useMemo(() => Boolean(id), [id])
   const refresh = async () => {
     if (!id) return
     const { data } = await api.get(`/api/v1/vehicles/${id}`)
@@ -5773,7 +5796,7 @@ export default function VehiclesForm() {
       setSupportActiveInfo({
         from: v.support.startedAt,
         code: v.support.replacementCode,
-        targetCode: (v.support.replacementCode || '').replace(/R$/,'')
+        targetCode: (v.support.replacementCode || '').replace(/R$/, '')
       })
     } else setSupportActiveInfo(null)
   }
@@ -5899,19 +5922,25 @@ export default function VehiclesForm() {
       setSupportBusy(false)
     }
   }
-  
 
-  // ===================== Carrusel de imágenes/videos =====================
-  function openViewer(idx) { setViewerIndex(idx); setViewerOpen(true) }
-  function closeViewer() { setViewerOpen(false) }
-  function prevViewer() {
-    if (!vehicle?.photos?.length) return
-    setViewerIndex((viewerIndex - 1 + vehicle.photos.length) % vehicle.photos.length)
-  }
-  function nextViewer() {
-    if (!vehicle?.photos?.length) return
-    setViewerIndex((viewerIndex + 1) % vehicle.photos.length)
-  }
+
+  // ===================== Carrusel de imágenes/videos ===================== okok
+  // function openViewer(idx) { setViewerIndex(idx); setViewerOpen(true) }
+  // function closeViewer() { setViewerOpen(false) }
+  // function prevViewer() {
+  //   if (!vehicle?.photos?.length) return
+  //   setViewerIndex((viewerIndex - 1 + vehicle.photos.length) % vehicle.photos.length)
+  // }
+  // function nextViewer() {
+  //   if (!vehicle?.photos?.length) return
+  //   setViewerIndex((viewerIndex + 1) % vehicle.photos.length)
+  // }
+
+  const openViewer = (i) => { setViewerIndex(i); setViewerOpen(true) }
+  const closeViewer = () => setViewerOpen(false)
+  const prevViewer = () => setViewerIndex(i => (i - 1 + (vehicle?.photos?.length || 1)) % (vehicle?.photos?.length || 1))
+  const nextViewer = () => setViewerIndex(i => ((i + 1) % (vehicle?.photos?.length || 1)))
+
 
   useEffect(() => {
     if (!viewerOpen) return
@@ -5932,12 +5961,27 @@ export default function VehiclesForm() {
   }
 
   // ===================== Render =====================
-  if (loading) return <div className="max-w-5xl mx-auto bg-white shadow rounded p-4">Cargando…</div>
+  // if (loading) return <div className="max-w-5xl mx-auto bg-white shadow rounded p-4">Cargando…</div>
+
+  // const TabButton = ({ code, label }) => (
+  //   <button
+  //     type="button"
+  //     onClick={() => setTab(code)}
+  //     className={`px-3 py-1.5 rounded ${tab === code
+  //       ? 'bg-blue-600 text-white shadow-[0_0_0_3px_rgba(37,99,235,0.25)]'
+  //       : 'bg-white border'}`}
+  //   >
+  //     {label}
+  //   </button>
+  // )
+
+  if (loading) return <div className={`${contentWrap} bg-white shadow rounded p-4 mt-3`}>Cargando…</div>
 
   const TabButton = ({ code, label }) => (
     <button
       type="button"
-      onClick={() => setTab(code)}
+      // onClick={() => setTab(code)}
+      onClick={() => handleChangeTab(code)}   // ← antes hacía setTab(code)
       className={`px-3 py-1.5 rounded ${tab === code
         ? 'bg-blue-600 text-white shadow-[0_0_0_3px_rgba(37,99,235,0.25)]'
         : 'bg-white border'}`}
@@ -5959,12 +6003,14 @@ export default function VehiclesForm() {
     ['Partes', 'PARTS'],
   ]
 
+
+  
   return (
     <div className="flex flex-col h-full">
       {/* Guard global de cambios sin guardar */}
       <UnsavedChangesGuard isDirty={isDirty} />
 
-      <header className="px-2 sm:px-0 max-w-6xl mx-auto w-full mt-2">
+      {/* <header className="px-2 sm:px-0 max-w-6xl mx-auto w-full mt-2">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold">
@@ -5984,18 +6030,47 @@ export default function VehiclesForm() {
             <TabButton code="INVENTARIO" label="Inventario" />
             <TabButton code="ACCIDENTES" label="Accidentes" />
             <TabButton code="COMBUSTIBLE" label="Combustible" />
-            {/* NUEVA pestaña solicitada */}
+            NUEVA pestaña solicitada
             <TabButton code="TICKETS" label="Tickets" />
           </nav>
         </div>
+      </header> */}
+
+      <header className={`${contentWrap} mt-2 `}>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold">
+              {readOnly ? 'Consulta de vehículo' : id ? 'Editar Vehículo' : 'Registrar Vehículo'}
+            </h2>
+            {!readOnly && (
+              <p className="text-xs text-slate-500">Los textos se guardan en MAYÚSCULAS.</p>
+            )}
+          </div>
+        </div>
+        {/* Tabs centradas */}
+        <nav className="mt-2 flex justify-center gap-2">
+          <TabButton code="BASICO" label="Básico" />
+          <TabButton code="TECNICO" label="Técnico" />
+          <TabButton code="DOCUMENTOS" label="Documentos" />
+          <TabButton code="MEDIOS" label="Medios" />
+          <TabButton code="INVENTARIO" label="Inventario" />
+          <TabButton code="ACCIDENTES" label="Accidentes" />
+          <TabButton code="COMBUSTIBLE" label="Combustible" />
+          <TabButton code="TICKETS" label="Tickets" />
+        </nav>
       </header>
 
-      {error && <div className="max-w-6xl mx-auto px-3 py-2 bg-red-50 text-red-700 rounded text-sm mt-2">{error}</div>}
-      {notice && <div className="max-w-6xl mx-auto px-3 py-2 bg-amber-50 text-amber-800 rounded text-sm mt-2">{notice}</div>}
+
+      {error && <div className={`${contentWrap} px-3 py-2 bg-red-50 text-red-700 rounded text-sm mt-2`}>{error}</div>}
+      {notice && <div className={`${contentWrap} px-3 py-2 bg-amber-50 text-amber-800 rounded text-sm mt-2`}>{notice}</div>}
+
+      {/* {error && <div className="max-w-6xl mx-auto px-3 py-2 bg-red-50 text-red-700 rounded text-sm mt-2">{error}</div>}
+      {notice && <div className="max-w-6xl mx-auto px-3 py-2 bg-amber-50 text-amber-800 rounded text-sm mt-2">{notice}</div>} */}
 
       {/* Contenedor con scroll propio, independiente del menú */}
-      <form onSubmit={handleSubmit} className={`${scrollContainerClass} my-3`}>
-        <fieldset disabled={readOnly} className="space-y-4">
+      {/* <form onSubmit={handleSubmit} className={`${scrollContainerClass} my-3`}> */}
+      <form ref={scrollRef}  onSubmit={handleSubmit} className={`${contentWrap} ${scrollBox} my-3`}>
+        {/* <fieldset disabled={readOnly} className="space-y-4"> */}
 
           {/* ====================== BASICO ====================== */}
           {tab === 'BASICO' && (
@@ -6021,6 +6096,10 @@ export default function VehiclesForm() {
                         className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
                         placeholder={ph}
                         required
+                        disabled={readOnly || Boolean(supportActiveInfo)}  // ← bloquea si está en apoyo
+                        readOnly={readOnly || Boolean(supportActiveInfo)} 
+                        // disabled={readOnly}
+                        // readOnly={readOnly}
                       />
                     </div>
                   ))}
@@ -6037,6 +6116,8 @@ export default function VehiclesForm() {
                       className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
                       placeholder={String(currentYear)}
                       required
+                      disabled={readOnly}
+                      readOnly={readOnly}
                     />
                     <p className="text-xs text-slate-500 mt-1">Permitido: {YEAR_MIN}–{YEAR_MAX}</p>
                   </div>
@@ -6051,6 +6132,8 @@ export default function VehiclesForm() {
                       className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
                       placeholder="ROJO"
                       required
+                      disabled={readOnly}
+                      readOnly={readOnly}
                     />
                   </div>
 
@@ -6077,8 +6160,8 @@ export default function VehiclesForm() {
                     <label className="block text-sm font-medium text-slate-600 mb-1">Estado</label>
                     <select
                       required
-                      disabled={statusLoading}
                       value={form.status}
+                      // disabled={readOnly || statusLoading}
                       onChange={(e) => update('status', e.target.value)}
                       className="w-full border p-2 rounded bg-white"
                     >
@@ -6091,81 +6174,80 @@ export default function VehiclesForm() {
                 </div>
               </div>
 
-              {/* ====================== APOYO A OTRAS SUCURSALES ====================== */}
-              <div className="bg-white shadow rounded-xl border">
-                <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-                  <h3 className="font-medium text-slate-700">Servicios de Apoyo a otras Sucursales</h3>
-                </div>
-                <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                  {/* Sucursal destino */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal objetivo</label>
-                    <select
-                      value={supportBranch}
-                      onChange={(e) => setSupportBranch(e.target.value)}
-                      className="w-full border p-2 rounded bg-white"
-                    >
-                      <option value="">— Selecciona sucursal —</option>
-                      {branches.map(b => (
-                        <option key={b._id} value={b._id}>
-                          {b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Vehículo de esa sucursal */}
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Vehículo a reemplazar</label>
-                    <select
-                      value={supportTarget}
-                      onChange={(e) => setSupportTarget(e.target.value)}
-                      className="w-full border p-2 rounded bg-white"
-                      disabled={!supportBranch}
-                    >
-                      <option value="">— Selecciona vehículo —</option>
-                      {supportVehicles.map(v => (
-                        <option key={v._id} value={v._id}>
-                          {(v.internalCode || v.plate || v._id)} — {v.brand} {v.model}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Botón acción */}
-                  <div className="flex gap-2">
-                    {supportActiveInfo ? (
-                      <button
-                        type="button"
-                        onClick={finishSupport}
-                        disabled={supportBusy}
-                        className="px-3 py-2 bg-emerald-600 text-white rounded disabled:opacity-50"
-                      >
-                        {supportBusy ? 'Finalizando…' : 'Finalizar reemplazo'}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={startSupport}
-                        disabled={supportBusy || !supportBranch || !supportTarget}
-                        className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-                      >
-                        {supportBusy ? 'Iniciando…' : 'Iniciar reemplazo'}
-                      </button>
-                    )}
-                  </div>
-                </div>
+               {/* ====================== APOYO A OTRAS SUCURSALES ====================== */}
 
-                {/* Etiquetas de estado de reemplazo */}
-                {supportActiveInfo && (
-                  <div className="px-4 pb-4">
-                    <div className="text-sm text-slate-600">
-                      En reemplazo desde: {new Date(supportActiveInfo.from).toLocaleString()}
-                    </div>
-                    <div className="text-red-700 font-extrabold text-lg">
-                      {supportActiveInfo.code}
-                    </div>
-                  </div>
-                )}
+              <div className="bg-white shadow rounded-xl border">
+              <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+                <h3 className="font-medium text-slate-700">Servicios de Apoyo a otras Sucursales</h3>
               </div>
+              <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal objetivo</label>
+                  <select
+                    value={supportBranch}
+                    onChange={(e) => {setSupportBranch(e.target.value); setSupportTarget(''); }}
+                    className="w-full border p-2 rounded bg-white"
+                    disabled={readOnly}
+                  >
+                    <option value="">— Selecciona sucursal —</option>
+                    {branches.map(b => (
+                      <option key={b._id} value={b._id}>
+                        {b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Vehículo a reemplazar</label>
+                  <select
+                    value={supportTarget}
+                    onChange={(e) => setSupportTarget(e.target.value)}
+                    className="w-full border p-2 rounded bg-white"
+                    disabled={readOnly || !supportBranch}
+                  >
+                    <option value="">— Selecciona vehículo —</option>
+                    {supportVehicles.map(v => (
+                      <option key={v._id} value={v._id}>
+                        {(v.internalCode || v.plate || v._id)} — {v.brand} {v.model}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  {supportActiveInfo ? (
+                    <button
+                      type="button"
+                      onClick={finishSupport}
+                      disabled={readOnly || supportBusy}
+                      className="px-3 py-2 bg-emerald-600 text-white rounded disabled:opacity-50"
+                    >
+                      {supportBusy ? 'Finalizando…' : 'Finalizar reemplazo'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={startSupport}
+                      disabled={readOnly || supportBusy || !supportBranch || !supportTarget}
+                      className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+                    >
+                      {supportBusy ? 'Iniciando…' : 'Iniciar reemplazo'}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Leyenda de reemplazo requerida */}
+              {supportActiveInfo && (
+                <div className="px-4 pb-4 text-sm">
+                  <span className="font-medium">EN Reemplazo del vehículo:</span>{' '}
+                  <span className="font-semibold">{supportActiveInfo.targetCode}</span>{' '}
+                  desde {fmtDateTimeCL(supportActiveInfo.from)}
+                </div>
+              )}
+            </div>
+
+
+          
 
               {/* Auditoría (mixta) */}
               {id && <AuditBlock vehicleId={id} />}
@@ -6681,7 +6763,7 @@ export default function VehiclesForm() {
               </div>
             </div>
           )}
-        </fieldset>
+        {/* </fieldset> */}
       </form>
     </div>
   )

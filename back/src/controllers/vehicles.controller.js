@@ -1494,6 +1494,7 @@
 
 import Vehicle from '../models/Vehicle.js';
 import cloud from '../utils/cloudinary.js';
+import { humanizeDuration, humanizeMs } from '../utils/time.js';
 
 // ----------------------------- Helpers ---------------------------------------
 const U = (v) => (typeof v === 'string' ? v.toUpperCase() : v);
@@ -1708,8 +1709,10 @@ export async function startSupport(req, res) {
     originalInternalCode: originalInternal,
     startedAt: new Date(),
     endedAt: null,
+    totalMsServed: vehicle.support?.totalMsServed || 0,
   };
-  v.internalCode = replacement;
+  // v.internalCode = replacement;
+  v.internalCode = originalInternal;
   v.status = 'SUPPORT';
 
   auditPush(v, 'SUPPORT_START', {
@@ -1735,19 +1738,44 @@ export async function finishSupport(req, res) {
 
   const { targetVehicle, originalInternalCode, replacementCode } = v.support || {};
   const fromCode = replacementCode || v.internalCode;
-  const toCode   = originalInternalCode || v.internalCode;
+  const toCode = originalInternalCode || v.internalCode;
+
+  // ========= NUEVO: cálculo de tramo y acumulado =========
+  const now = new Date();
+  const from = v.support?.from || v.support?.startedAt || v.support?.beganAt || v.support?.initAt || null;
+
+  // ms del tramo actual (si no hay 'from', consideramos 0)
+  const tramoMs = from ? Math.max(0, now - new Date(from)) : 0;
+
+  // acumular total en support.totalMsServed (si el campo no existe, lo iniciamos)
+  if (typeof v.support.totalMsServed !== 'number') v.support.totalMsServed = 0;
+  v.support.totalMsServed += tramoMs;
+
+  const tramoHuman = humanizeDuration(from || now, now);
+  const totalHuman = humanizeMs(v.support.totalMsServed);
+  // ========= FIN NUEVO =========
 
   // Restaurar sigla/status
   if (originalInternalCode) v.internalCode = originalInternalCode;
   v.status = 'ACTIVE';
   v.support.active = false;
-  v.support.endedAt = new Date();
+  // v.support.endedAt = new Date();
+  v.support.endedAt = now;
 
   auditPush(v, 'SUPPORT_FINISH', {
     detail: `${fromCode} → ${toCode}`,
     targetVehicle,
     endedAt: v.support.endedAt,
   }, req.user?.email || req.user?.id);
+
+  // ========= NUEVO: auditoría adicional con notas humanizadas =========
+  v.audit.push({
+    at: now,
+    action: 'support.finish',
+    notes: `Fin apoyo → tramo=${tramoHuman}, total_acumulado=${totalHuman}; ` +
+      `reemplazó a ${v.support.replacementCode}; original=${v.support.originalInternalCode}`,
+  });
+  // ========= FIN NUEVO =========
 
   await v.save();
   res.json(v.toObject());
@@ -1967,7 +1995,7 @@ export async function deleteVehiclePhoto(req, res) {
     if (ph.publicId) {
       try {
         await cloud.uploader.destroy(ph.publicId, { resource_type: 'auto' });
-      } catch (_) {}
+      } catch (_) { }
     }
     v.photos.splice(idx, 1);
 
@@ -2094,7 +2122,7 @@ export async function deleteVehicleDocument(req, res) {
     if (d.publicId) {
       try {
         await cloud.uploader.destroy(d.publicId, { resource_type: 'auto' });
-      } catch (_) {}
+      } catch (_) { }
     }
     v.documents.splice(idx, 1);
 

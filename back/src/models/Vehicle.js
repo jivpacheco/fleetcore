@@ -457,6 +457,7 @@ const VehicleSchema = new Schema({
     originalInternalCode: { type: String, uppercase: true },  // para volver al finalizar
     startedAt: Date,
     endedAt: Date,
+    totalMsServed: { type: Number, default: 0 }, // acumulado en milisegundos
   },
 
   // Auditoría
