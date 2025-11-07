@@ -11,6 +11,7 @@
 // -----------------------------------------------------------------------------
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import React from 'react';
 import { api } from '../../services/http'
 import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom'
 import MediaUploader from '../../components/Vehicle/VehicleMediaUploader'
@@ -20,43 +21,6 @@ import {
   deleteVehiclePhoto,
   deleteVehicleDocument
 } from '../../api/vehicles.api'
-
-// ===================== Helpers generales =====================
-// const U = (v) => (typeof v === 'string' ? v.toUpperCase() : v)
-
-// //adicion
-// const fmtDateTimeCL = (d) => {
-//   if (!d) return ''
-//   const dt = new Date(d)
-//   if (Number.isNaN(dt.getTime())) return ''
-//   return dt.toLocaleString('es-CL', { hour12: false })
-// }
-// // fin adicion
-
-
-// function ymd(d) {
-//   if (!d) return ''
-//   const dt = new Date(d)
-//   if (Number.isNaN(dt.getTime())) return ''
-//   const mm = String(dt.getUTCMonth() + 1).padStart(2, '0')
-//   const dd = String(dt.getUTCDate()).padStart(2, '0')
-//   return `${dt.getUTCFullYear()}-${mm}-${dd}`
-// }
-
-// // importante: devolver null (no undefined) cuando esté vacío → mongoose acepta null
-// function parseYMD(str) {
-//   if (!str) return null
-//   const [Y, M, D] = str.split('-').map(n => parseInt(n, 10))
-//   if (!Y || !M || !D) return null
-//   return new Date(Date.UTC(Y, M - 1, D))
-// }
-
-// function parseYMD(str) {
-//   if (!str) return undefined
-//   const [Y, M, D] = str.split('-').map(n => parseInt(n, 10))
-//   if (!Y || !M || !D) return undefined
-//   return new Date(Date.UTC(Y, M - 1, D))
-// }
 
 const U = (v) => (typeof v === 'string' ? v.toUpperCase() : v);
 
@@ -98,49 +62,6 @@ function naturalSortBranches(list) {
     return (a.name || '').localeCompare(b.name || '', 'es', { numeric: true })
   })
 }
-// function deepEqual(a, b) {
-//   try { return JSON.stringify(a) === JSON.stringify(b) } catch { return false }
-// }
-
-
-// ===================== Guard de cambios no guardados =====================
-// - beforeunload (recarga/cerrar)
-// - Intercepta clics en <a> internos para confirmar si isDirty
-
-
-// function UnsavedChangesGuard({ isDirty }) {
-//   useEffect(() => {
-//     const onBeforeUnload = (e) => {
-//       if (!isDirty) return
-//       e.preventDefault()
-//       e.returnValue = ''
-//     }
-//     window.addEventListener('beforeunload', onBeforeUnload)
-//     return () => window.removeEventListener('beforeunload', onBeforeUnload)
-//   }, [isDirty])
-
-//   useEffect(() => {
-//     const onDocClick = (e) => {
-//       if (!isDirty) return
-//       // Sólo anchors con navegación interna
-//       const a = e.target.closest?.('a')
-//       if (!a) return
-//       const href = a.getAttribute('href') || ''
-//       if (!href || href.startsWith('#') || href.startsWith('javascript:')) return
-//       const isSameOrigin = a.origin === window.location.origin
-//       if (!isSameOrigin) return // enlaces externos no los bloqueamos
-//       const confirmLeave = window.confirm('Tienes cambios sin guardar. ¿Salir sin guardar?')
-//       if (!confirmLeave) {
-//         e.preventDefault()
-//         e.stopPropagation()
-//       }
-//     }
-//     document.addEventListener('click', onDocClick, true)
-//     return () => document.removeEventListener('click', onDocClick, true)
-//   }, [isDirty])
-
-//   return null
-// }
 
 function UnsavedChangesGuard({ isDirty }) {
   useEffect(() => {
@@ -171,127 +92,6 @@ function UnsavedChangesGuard({ isDirty }) {
 
   return null;
 }
-
-// ===================== Auditoría (mixta 5 + ver más) =====================
-// Auditoría (una sola línea + truncado)
-
-
-// function AuditBlock({ vehicleId }) {
-//   const [items, setItems] = useState([])
-//   const [total, setTotal] = useState(0)
-//   const [limit, setLimit] = useState(5) // mixto: 5 iniciales
-//   const [loading, setLoading] = useState(false)
-
-//   const load = useCallback(async (lim = limit) => {
-//     if (!vehicleId) return
-//     setLoading(true)
-//     try {
-//       const { data } = await api.get(`/api/v1/vehicles/${vehicleId}/audit`, {
-//         params: { page: 1, limit: lim }
-//       })
-//       setItems(data?.items || [])
-//       setTotal(data?.total || 0)
-//     // } catch (_) { /* noop */ } finally { setLoading(false) }
-//     } catch (_) {} finally { setLoading(false) }
-//   }, [vehicleId, limit])
-
-//   useEffect(() => { load(limit) }, [load, limit])
-
-//   const showMore = () => {
-//     const next = Math.min(limit + 10, total || limit + 10)
-//     setLimit(next)
-//   }
-
-//   // return (
-//   //   <div className="mt-6">
-//   //     <div className="text-sm text-slate-500 mb-2 font-medium">Auditoría</div>
-//   //     <div className="rounded border bg-white">
-//   //       {loading && <div className="p-3 text-sm text-slate-500">Cargando auditoría…</div>}
-//   //       {!loading && items.length === 0 && (
-//   //         <div className="p-3 text-sm text-slate-500">Sin movimientos registrados.</div>
-//   //       )}
-//   //       {!loading && items.length > 0 && (
-//   //         <ul className="divide-y">
-//   //           {items.map((it, idx) => (
-//   //             <li key={idx} className="p-3 text-sm">
-//   //               <div className="flex items-center justify-between">
-//   //                 <div className="font-mono text-xs text-slate-500">
-//   //                   {new Date(it.at).toLocaleString()}
-//   //                 </div>
-//   //                 <div className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-//   //                   {it.action}
-//   //                 </div>
-//   //               </div>
-//   //               {/* Muestra un resumen: intenta detalle from → to si existe */}
-//   //               <div className="mt-1">
-//   //                 {it?.data?.detail ? (
-//   //                   <span className="text-slate-700">{it.data.detail}</span>
-//   //                 ) : (
-//   //                   <span className="text-slate-500">—</span>
-//   //                 )}
-//   //               </div>
-//   //               {it.by && (
-//   //                 <div className="mt-1 text-xs text-slate-400">
-//   //                   por: {it.by}
-//   //                 </div>
-//   //               )}
-//   //             </li>
-//   //           ))}
-//   //         </ul>
-//   //       )}
-//   //       {total > limit && (
-//   //         <div className="p-2 border-t flex justify-center">
-//   //           <button
-//   //             type="button"
-//   //             onClick={showMore}
-//   //             className="text-xs text-blue-600 hover:underline"
-//   //           >
-//   //             Ver más
-//   //           </button>
-//   //         </div>
-//   //       )}
-//   //     </div>
-//   //   </div>
-//   // )
-
-//   return (
-//     <div className="mt-6">
-//       <div className="text-sm text-slate-500 mb-2 font-medium">Auditoría</div>
-//       <div className="rounded border bg-white">
-//         {loading && <div className="p-3 text-sm text-slate-500">Cargando auditoría…</div>}
-//         {!loading && items.length === 0 && (
-//           <div className="p-3 text-sm text-slate-500">Sin movimientos registrados.</div>
-//         )}
-//         {!loading && items.length > 0 && (
-//           <ul className="divide-y">
-//             {items.map((it, idx) => (
-//               <li key={idx} className="p-3 text-sm flex items-center gap-3">
-//                 <span className="shrink-0 font-mono text-xs text-slate-500">{fmtDateTimeCL(it.at)}</span>
-//                 <span className="shrink-0 text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700">{it.action}</span>
-//                 <span className="min-w-0 grow truncate text-slate-700">
-//                   {it?.data?.detail || '—'}
-//                 </span>
-//                 {it.by && <span className="shrink-0 text-xs text-slate-400">por: {it.by}</span>}
-//               </li>
-//             ))}
-//           </ul>
-//         )}
-//         {total > limit && (
-//           <div className="p-2 border-t flex justify-center">
-//             <button
-//               type="button"
-//               onClick={() => setLimit(Math.min(limit + 10, total))}
-//               className="text-xs text-blue-600 hover:underline"
-//             >
-//               Ver más
-//             </button>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   )
-// }
-
 
 function AuditBlock({ vehicleId }) {
   const [items, setItems] = useState([]);
@@ -435,6 +235,191 @@ export default function VehiclesForm() {
     }
   })
 
+
+  // =============== Cargador Universal =================
+
+  function UnifiedMediaUploader({ canUpload, mediaCats, onUploadPhoto, onUploadDoc }) {
+  const [category, setCategory] = useState(mediaCats?.[0]?.[1] || '');
+  const [title, setTitle] = useState('');
+  const [files, setFiles] = useState([]);
+  const dropRef = useRef(null);
+  // const [category, setCategory] = React.useState(mediaCats?.[0]?.[1] || '');
+  // const [title, setTitle] = React.useState('');
+  // const [files, setFiles] = React.useState([]);
+  // const dropRef = React.useRef(null);
+
+  // Arrastrar/soltar
+  const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+  const onDrop = (e) => {
+    prevent(e);
+    if (!canUpload) return;
+    const list = Array.from(e.dataTransfer?.files || []);
+    if (list.length) setFiles(prev => [...prev, ...list]);
+  };
+
+  // Pegar (Ctrl+V imágenes desde clipboard)
+  React.useEffect(() => {
+    const onPaste = (e) => {
+      if (!canUpload) return;
+      const items = e.clipboardData?.items || [];
+      const pasted = [];
+      for (const it of items) {
+        if (it.kind === 'file') {
+          const f = it.getAsFile();
+          if (f) pasted.push(f);
+        }
+      }
+      if (pasted.length) setFiles(prev => [...prev, ...pasted]);
+    };
+    const el = dropRef.current || window;
+    el.addEventListener('paste', onPaste);
+    return () => el.removeEventListener('paste', onPaste);
+  }, [canUpload]);
+
+  const onInputFiles = (e) => {
+    const list = Array.from(e.target.files || []);
+    if (list.length) setFiles(prev => [...prev, ...list]);
+    e.target.value = ''; // reset input
+  };
+
+  const removeAt = (idx) => setFiles(prev => prev.filter((_, i) => i !== idx));
+
+  const doUpload = async () => {
+    if (!canUpload) return alert('Guarda el vehículo antes de subir.');
+    if (!category) return alert('Selecciona una categoría.');
+    if (!files.length) return alert('Selecciona al menos un archivo.');
+
+    //adicion
+
+    const pair = (mediaCats || []).find(([label, cat]) => cat === category);
+    const displayCategory = (pair?.[0] || category).toUpperCase(); // ← NOMBRE VISIBLE EN MAYÚSCULAS
+
+
+    for (const file of files) {
+      const isPdf = (file.type?.toLowerCase?.()?.includes('pdf') || file.name?.toLowerCase?.()?.endsWith('.pdf'));
+      // const payload = { file, category, title: title?.trim() || file.name };
+
+      //adicion//
+      const payload = { 
+      file, 
+      category,               // code (p.ej. 'MOTOR')
+      categoryLabel: displayCategory,  // 'MOTOR' pero desde el label visible en mayúsculas
+      title: title?.trim() || file.name 
+      };
+
+      try {
+        if (isPdf) {
+          await onUploadDoc({ ...payload, label: payload.title }); // mantiene tu API actual
+        } else {
+          await onUploadPhoto(payload);
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        alert('No se pudo subir uno de los archivos.');
+      }
+    }
+
+    // Limpieza tras subir
+    setFiles([]);
+    // conservamos la categoría elegida; limpiamos título
+    setTitle('');
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      {/* 1) Categorías (radio) */}
+      <div>
+        <div className="text-sm font-medium text-slate-700 mb-2">Categoría</div>
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-y-2">
+          {mediaCats.map(([label, cat]) => (
+            <label key={cat} className="inline-flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="media-cat"
+                value={cat}
+                checked={category === cat}
+                onChange={() => setCategory(cat)}
+                disabled={!canUpload}
+              />
+              <span className="text-sm">{label}</span>
+            </label>
+          ))}
+        </div>
+        {!canUpload && (
+          <p className="text-xs text-slate-500 mt-1">Guarda el vehículo para habilitar la subida.</p>
+        )}
+      </div>
+
+      {/* 2) Título */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-1">Título</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full border p-2 rounded"
+          placeholder="Frente, lateral, número de serie, etc."
+          disabled={!canUpload}
+        />
+      </div>
+
+      {/* 3) Selección / Drag&Drop / Pegar */}
+      <div
+        ref={dropRef}
+        onDragEnter={prevent}
+        onDragOver={prevent}
+        onDrop={onDrop}
+        className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center ${canUpload ? 'bg-white' : 'bg-slate-50 opacity-60'}`}
+      >
+        <p className="text-sm">Arrastra y suelta aquí, o pega (Ctrl+V) imágenes.</p>
+        <p className="text-xs text-slate-500 mt-1">También puedes seleccionar archivos:</p>
+        <label className="mt-3 inline-block px-3 py-2 border rounded cursor-pointer hover:bg-slate-50">
+          Elegir archivos…
+          <input
+            type="file"
+            className="hidden"
+            multiple
+            accept="image/*,video/*,application/pdf"
+            onChange={onInputFiles}
+            disabled={!canUpload}
+          />
+        </label>
+
+        {/* Lista de archivos seleccionados */}
+        {files.length > 0 && (
+          <div className="w-full mt-4">
+            <div className="text-sm font-medium mb-2">A subir ({files.length}):</div>
+            <ul className="text-sm space-y-1 max-h-40 overflow-y-auto">
+              {files.map((f, i) => (
+                <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-2">
+                  <span className="truncate">{f.name}</span>
+                  <button
+                    type="button"
+                    className="text-red-600 hover:underline text-xs"
+                    onClick={() => removeAt(i)}
+                  >Quitar</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* 4) Botón subir */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={doUpload}
+          disabled={!canUpload || !category || files.length === 0}
+          className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+        >
+          Subir
+        </button>
+      </div>
+    </div>
+  );
+}
+
   // Para detectar cambios
   const [initialForm, setInitialForm] = useState(null)
   const isDirty = !readOnly && !deepEqual(form, initialForm || form)
@@ -505,15 +490,6 @@ useEffect(() => {
       .then(({ data }) => {
         const v = data?.item || data
         setVehicle(v)
-
-        // // Apoyo activo
-        // let supportInfo = null
-        // const last = Array.isArray(v.assignments) && v.assignments.length ? v.assignments[v.assignments.length - 1] : null
-        // if (last && last.reason === 'APOYO' && !last.endAt) {
-        //   supportInfo = { from: last.startAt, code: v.internalCode }
-        // }
-        // setSupportActiveInfo(supportInfo)
-
 
         // soporte activo (desde doc) // Adicion //
         if (v?.support?.active) {
@@ -656,23 +632,42 @@ useEffect(() => {
       // Payload clonado
       const payload = structuredClone(form)
 
-      // Parseo de fechas (Documentos y Padrón extendido)
-      payload.legal.padron.acquisitionDate = parseYMD(form.legal.padron.acquisitionDate)
-      payload.legal.padron.inscriptionDate = parseYMD(form.legal.padron.inscriptionDate)
-      payload.legal.padron.issueDate = parseYMD(form.legal.padron.issueDate)
+            // === Conversión segura de fechas ===
+      const toDateOrNull = (v) => {
+        if (!v) return null;
+        if (v instanceof Date) return isNaN(v) ? null : v;
+        // Si viene "YYYY-MM-DD"
+        if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+          return new Date(`${v}T00:00:00.000Z`);
+        }
+        // Intento final
+        const d = new Date(v);
+        return isNaN(d) ? null : d;
+      };
 
-      payload.legal.soap.validFrom = parseYMD(form.legal.soap.validFrom)
-      payload.legal.soap.validTo = parseYMD(form.legal.soap.validTo)
-      payload.legal.insurance.validFrom = parseYMD(form.legal.insurance.validFrom)
-      payload.legal.insurance.validTo = parseYMD(form.legal.insurance.validTo)
-      payload.legal.fuelCard.validTo = parseYMD(form.legal.fuelCard.validTo)
+      // PADRÓN
+      payload.legal.padron.acquisitionDate = toDateOrNull(form.legal.padron.acquisitionDate);
+      payload.legal.padron.inscriptionDate = toDateOrNull(form.legal.padron.inscriptionDate);
+      payload.legal.padron.issueDate = toDateOrNull(form.legal.padron.issueDate);
 
-      payload.legal.technicalReview.reviewedAt = parseYMD(form.legal.technicalReview.reviewedAt)
-      payload.legal.technicalReview.validTo = parseYMD(form.legal.technicalReview.validTo)
-      payload.legal.circulationPermit.reviewedAt = parseYMD(form.legal.circulationPermit.reviewedAt)
-      payload.legal.circulationPermit.validTo = parseYMD(form.legal.circulationPermit.validTo)
+      // SOAP
+      payload.legal.soap.validFrom = toDateOrNull(form.legal.soap.validFrom);
+      payload.legal.soap.validTo   = toDateOrNull(form.legal.soap.validTo);
 
-      console.log('→ payload.legal.soap.validFrom', payload.legal.soap.validFrom, typeof payload.legal.soap.validFrom);
+      // SEGURO
+      payload.legal.insurance.validFrom = toDateOrNull(form.legal.insurance.validFrom);
+      payload.legal.insurance.validTo   = toDateOrNull(form.legal.insurance.validTo);
+
+      // TARJETA COMBUSTIBLE
+      payload.legal.fuelCard.validTo = toDateOrNull(form.legal.fuelCard.validTo);
+
+      // REVISIÓN TÉCNICA
+      payload.legal.technicalReview.reviewedAt = toDateOrNull(form.legal.technicalReview.reviewedAt);
+      payload.legal.technicalReview.validTo    = toDateOrNull(form.legal.technicalReview.validTo);
+
+      // PERMISO CIRCULACIÓN
+      payload.legal.circulationPermit.reviewedAt = toDateOrNull(form.legal.circulationPermit.reviewedAt);
+      payload.legal.circulationPermit.validTo    = toDateOrNull(form.legal.circulationPermit.validTo);
 
       // Uppercase inteligente (excepto branch y fechas)
       const up = (obj) => {
@@ -711,35 +706,6 @@ useEffect(() => {
     }
   }
 
-  // ===================== Medios =====================
-  // const canUpload = useMemo(() => Boolean(id), [id])
-  // const refresh = async () => {
-  //   if (!id) return
-  //   const { data } = await api.get(`/api/v1/vehicles/${id}`)
-  //   setVehicle(data?.item || data)
-  // }
-  // const handleUploadPhoto = async ({ file, category = 'BASIC', title = '' }) => {
-  //   if (!id) throw new Error('Guarda el vehículo antes de subir medios')
-  //   await uploadVehiclePhoto(id, { file, category, title })
-  //   await refresh()
-  // }
-  // const handleUploadDoc = async ({ file, category, label }) => {
-  //   if (!id) throw new Error('Guarda el vehículo antes de subir documentos')
-  //   await uploadVehicleDocument(id, { file, category, label })
-  //   await refresh()
-  // }
-  // const handleDeletePhoto = async (photoId) => {
-  //   if (!confirm('¿Eliminar foto?')) return
-  //   await deleteVehiclePhoto(id, photoId)
-  //   await refresh()
-  // }
-  // const handleDeleteDoc = async (docId) => {
-  //   if (!confirm('¿Eliminar documento?')) return
-  //   await deleteVehicleDocument(id, docId)
-  //   await refresh()
-  // }
-
-
   const canUpload = useMemo(() => Boolean(id), [id])
   const refresh = async () => {
     if (!id) return
@@ -774,56 +740,6 @@ useEffect(() => {
     await deleteVehicleDocument(id, docId)
     await refresh()
   }
-
-
-  // ===================== Apoyo (UI) =====================
-  // useEffect(() => {
-  //   if (!supportBranch) { setSupportVehicles([]); setSupportTarget(''); return }
-  //   api.get('/api/v1/vehicles', { params: { page: 1, limit: 500, branch: supportBranch } })
-  //     .then(({ data }) => {
-  //       const items = data?.items || data?.data || []
-  //       setSupportVehicles(items)
-  //     })
-  // }, [supportBranch])
-
-  // async function startSupport() {
-  //   if (!id || !supportBranch || !supportTarget) {
-  //     return alert('Selecciona sucursal y vehículo objetivo.')
-  //   }
-  //   // No reemplazarse a sí mismo
-  //   if (supportTarget === id) {
-  //     return alert('Un vehículo no puede reemplazarse a sí mismo.')
-  //   }
-  //   setSupportBusy(true)
-  //   try {
-  //     await api.post(`/api/v1/vehicles/${id}/support/start`, {
-  //       targetBranch: supportBranch,
-  //       targetVehicle: supportTarget,
-  //     })
-  //     alert('Reemplazo iniciado')
-  //     navigate('/vehicles') // redirección a lista
-  //   } catch (e) {
-  //     alert(e?.response?.data?.message || 'No se pudo iniciar el reemplazo')
-  //   } finally {
-  //     setSupportBusy(false)
-  //   }
-  // }
-
-  // async function finishSupport() {
-  //   if (!id) return
-  //   setSupportBusy(true)
-  //   try {
-  //     await api.post(`/api/v1/vehicles/${id}/support/finish`)
-  //     await refresh()
-  //     setSupportActiveInfo(null)
-  //     setSupportBranch(''); setSupportVehicles([]); setSupportTarget('')
-  //     alert('Reemplazo finalizado')
-  //   } catch (e) {
-  //     alert(e?.response?.data?.message || 'No se pudo finalizar el reemplazo')
-  //   } finally {
-  //     setSupportBusy(false)
-  //   }
-  // }
 
   useEffect(() => {
     if (!supportBranch) { setSupportVehicles([]); setSupportTarget(''); return }
@@ -878,19 +794,6 @@ useEffect(() => {
     }
   }
 
-
-  // ===================== Carrusel de imágenes/videos ===================== okok
-  // function openViewer(idx) { setViewerIndex(idx); setViewerOpen(true) }
-  // function closeViewer() { setViewerOpen(false) }
-  // function prevViewer() {
-  //   if (!vehicle?.photos?.length) return
-  //   setViewerIndex((viewerIndex - 1 + vehicle.photos.length) % vehicle.photos.length)
-  // }
-  // function nextViewer() {
-  //   if (!vehicle?.photos?.length) return
-  //   setViewerIndex((viewerIndex + 1) % vehicle.photos.length)
-  // }
-
   const openViewer = (i) => { setViewerIndex(i); setViewerOpen(true) }
   const closeViewer = () => setViewerOpen(false)
   const prevViewer = () => setViewerIndex(i => (i - 1 + (vehicle?.photos?.length || 1)) % (vehicle?.photos?.length || 1))
@@ -916,20 +819,7 @@ useEffect(() => {
   }
 
   // ===================== Render =====================
-  // if (loading) return <div className="max-w-5xl mx-auto bg-white shadow rounded p-4">Cargando…</div>
-
-  // const TabButton = ({ code, label }) => (
-  //   <button
-  //     type="button"
-  //     onClick={() => setTab(code)}
-  //     className={`px-3 py-1.5 rounded ${tab === code
-  //       ? 'bg-blue-600 text-white shadow-[0_0_0_3px_rgba(37,99,235,0.25)]'
-  //       : 'bg-white border'}`}
-  //   >
-  //     {label}
-  //   </button>
-  // )
-
+  
   if (loading) return <div className={`${contentWrap} bg-white shadow rounded p-4 mt-3`}>Cargando…</div>
 
   const TabButton = ({ code, label }) => (
@@ -959,39 +849,12 @@ useEffect(() => {
   ]
 
 
-  
-  return (
+    return (
     <div className="flex flex-col h-full">
       {/* Guard global de cambios sin guardar */}
       <UnsavedChangesGuard isDirty={isDirty} />
 
-      {/* <header className="px-2 sm:px-0 max-w-6xl mx-auto w-full mt-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">
-              {readOnly ? 'Consulta de vehículo' : id ? 'Editar Vehículo' : 'Registrar Vehículo'}
-            </h2>
-            {!readOnly && (
-              <p className="text-sm text-slate-500">
-                Los textos se guardan en MAYÚSCULAS.
-              </p>
-            )}
-          </div>
-          <nav className="flex gap-2">
-            <TabButton code="BASICO" label="Básico" />
-            <TabButton code="TECNICO" label="Técnico" />
-            <TabButton code="DOCUMENTOS" label="Documentos" />
-            <TabButton code="MEDIOS" label="Medios" />
-            <TabButton code="INVENTARIO" label="Inventario" />
-            <TabButton code="ACCIDENTES" label="Accidentes" />
-            <TabButton code="COMBUSTIBLE" label="Combustible" />
-            NUEVA pestaña solicitada
-            <TabButton code="TICKETS" label="Tickets" />
-          </nav>
-        </div>
-      </header> */}
-
-      <header className={`${contentWrap} mt-2 `}>
+        <header className={`${contentWrap} mt-2 `}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">
@@ -1019,10 +882,7 @@ useEffect(() => {
       {error && <div className={`${contentWrap} px-3 py-2 bg-red-50 text-red-700 rounded text-sm mt-2`}>{error}</div>}
       {notice && <div className={`${contentWrap} px-3 py-2 bg-amber-50 text-amber-800 rounded text-sm mt-2`}>{notice}</div>}
 
-      {/* {error && <div className="max-w-6xl mx-auto px-3 py-2 bg-red-50 text-red-700 rounded text-sm mt-2">{error}</div>}
-      {notice && <div className="max-w-6xl mx-auto px-3 py-2 bg-amber-50 text-amber-800 rounded text-sm mt-2">{notice}</div>} */}
-
-      {/* Contenedor con scroll propio, independiente del menú */}
+        {/* Contenedor con scroll propio, independiente del menú */}
       {/* <form onSubmit={handleSubmit} className={`${scrollContainerClass} my-3`}> */}
       <form ref={scrollRef}  onSubmit={handleSubmit} className={`${contentWrap} ${scrollBox} my-3`}>
         {/* <fieldset disabled={readOnly} className="space-y-4"> */}
@@ -1529,9 +1389,26 @@ useEffect(() => {
           {tab === 'MEDIOS' && (
             <div className="space-y-4">
               <div className="bg-white shadow rounded-xl border">
+                  <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+                    <h3 className="font-medium text-slate-700">Cargar medios</h3>
+                    <p className="text-xs text-slate-500">Selecciona categoría, asigna un título opcional y sube múltiples archivos (arrastrar, pegar o elegir).</p>
+                  </div>
+
+                  {/* Uploader unificado */}
+                  <UnifiedMediaUploader
+                    canUpload={canUpload}
+                    mediaCats={mediaCats /* [['Básico','BASICO'], ['Motor','MOTOR'], ...] */}
+                    onUploadPhoto={handleUploadPhoto}
+                    onUploadDoc={handleUploadDoc}
+                  />
+                </div>
+              {/* <div className="bg-white shadow rounded-xl border">
                 <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
                   <h3 className="font-medium text-slate-700">Cargar medios (por categoría)</h3>
+                  <p className="text-xs text-slate-500">Selecciona categoría, asigna un título opcional y sube múltiples archivos (arrastrar, pegar o elegir).</p>
                 </div>
+
+                
                 <div className="p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {mediaCats.map(([label, cat]) => (
                     <div key={cat} className="border rounded-lg p-3">
@@ -1551,7 +1428,8 @@ useEffect(() => {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
+              
 
               {/* Contenido actual */}
               {vehicle && (

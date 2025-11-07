@@ -1574,6 +1574,65 @@ export async function list(req, res) {
   res.json({ items, total, page: p, limit: l, pages: Math.ceil(total / l) });
 }
 
+
+// ============== VALIDADOR DE FECHAS ===============
+
+// Normaliza cualquier fecha: acepta Date, 'YYYY-MM-DD', ISO o '' -> null
+function normDate(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (v instanceof Date) return isNaN(v) ? null : v;
+
+  const s = String(v).trim();
+
+  // YYYY-MM-DD anclado a 00:00Z
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const d = new Date(`${s}T00:00:00.000Z`);
+    return isNaN(d) ? null : d;
+  }
+
+  // ISO/otras variantes parseables
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
+// Asegura estructura y convierte TODAS las fechas legales a Date|null
+function normalizeLegalDates(body = {}) {
+  body.legal ??= {};
+  body.legal.padron ??= {};
+  body.legal.soap ??= {};
+  body.legal.insurance ??= {};
+  body.legal.technicalReview ??= {};
+  body.legal.circulationPermit ??= {};
+  body.legal.fuelCard ??= {};
+
+  // PADRÓN
+  body.legal.padron.acquisitionDate = normDate(body.legal.padron.acquisitionDate);
+  body.legal.padron.inscriptionDate = normDate(body.legal.padron.inscriptionDate);
+  body.legal.padron.issueDate = normDate(body.legal.padron.issueDate);
+
+  // SOAP
+  body.legal.soap.validFrom = normDate(body.legal.soap.validFrom);
+  body.legal.soap.validTo   = normDate(body.legal.soap.validTo);
+
+  // SEGURO
+  body.legal.insurance.validFrom = normDate(body.legal.insurance.validFrom);
+  body.legal.insurance.validTo   = normDate(body.legal.insurance.validTo);
+
+  // REVISIÓN TÉCNICA
+  body.legal.technicalReview.reviewedAt = normDate(body.legal.technicalReview.reviewedAt);
+  body.legal.technicalReview.validTo    = normDate(body.legal.technicalReview.validTo);
+
+  // PERMISO DE CIRCULACIÓN
+  body.legal.circulationPermit.reviewedAt = normDate(body.legal.circulationPermit.reviewedAt);
+  body.legal.circulationPermit.validTo    = normDate(body.legal.circulationPermit.validTo);
+
+  // TARJETA DE COMBUSTIBLE
+  body.legal.fuelCard.validTo = normDate(body.legal.fuelCard.validTo);
+
+  return body;
+}
+
+
 // ====================== CRUD ======================
 export async function create(req, res) {
   const payload = req.body || {};
@@ -1595,10 +1654,18 @@ export async function update(req, res) {
     const id = req.params.id;
     const changes = req.body || {};
 
+    /// Adicion ///
+
+    // ⬇️ Normalizar fechas para evitar "{}" en campos Date
+    normalizeLegalDates(changes);
+
+
     const before = await Vehicle.findById(id).lean();
     if (!before) return res.status(404).json({ message: 'No encontrado' });
 
-    const after = await Vehicle.findByIdAndUpdate(id, changes, { new: true }).lean();
+    // const after = await Vehicle.findByIdAndUpdate(id, changes, { new: true }).lean();
+    const after = await Vehicle.findByIdAndUpdate(id, changes, { new: true, runValidators: true }).lean();
+
 
     // Snapshot plano de sólo las claves cambiadas (evita "circular structure")
     const vDoc = await Vehicle.findById(id); // doc vivo para push en audit
