@@ -523,6 +523,7 @@
 // //   try {
 // //     const { id, documentId } = req.params;
 // //     const v = await Vehicle.findById(id);
+
 // //     if (!v) return res.status(404).json({ message: 'No encontrado' });
 
 // //     const d = v.documents.id(documentId);
@@ -1668,9 +1669,76 @@ export async function transfer(req, res) {
 }
 
 // ====================== APOYO (start/finish) ======================
+// export async function startSupport(req, res) {
+//   // Espera body: { targetBranch, targetVehicle }  (nombres exactos)
+//   const { id } = req.params;
+//   const { targetBranch, targetVehicle } = req.body || {};
+
+//   const v = await Vehicle.findById(id);
+//   if (!v) return res.status(404).json({ message: 'Vehículo origen no encontrado' });
+
+//   if (!targetBranch || !targetVehicle) {
+//     return res.status(400).json({ message: 'Sucursal y vehículo objetivo son requeridos' });
+//   }
+//   if (String(targetVehicle) === String(id)) {
+//     return res.status(400).json({ message: 'Un vehículo no puede reemplazarse a sí mismo' });
+//   }
+//   if (v.support?.active) {
+//     return res.status(400).json({ message: 'Este vehículo ya está en reemplazo activo' });
+//   }
+
+//   const target = await Vehicle.findById(targetVehicle);
+//   if (!target) return res.status(404).json({ message: 'Vehículo a reemplazar no encontrado' });
+//   if (target.support?.active) {
+//     return res.status(400).json({ message: 'No se puede reemplazar un vehículo que ya está en reemplazo' });
+//   }
+
+//   // Estado objetivo OUT_OF_SERVICE (si no lo está)
+//   if ((target.status || '').toUpperCase() !== 'OUT_OF_SERVICE') {
+//     target.status = 'OUT_OF_SERVICE';
+//   }
+
+//     // El actual toma sigla target + 'R'
+//   const originalInternal = v.internalCode;
+//   const replacement = `${target.internalCode}R`;
+
+//   // Inicializa soporte en v
+//   v.support = {
+//     active: true,
+//     targetBranch,
+//     targetVehicle,
+//     replacementCode: replacement,
+//     originalInternalCode: originalInternal,
+//     startedAt: new Date(),
+//     endedAt: null,
+//     totalMsServed: v.support?.totalMsServed || 0,
+//   };
+
+//   // Marcar estados v.internalCode = replacement;
+//   v.internalCode = originalInternal;
+//   v.status = 'SUPPORT';
+
+//   // Guarda quién lo dejó así (para restaurar solo si corresponde a este apoyo)
+//   target.supportReplacedBy = v._id;
+//   target.supportReplacedAt = v.support.startedAt;
+
+
+//   auditPush(v, 'SUPPORT_START', {
+//     detail: `${originalInternal} → ${replacement}`,
+//     targetVehicle,
+//     targetBranch,
+//   }, req.user?.email || req.user?.id);
+
+//   await target.save();
+//   await v.save();
+
+//   res.json(v.toObject());
+// }
+
+
 export async function startSupport(req, res) {
-  // Espera body: { targetBranch, targetVehicle }  (nombres exactos)
-  const { id } = req.params;
+  // Body esperado: { targetBranch, targetVehicle }
+  const { id } = req.params; // vehículo que presta apoyo
   const { targetBranch, targetVehicle } = req.body || {};
 
   const v = await Vehicle.findById(id);
@@ -1692,50 +1760,130 @@ export async function startSupport(req, res) {
     return res.status(400).json({ message: 'No se puede reemplazar un vehículo que ya está en reemplazo' });
   }
 
-  // Estado objetivo OUT_OF_SERVICE (si no lo está)
-  if ((target.status || '').toUpperCase() !== 'OUT_OF_SERVICE') {
-    target.status = 'OUT_OF_SERVICE';
-  }
-
-    // El actual toma sigla target + 'R'
+  // Datos del tramo
+  const startedAt = new Date();
   const originalInternal = v.internalCode;
   const replacement = `${target.internalCode}R`;
 
-  // Inicializa soporte en v
+  // Bloque support del apoyador
   v.support = {
     active: true,
     targetBranch,
-    targetVehicle,
+    targetVehicle: target._id,
     replacementCode: replacement,
     originalInternalCode: originalInternal,
-    startedAt: new Date(),
+    startedAt,
     endedAt: null,
-    totalMsServed: v.support?.totalMsServed || 0,
+    totalMsServed: typeof v.support?.totalMsServed === 'number' ? v.support.totalMsServed : 0,
   };
 
-  // Marcar estados v.internalCode = replacement;
-  v.internalCode = originalInternal;
-  v.status = 'SUPPORT';
+  // Estados
+  v.internalCode = originalInternal;   // no se cambia por apoyo
+  v.status = 'SUPPORT';                // usa el código que tengas en catálogo
 
-  // Guarda quién lo dejó así (para restaurar solo si corresponde a este apoyo)
+  // // Reemplazado: fuera de servicio + trazabilidad para restaurar al finalizar
+  // target.status = 'OUT_OF_SERVICE';
+  // target.supportReplacedBy = v._id;
+  // target.supportReplacedAt = startedAt;
+
+  // Reemplazado: NO tocar status; solo metadatos de relación
   target.supportReplacedBy = v._id;
-  target.supportReplacedAt = v.support.startedAt;
+  target.supportReplacedAt = startedAt;
 
 
-  auditPush(v, 'SUPPORT_START', {
-    detail: `${originalInternal} → ${replacement}`,
-    targetVehicle,
-    targetBranch,
-  }, req.user?.email || req.user?.id);
-
+  // Guardar primero target (depende del startedAt), luego v
   await target.save();
   await v.save();
 
-  res.json(v.toObject());
+  // Auditoría
+  auditPush(
+    v,
+    'INICIO_REEMPLAZO',
+    {
+      detail: `${originalInternal} → ${replacement}`,
+      targetVehicle: target._id,
+      targetBranch,
+      startedAt,
+    },
+    req.user?.email || req.user?.id
+  );
+
+  await v.save();
+
+  // Devolver ambos actualizados para que el front sincronice lista/consulta
+  return res.json({
+    vehicle: v.toObject(),
+    target: target.toObject(),
+  });
 }
 
+
+// export async function finishSupport(req, res) {
+//   const { id } = req.params;
+
+//   const v = await Vehicle.findById(id);
+//   if (!v) return res.status(404).json({ message: 'Vehículo no encontrado' });
+//   if (!v.support?.active) {
+//     return res.status(400).json({ message: 'Este vehículo no está en apoyo activo' });
+//   }
+
+//   const { targetVehicle, originalInternalCode, replacementCode } = v.support || {};
+//   const fromCode = replacementCode || v.internalCode;
+//   const toCode = originalInternalCode || v.internalCode;
+
+//   // ========= NUEVO: cálculo de tramo y acumulado =========
+//   const now = new Date();
+//   // const from = v.support?.from || v.support?.startedAt || v.support?.beganAt || v.support?.initAt || null;
+//   const from = v.support?.startedAt || v.support?.from || null;
+
+//   // ms del tramo actual (si no hay 'from', consideramos 0)
+//   const tramoMs = from ? Math.max(0, now - new Date(from)) : 0;
+
+//   // acumular total en support.totalMsServed (si el campo no existe, lo iniciamos)
+//   // if (typeof v.support.totalMsServed !== 'number') v.support.totalMsServed = 0;
+//   // v.support.totalMsServed += tramoMs;
+//   if (!v.support) v.support = {};
+//   if (typeof v.support.totalMsServed !== 'number') v.support.totalMsServed = 0;
+//   v.support.totalMsServed += tramoMs;
+
+
+//   const tramoHuman = humanizeDuration(from || now, now);
+//   const totalHuman = humanizeMs(v.support.totalMsServed);
+//   // ========= FIN NUEVO =========
+
+//   // Restaurar sigla/status del que apoya
+//   if (originalInternalCode) v.internalCode = originalInternalCode;
+//   v.status = 'ACTIVE';
+//   v.support.active = false;
+//   // v.support.endedAt = new Date();
+//   v.support.endedAt = now;
+
+//   // 🔁 Restaurar el objetivo si este apoyo lo dejó OUT_OF_SERVICE
+//   if (targetVehicle) {
+//     const target = await Vehicle.findById(targetVehicle);
+//     if (target && String(target.supportReplacedBy) === String(v._id)) {
+//       target.status = 'ACTIVE';
+//       target.supportReplacedBy = undefined;
+//       target.supportReplacedAt = undefined;
+//       await target.save();
+//     }
+//   }
+  
+//   auditPush(v, 'SUPPORT_FINISH', {
+//     // detail: `${fromCode} → ${toCode}`,
+//     // detail: `${fromCode} → ${toCode} — tramo=${tramoHuman}, total=${totalHuman}`,  
+//     detail: `${fromCode} → ${toCode} — Tiempo Total: ${tramoHuman}`,
+//     targetVehicle,
+//     endedAt: v.support.endedAt,
+//   }, req.user?.email || req.user?.id);
+
+//   await v.save();
+//   res.json(v.toObject());
+// }
+
+
 export async function finishSupport(req, res) {
-  const { id } = req.params;
+  const { id } = req.params; // vehículo que estaba prestando apoyo
 
   const v = await Vehicle.findById(id);
   if (!v) return res.status(404).json({ message: 'Vehículo no encontrado' });
@@ -1743,68 +1891,75 @@ export async function finishSupport(req, res) {
     return res.status(400).json({ message: 'Este vehículo no está en apoyo activo' });
   }
 
-  const { targetVehicle, originalInternalCode, replacementCode } = v.support || {};
-  const fromCode = replacementCode || v.internalCode;
-  const toCode = originalInternalCode || v.internalCode;
-
-  // ========= NUEVO: cálculo de tramo y acumulado =========
   const now = new Date();
-  // const from = v.support?.from || v.support?.startedAt || v.support?.beganAt || v.support?.initAt || null;
-  const from = v.support?.startedAt || v.support?.from || null;
+  const startedAt = v.support?.startedAt ? new Date(v.support.startedAt) : null;
+  if (!startedAt) {
+    return res.status(400).json({ message: 'No existe hora de inicio (startedAt) para este apoyo.' });
+  }
 
-  // ms del tramo actual (si no hay 'from', consideramos 0)
-  const tramoMs = from ? Math.max(0, now - new Date(from)) : 0;
-
-  // acumular total en support.totalMsServed (si el campo no existe, lo iniciamos)
-  // if (typeof v.support.totalMsServed !== 'number') v.support.totalMsServed = 0;
-  // v.support.totalMsServed += tramoMs;
-  if (!v.support) v.support = {};
+  // Tiempo del servicio actual (FIN - INICIO)
+  const tramoMs = Math.max(0, now - startedAt);
+  // Si quieres conservar acumulado, lo dejamos (aunque solo mostramos tramo)
   if (typeof v.support.totalMsServed !== 'number') v.support.totalMsServed = 0;
   v.support.totalMsServed += tramoMs;
 
+  const tramoHuman = humanizeDuration(startedAt, now);
 
-  const tramoHuman = humanizeDuration(from || now, now);
-  const totalHuman = humanizeMs(v.support.totalMsServed);
-  // ========= FIN NUEVO =========
-
-  // Restaurar sigla/status del que apoya
-  if (originalInternalCode) v.internalCode = originalInternalCode;
-  v.status = 'ACTIVE';
-  v.support.active = false;
-  // v.support.endedAt = new Date();
+  // Restaurar apoyador
+  v.support.active  = false;
   v.support.endedAt = now;
+  v.status = 'ACTIVE';
+  // NO tocar internalCode por apoyo:
+  // if (v.support?.originalInternalCode) v.internalCode = v.support.originalInternalCode;
 
-  // 🔁 Restaurar el objetivo si este apoyo lo dejó OUT_OF_SERVICE
-  if (targetVehicle) {
-    const target = await Vehicle.findById(targetVehicle);
+  // Restaurar reemplazado SOLO si este apoyo lo puso fuera de servicio
+  let target = null;
+  const targetId = v.support?.targetVehicle || v.support?.target;
+  if (targetId) {
+    target = await Vehicle.findById(targetId);
     if (target && String(target.supportReplacedBy) === String(v._id)) {
-      target.status = 'ACTIVE';
       target.supportReplacedBy = undefined;
       target.supportReplacedAt = undefined;
       await target.save();
     }
-  }
-  
-  auditPush(v, 'SUPPORT_FINISH', {
-    // detail: `${fromCode} → ${toCode}`,
-    // detail: `${fromCode} → ${toCode} — tramo=${tramoHuman}, total=${totalHuman}`,  
-    detail: `${fromCode} → ${toCode} — Tiempo Total: ${tramoHuman}`,
-    targetVehicle,
-    endedAt: v.support.endedAt,
-  }, req.user?.email || req.user?.id);
 
-  // ========= NUEVO: auditoría adicional con notas humanizadas =========
-  // v.audit.push({
-  //   at: now,
-  //   action: 'support.finish',
-  //   notes: `Fin apoyo → tramo=${tramoHuman}, total_acumulado=${totalHuman}; ` +
-  //     `reemplazó a ${v.support.replacementCode}; original=${v.support.originalInternalCode}`,
-  // });
-  // ========= FIN NUEVO =========
+
+
+    // if (target && String(target.supportReplacedBy) === String(v._id) &&
+    //     (target.status || '').toUpperCase() === 'OUT_OF_SERVICE') {
+    //   target.status = 'ACTIVE';
+    //   target.supportReplacedBy = undefined;
+    //   target.supportReplacedAt = undefined;
+    //   await target.save();
+    // }
+  }
+
+  // Flecha inversa para auditoría
+  const fromCode = v.support?.replacementCode || (target?.internalCode ?? target?.plate ?? 'OBJETIVO');
+  const toCode   = v.support?.originalInternalCode || v.internalCode;
+
+  auditPush(
+    v,
+    'FINALIZA_REEMPLAZO',
+    {
+      detail: `${fromCode} → ${toCode} — Tiempo Total: ${tramoHuman}`,
+      startedAt,
+      endedAt: now,
+      targetVehicle: targetId || target?._id,
+    },
+    req.user?.email || req.user?.id
+  );
 
   await v.save();
-  res.json(v.toObject());
+
+  // Devolver ambos para sincronizar inmediatamente en el front
+  return res.json({
+    vehicle: v.toObject(),
+    target: target ? target.toObject() : null,
+  });
 }
+
+
 
 // ====================== APOYO (start/finish) ======================
 

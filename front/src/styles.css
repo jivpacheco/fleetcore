@@ -14,3 +14,7 @@
 .btn-ghost{ @apply px-3 py-2 rounded; color: var(--fc-secondary); }
 .input{ @apply w-full border rounded px-3 py-2; }
 .card{ @apply bg-white rounded-2xl shadow-sm; }
+
+/* Mostrar mano por defecto en los botones*/
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }

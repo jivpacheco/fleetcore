@@ -252,7 +252,7 @@ const stateLabel = (code) => {
                   <td className="p-2">{v.branch?.code ? `${v.branch.code} — ${v.branch.name}` : (v.branch?.name || '—')}</td>
                   <td className="p-2">{v.plate || '—'}</td>
                   <td className="p-2">{v.brand} {v.model}</td>
-                  <td className="p-2">{stateLabel(items.status)}</td>
+                  <td className="p-2">{stateLabel(v.status)}</td>
                   <td className="p-2 text-right">
                     <div className="inline-flex gap-2">
                       {/* Ver (solo lectura) */}
