@@ -152,6 +152,19 @@ function AuditBlock({ vehicleId }) {
   );
 }
 
+function fmtBytes(bytes) {
+  if (!bytes || isNaN(bytes)) return '0 KB';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  let val = Number(bytes);
+  while (val >= 1024 && i < units.length - 1) {
+    val /= 1024;
+    i++;
+  }
+  return `${val.toFixed(1)} ${units[i]}`;
+}
+
+
 // ===================== Componente principal =====================
 export default function VehiclesForm() {
   const navigate = useNavigate()
@@ -258,7 +271,7 @@ export default function VehiclesForm() {
   };
 
   // Pegar (Ctrl+V imágenes desde clipboard)
-  React.useEffect(() => {
+  useEffect(() => {
     const onPaste = (e) => {
       if (!canUpload) return;
       const items = e.clipboardData?.items || [];
@@ -304,7 +317,8 @@ export default function VehiclesForm() {
       file, 
       category,               // code (p.ej. 'MOTOR')
       categoryLabel: displayCategory,  // 'MOTOR' pero desde el label visible en mayúsculas
-      title: title?.trim() || file.name 
+      title: title?.trim() || file.name ,
+      bytes: file.size || 0,    // peso del archivo
       };
 
       try {
@@ -431,6 +445,18 @@ export default function VehiclesForm() {
   const contentWrap = 'max-w-6xl mx-auto'
   const scrollBox = 'h-[calc(100vh-140px)] overflow-y-auto px-3'
   
+
+  //============= Incluir Peso de Archivos ======================
+
+  function prettyBytes(n = 0) {
+  if (!n || isNaN(n)) return '';
+  const kb = n / 1024;
+  if (kb < 1024) return `${Math.round(kb)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(mb < 10 ? 1 : 0)} MB`;
+}
+
+
 
   /// ============= Manejo de pestañas ==========================
 
@@ -720,16 +746,43 @@ useEffect(() => {
       })
     } else setSupportActiveInfo(null)
   }
-  const handleUploadPhoto = async ({ file, category = 'BASIC', title = '' }) => {
-    if (!id) throw new Error('Guarda el vehículo antes de subir medios')
-    await uploadVehiclePhoto(id, { file, category, title })
-    await refresh()
-  }
-  const handleUploadDoc = async ({ file, category, label }) => {
-    if (!id) throw new Error('Guarda el vehículo antes de subir documentos')
-    await uploadVehicleDocument(id, { file, category, label })
-    await refresh()
-  }
+
+  //================ Handlers ====================
+  // const handleUploadPhoto = async ({ file, category = 'BASIC', title = '' }) => {
+  //   if (!id) throw new Error('Guarda el vehículo antes de subir medios')
+  //   await uploadVehiclePhoto(id, { file, category, title })
+  //   await refresh()
+  // }
+  // const handleUploadDoc = async ({ file, category, label }) => {
+  //   if (!id) throw new Error('Guarda el vehículo antes de subir documentos')
+  //   await uploadVehicleDocument(id, { file, category, label })
+  //   await refresh()
+  // }
+
+  const handleUploadPhoto = async ({ file, category = 'BASIC', categoryLabel, title = '', bytes = 0 }) => {
+  if (!id) throw new Error('Guarda el vehículo antes de subir medios');
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('category', category);
+  if (categoryLabel) fd.append('categoryLabel', categoryLabel); // 👈 nombre visible
+  if (title) fd.append('title', title);
+  fd.append('bytes', String(bytes || 0));
+  await api.post(`/api/v1/vehicles/${id}/photos`, fd);
+  await refresh();
+};
+
+const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label = '', bytes = 0 }) => {
+  if (!id) throw new Error('Guarda el vehículo antes de subir documentos');
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('category', category);
+  if (categoryLabel) fd.append('categoryLabel', categoryLabel); // 👈 nombre visible
+  if (label) fd.append('label', label);
+  fd.append('bytes', String(bytes || 0));
+  await api.post(`/api/v1/vehicles/${id}/documents`, fd);
+  await refresh();
+};
+
   const handleDeletePhoto = async (photoId) => {
     if (!confirm('¿Eliminar foto?')) return
     await deleteVehiclePhoto(id, photoId)
@@ -1462,7 +1515,17 @@ useEffect(() => {
                                   onClick={() => openViewer(idx)}
                                 />
                               )}
-                              <div className="mt-1 break-words">{ph.title}</div>
+                              {/* OMITIR */}
+                              {/* <div className="mt-1 break-words">{ph.title}</div> */}
+                              {/* ADICION */}
+                              <div className="mt-1 break-words">
+                              {ph.title}
+                              {ph.bytes ? (
+                                <span className="text-slate-500 text-xs"> ({fmtBytes(ph.bytes)})</span>
+                              ) : null}
+                              </div>
+
+
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(ph._id)}
@@ -1478,8 +1541,17 @@ useEffect(() => {
                       <div className="font-medium mb-1">Documentos</div>
                       <ul className="list-disc pl-5 text-sm space-y-1">
                         {(vehicle.documents || []).map(d => (
+                          // OMITIR
+                          // <li key={d._id} className="break-words">
+                          //   {d.label} — <a href={d.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">ver</a>
+                          // {/* ADICION */}
                           <li key={d._id} className="break-words">
-                            {d.label} — <a href={d.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">ver</a>
+                            <span className="font-medium">{d.categoryLabel || d.category}</span> — {d.label}
+                            {d.bytes ? (
+                              <span className="text-slate-500 text-xs"> ({fmtBytes(d.bytes)})</span>
+                            ) : null}
+                            {' — '}
+                            <a href={d.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">ver</a>
                             <button
                               type="button"
                               onClick={() => handleDeleteDoc(d._id)}

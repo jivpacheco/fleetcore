@@ -241,7 +241,7 @@ export default function Login() {
       <div className="card w-full max-w-md p-8 shadow-lg rounded-2xl bg-white">
         {/* LOGO Y TÍTULO */}
         <div className="flex flex-col items-center mb-6">
-          <img src={logo} alt="FleetCore Suite" className="h-14 mb-2" />
+          <img src={logo} alt="FleetCore Suite" className="h-38 mb-2" />
           <h1
             className="text-2xl font-bold"
             style={{ color: 'var(--fc-primary)' }}

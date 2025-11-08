@@ -2123,17 +2123,36 @@ export async function finishSupport(req, res) {
 // }
 
 // ====================== MEDIA: FOTOS ======================
+  // omitir
 export async function addVehiclePhoto(req, res) {
   try {
+    // omitir //
+    // const { id } = req.params;
+    // const file = req.file;
+    // const { category = 'BASIC', title = '', label = '' } = req.body || {};
+    // if (!file) return res.status(400).json({ message: 'Archivo requerido' });
+
     const { id } = req.params;
     const file = req.file;
-    const { category = 'BASIC', title = '', label = '' } = req.body || {};
+    const {
+      category = 'BASIC',
+      title = '',
+      label = '',
+      categoryLabel = '',   // 👈 NUEVO: nombre visible
+      bytes: bytesRaw = 0,  // 👈 NUEVO: peso opcional desde front
+    } = req.body || {};
     if (!file) return res.status(400).json({ message: 'Archivo requerido' });
 
     const v = await Vehicle.findById(id);
     if (!v) return res.status(404).json({ message: 'No encontrado' });
+    /// omitir ////
+    // const cat = U(category) || 'BASIC';
+    // const baseLabel = (label || title || '').toString().trim();
+    // const seq = nextSeq(v.photos, cat);
 
-    const cat = U(category) || 'BASIC';
+    // adicion //
+    const cat = (category || 'BASIC').toString().trim().toUpperCase();
+    const catLabel = (categoryLabel || cat).toString().trim().toUpperCase(); // 👈 usar visible si viene
     const baseLabel = (label || title || '').toString().trim();
     const seq = nextSeq(v.photos, cat);
 
@@ -2145,60 +2164,154 @@ export async function addVehiclePhoto(req, res) {
       mimetype = file.mimetype;
 
     // multer-storage-cloudinary → file.path https y con filename/public_id
+    // omitir ///
+    // if (isHttpUrl(file.path) && (file.filename || file.public_id)) {
+    //   url = file.path;
+    //   publicId = file.filename || file.public_id;
+    //   bytes = file.size;
+    //   format = file.format || (mimetype ? mimetype.split('/')[1] : '');
+    //   resourceType =
+    //     file.resource_type ||
+    //     (isVideoFormat(format, mimetype) ? 'video' : isPdf(format, mimetype) ? 'raw' : 'image');
+    // } else {
+    //   // multer simple → subimos
+    //   const folder = process.env.CLOUDINARY_FOLDER || 'fleetcore';
+    //   const up = await cloud.uploader.upload(file.path, {
+    //     folder: `${folder}/vehicles/${id}/photos`,
+    //     resource_type: 'auto',
+    //   });
+    //   url = up.secure_url;
+    //   publicId = up.public_id;
+    //   bytes = up.bytes;
+    //   format = up.format;
+    //   resourceType = up.resource_type;
+    // }
+
+    //adicion //
     if (isHttpUrl(file.path) && (file.filename || file.public_id)) {
       url = file.path;
       publicId = file.filename || file.public_id;
-      bytes = file.size;
+      bytes = Number(bytesRaw || file.size || 0);
       format = file.format || (mimetype ? mimetype.split('/')[1] : '');
       resourceType =
         file.resource_type ||
         (isVideoFormat(format, mimetype) ? 'video' : isPdf(format, mimetype) ? 'raw' : 'image');
     } else {
-      // multer simple → subimos
       const folder = process.env.CLOUDINARY_FOLDER || 'fleetcore';
-      const up = await cloud.uploader.upload(file.path, {
+      const opts = {
         folder: `${folder}/vehicles/${id}/photos`,
         resource_type: 'auto',
-      });
+      };
+      const up = await cloud.uploader.upload(file.path, opts);
       url = up.secure_url;
       publicId = up.public_id;
-      bytes = up.bytes;
+      bytes = Number(bytesRaw || up.bytes || 0);
       format = up.format;
       resourceType = up.resource_type;
     }
 
     // Si realmente es PDF/RAW, lo redirigimos a documentos
+    //omitir//
+//     if (resourceType === 'raw' || isPdf(format, mimetype)) {
+//       const uniformLabel = baseLabel
+//         ? `${cat} — ${U(baseLabel)} — ${seq}`
+//         : `${cat} — ${seq}`;
+//       v.documents.push({
+//         category: cat,
+//         label: uniformLabel,
+//         url,
+//         publicId,
+//         bytes,
+//         format,
+//         createdAt: new Date(),
+//       });
+//       auditPush(
+//         v,
+//         'MEDIA_ADD',
+//         { type: 'DOCUMENT', category: cat, label: uniformLabel, url },
+//         req.user?.email || req.user?.id
+//       );
+//       await v.save();
+//       return res
+//         .status(201)
+//         .json({ ok: true, redirected: 'document', document: v.documents.at(-1) });
+//     }
+
+//     const uniformTitle = baseLabel
+//       ? `${cat} — ${U(baseLabel)} — ${seq}`
+//       : `${cat} — ${seq}`;
+
+//     v.photos.push({
+//       category: cat,
+//       title: uniformTitle,
+//       url,
+//       publicId,
+//       bytes,
+//       format,
+//       createdAt: new Date(),
+//     });
+
+//     auditPush(
+//       v,
+//       'MEDIA_ADD',
+//       {
+//         type: resourceType === 'video' ? 'VIDEO' : 'PHOTO',
+//         category: cat,
+//         title: uniformTitle,
+//         url,
+//       },
+//       req.user?.email || req.user?.id
+//     );
+//     await v.save();
+
+//     res
+//       .status(201)
+//       .json({ ok: true, photo: v.photos.at(-1), isVideo: resourceType === 'video' });
+//   } catch (err) {
+//     console.error('[addVehiclePhoto] ❌', err);
+//     res.status(500).json({ message: 'Error subiendo foto', error: err.message });
+//   }
+// }
+
+/// adicion ///
+    // Si es PDF → a documentos, y normalizar URL para inline
     if (resourceType === 'raw' || isPdf(format, mimetype)) {
+      // Fuerza extensión .pdf si falta
+      const pdfUrl = url.includes('.pdf') ? url : `${url}.pdf`;
+
       const uniformLabel = baseLabel
-        ? `${cat} — ${U(baseLabel)} — ${seq}`
-        : `${cat} — ${seq}`;
+        ? `${catLabel} — ${U(baseLabel)} — ${seq}`
+        : `${catLabel} — ${seq}`;
+
       v.documents.push({
         category: cat,
+        categoryLabel: catLabel,  // 👈 guardar visible
         label: uniformLabel,
-        url,
+        url: pdfUrl,
         publicId,
         bytes,
-        format,
+        format: 'pdf',
         createdAt: new Date(),
       });
+
       auditPush(
         v,
         'MEDIA_ADD',
-        { type: 'DOCUMENT', category: cat, label: uniformLabel, url },
+        { type: 'DOCUMENT', category: cat, categoryLabel: catLabel, label: uniformLabel, url: pdfUrl },
         req.user?.email || req.user?.id
       );
       await v.save();
-      return res
-        .status(201)
-        .json({ ok: true, redirected: 'document', document: v.documents.at(-1) });
+      return res.status(201).json({ ok: true, redirected: 'document', document: v.documents.at(-1) });
     }
 
+    // Foto/Video
     const uniformTitle = baseLabel
-      ? `${cat} — ${U(baseLabel)} — ${seq}`
-      : `${cat} — ${seq}`;
+      ? `${catLabel} — ${U(baseLabel)} — ${seq}`
+      : `${catLabel} — ${seq}`;
 
     v.photos.push({
       category: cat,
+      categoryLabel: catLabel,  // 👈 guardar visible
       title: uniformTitle,
       url,
       publicId,
@@ -2213,6 +2326,7 @@ export async function addVehiclePhoto(req, res) {
       {
         type: resourceType === 'video' ? 'VIDEO' : 'PHOTO',
         category: cat,
+        categoryLabel: catLabel,
         title: uniformTitle,
         url,
       },
@@ -2220,14 +2334,13 @@ export async function addVehiclePhoto(req, res) {
     );
     await v.save();
 
-    res
-      .status(201)
-      .json({ ok: true, photo: v.photos.at(-1), isVideo: resourceType === 'video' });
+    res.status(201).json({ ok: true, photo: v.photos.at(-1), isVideo: resourceType === 'video' });
   } catch (err) {
     console.error('[addVehiclePhoto] ❌', err);
     res.status(500).json({ message: 'Error subiendo foto', error: err.message });
   }
 }
+
 
 export async function deleteVehiclePhoto(req, res) {
   try {
@@ -2257,35 +2370,144 @@ export async function deleteVehiclePhoto(req, res) {
 }
 
 // ====================== MEDIA: DOCUMENTOS ======================
+
+/// omitir ///
+// export async function addVehicleDocument(req, res) {
+//   try {
+//     const { id } = req.params;
+//     const file = req.file;
+//     const { category = 'LEGAL', label = '' } = req.body || {};
+//     if (!file) return res.status(400).json({ message: 'Archivo requerido' });
+
+//     const v = await Vehicle.findById(id);
+//     if (!v) return res.status(404).json({ message: 'No encontrado' });
+
+//     const cat = U(category) || 'LEGAL';
+//     const lbl = (label || '').toString().trim();
+
+//     let url,
+//       publicId,
+//       bytes,
+//       format,
+//       resourceType,
+//       mimetype = file.mimetype;
+
+//     if (isHttpUrl(file.path) && (file.filename || file.public_id)) {
+//       url = file.path;
+//       publicId = file.filename || file.public_id;
+//       bytes = file.size;
+//       format = file.format || (mimetype ? mimetype.split('/')[1] : '');
+//       resourceType =
+//         file.resource_type ||
+//         (isPdf(format, mimetype) ? 'raw' : isVideoFormat(format, mimetype) ? 'video' : 'image');
+//     } else {
+//       const folder = process.env.CLOUDINARY_FOLDER || 'fleetcore';
+//       const up = await cloud.uploader.upload(file.path, {
+//         folder: `${folder}/vehicles/${id}/documents`,
+//         resource_type: 'auto',
+//       });
+//       url = up.secure_url;
+//       publicId = up.public_id;
+//       bytes = up.bytes;
+//       format = up.format;
+//       resourceType = up.resource_type;
+//     }
+
+//     // Si por error llega imagen/video, lo tratamos como photo
+//     if (resourceType !== 'raw' && !isPdf(format, mimetype)) {
+//       const seq = nextSeq(v.photos, cat);
+//       const uniformTitle = lbl ? `${cat} — ${U(lbl)} — ${seq}` : `${cat} — ${seq}`;
+//       v.photos.push({
+//         category: cat,
+//         title: uniformTitle,
+//         url,
+//         publicId,
+//         bytes,
+//         format,
+//         createdAt: new Date(),
+//       });
+//       auditPush(
+//         v,
+//         'MEDIA_ADD',
+//         {
+//           type: isVideoFormat(format, mimetype) ? 'VIDEO' : 'PHOTO',
+//           category: cat,
+//           title: uniformTitle,
+//           url,
+//         },
+//         req.user?.email || req.user?.id
+//       );
+//       await v.save();
+//       return res
+//         .status(201)
+//         .json({ ok: true, redirected: 'photo', photo: v.photos.at(-1) });
+//     }
+
+//     const seq = nextSeq(v.documents, cat);
+//     const uniformLabel = lbl ? `${cat} — ${U(lbl)} — ${seq}` : `${cat} — ${seq}`;
+
+//     v.documents.push({
+//       category: cat,
+//       label: uniformLabel,
+//       url,
+//       publicId,
+//       bytes,
+//       format,
+//       createdAt: new Date(),
+//     });
+
+//     auditPush(
+//       v,
+//       'MEDIA_ADD',
+//       { type: 'DOCUMENT', category: cat, label: uniformLabel, url },
+//       req.user?.email || req.user?.id
+//     );
+//     await v.save();
+
+//     res.status(201).json({ ok: true, document: v.documents.at(-1) });
+//   } catch (err) {
+//     console.error('[addVehicleDocument] ❌', err);
+//     res.status(500).json({ message: 'Error subiendo documento', error: err.message });
+//   }
+// }
+
+// adicion //
+
 export async function addVehicleDocument(req, res) {
   try {
     const { id } = req.params;
     const file = req.file;
-    const { category = 'LEGAL', label = '' } = req.body || {};
+    const {
+      category = 'LEGAL',
+      label = '',
+      categoryLabel = '',   // 👈 nombre visible desde el front
+      bytes: bytesRaw = 0,  // 👈 tamaño que mandamos en payload
+    } = req.body || {};
+
     if (!file) return res.status(400).json({ message: 'Archivo requerido' });
 
     const v = await Vehicle.findById(id);
     if (!v) return res.status(404).json({ message: 'No encontrado' });
 
-    const cat = U(category) || 'LEGAL';
+    const cat = (category || 'LEGAL').toString().trim().toUpperCase();
+    const catLabel = (categoryLabel || cat).toString().trim().toUpperCase(); // 👈 USAMOS SIEMPRE MAYÚSCULA
     const lbl = (label || '').toString().trim();
 
-    let url,
-      publicId,
-      bytes,
-      format,
-      resourceType,
-      mimetype = file.mimetype;
+    let url, publicId, bytes, format, resourceType, mimetype = file.mimetype;
 
-    if (isHttpUrl(file.path) && (file.filename || file.public_id)) {
+    // === Detectamos si el archivo ya viene de cloudinary (multer-storage-cloudinary) ===
+    const isCloud = isHttpUrl(file.path) && (file.filename || file.public_id);
+
+    if (isCloud) {
       url = file.path;
       publicId = file.filename || file.public_id;
-      bytes = file.size;
+      bytes = Number(bytesRaw || file.size || 0);
       format = file.format || (mimetype ? mimetype.split('/')[1] : '');
       resourceType =
         file.resource_type ||
         (isPdf(format, mimetype) ? 'raw' : isVideoFormat(format, mimetype) ? 'video' : 'image');
     } else {
+      // === Subida normal ===
       const folder = process.env.CLOUDINARY_FOLDER || 'fleetcore';
       const up = await cloud.uploader.upload(file.path, {
         folder: `${folder}/vehicles/${id}/documents`,
@@ -2293,17 +2515,21 @@ export async function addVehicleDocument(req, res) {
       });
       url = up.secure_url;
       publicId = up.public_id;
-      bytes = up.bytes;
+      bytes = Number(bytesRaw || up.bytes || 0);
       format = up.format;
       resourceType = up.resource_type;
     }
 
-    // Si por error llega imagen/video, lo tratamos como photo
+    // === Si llegó imagen/video por error → redirigir a PHOTO (como ya hacías) ===
     if (resourceType !== 'raw' && !isPdf(format, mimetype)) {
       const seq = nextSeq(v.photos, cat);
-      const uniformTitle = lbl ? `${cat} — ${U(lbl)} — ${seq}` : `${cat} — ${seq}`;
+      const uniformTitle = lbl
+        ? `${catLabel} — ${U(lbl)} — ${seq}`
+        : `${catLabel} — ${seq}`;
+
       v.photos.push({
         category: cat,
+        categoryLabel: catLabel,   // 👈 guardamos nombre visible
         title: uniformTitle,
         url,
         publicId,
@@ -2311,50 +2537,53 @@ export async function addVehicleDocument(req, res) {
         format,
         createdAt: new Date(),
       });
+
       auditPush(
         v,
         'MEDIA_ADD',
-        {
-          type: isVideoFormat(format, mimetype) ? 'VIDEO' : 'PHOTO',
-          category: cat,
-          title: uniformTitle,
-          url,
-        },
+        { type: isVideoFormat(format, mimetype) ? 'VIDEO' : 'PHOTO', category: cat, categoryLabel: catLabel, title: uniformTitle, url },
         req.user?.email || req.user?.id
       );
+
       await v.save();
-      return res
-        .status(201)
-        .json({ ok: true, redirected: 'photo', photo: v.photos.at(-1) });
+      return res.status(201).json({ ok: true, redirected: 'photo', photo: v.photos.at(-1) });
     }
 
+    // === Normalizar PDF: forzar extensión `.pdf` si falta ===
+    const pdfUrl = url.includes('.pdf') ? url : `${url}.pdf`;
+
     const seq = nextSeq(v.documents, cat);
-    const uniformLabel = lbl ? `${cat} — ${U(lbl)} — ${seq}` : `${cat} — ${seq}`;
+    const uniformLabel = lbl
+      ? `${catLabel} — ${U(lbl)} — ${seq}`
+      : `${catLabel} — ${seq}`;
 
     v.documents.push({
       category: cat,
+      categoryLabel: catLabel, // 👈 Guardamos el visible
       label: uniformLabel,
-      url,
+      url: pdfUrl,
       publicId,
       bytes,
-      format,
+      format: 'pdf',
       createdAt: new Date(),
     });
 
     auditPush(
       v,
       'MEDIA_ADD',
-      { type: 'DOCUMENT', category: cat, label: uniformLabel, url },
+      { type: 'DOCUMENT', category: cat, categoryLabel: catLabel, label: uniformLabel, url: pdfUrl },
       req.user?.email || req.user?.id
     );
-    await v.save();
 
+    await v.save();
     res.status(201).json({ ok: true, document: v.documents.at(-1) });
+
   } catch (err) {
     console.error('[addVehicleDocument] ❌', err);
     res.status(500).json({ message: 'Error subiendo documento', error: err.message });
   }
 }
+
 
 export async function deleteVehicleDocument(req, res) {
   try {
