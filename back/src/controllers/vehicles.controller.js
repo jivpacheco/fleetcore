@@ -2160,8 +2160,10 @@ export async function addVehiclePhoto(req, res) {
       publicId,
       bytes,
       format,
-      resourceType,
-      mimetype = file.mimetype;
+      resourceType;
+      
+      //modificacion
+      const mimetype = file.mimetype;
 
     // multer-storage-cloudinary → file.path https y con filename/public_id
     // omitir ///
@@ -2198,10 +2200,18 @@ export async function addVehiclePhoto(req, res) {
         (isVideoFormat(format, mimetype) ? 'video' : isPdf(format, mimetype) ? 'raw' : 'image');
     } else {
       const folder = process.env.CLOUDINARY_FOLDER || 'fleetcore';
+
+      //Adcion
+      const name = file.originalname || file.name || '';
+      const preIsPdf = (mimetype?.toLowerCase().includes('pdf') || /\.pdf$/i.test(name));
+      
       const opts = {
         folder: `${folder}/vehicles/${id}/photos`,
-        resource_type: 'auto',
+        // resource_type: 'auto',
+         resource_type: preIsPdf ? 'raw' : 'auto',
       };
+
+
       const up = await cloud.uploader.upload(file.path, opts);
       url = up.secure_url;
       publicId = up.public_id;

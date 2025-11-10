@@ -31,6 +31,18 @@ const fmtDateTimeCL = (d) => {
   return dt.toLocaleString('es-CL', { hour12: false });
 };
 
+function fmtBytes(bytes) {
+  if (!bytes || isNaN(bytes)) return '0 KB';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  let val = Number(bytes);
+  while (val >= 1024 && i < units.length - 1) {
+    val /= 1024;
+    i++;
+  }
+  return `${val.toFixed(1)} ${units[i]}`;
+}
+
 function ymd(d) {
   if (!d) return '';
   const dt = new Date(d);
@@ -61,6 +73,13 @@ function naturalSortBranches(list) {
     if (bIsNum) return 1
     return (a.name || '').localeCompare(b.name || '', 'es', { numeric: true })
   })
+}
+
+function normalizePdfUrl(url, format) {
+  if (!url) return url;
+  const isPdf = String(format || '').toLowerCase() === 'pdf' || /\.pdf(\?|$)/i.test(url);
+  if (!isPdf) return url;
+  return url.replace('/upload/', '/upload/fl_attachment/'); // fuerza Content-Disposition
 }
 
 function UnsavedChangesGuard({ isDirty }) {
@@ -151,19 +170,6 @@ function AuditBlock({ vehicleId }) {
     </div>
   );
 }
-
-function fmtBytes(bytes) {
-  if (!bytes || isNaN(bytes)) return '0 KB';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  let i = 0;
-  let val = Number(bytes);
-  while (val >= 1024 && i < units.length - 1) {
-    val /= 1024;
-    i++;
-  }
-  return `${val.toFixed(1)} ${units[i]}`;
-}
-
 
 // ===================== Componente principal =====================
 export default function VehiclesForm() {
@@ -767,7 +773,12 @@ useEffect(() => {
   if (categoryLabel) fd.append('categoryLabel', categoryLabel); // 👈 nombre visible
   if (title) fd.append('title', title);
   fd.append('bytes', String(bytes || 0));
-  await api.post(`/api/v1/vehicles/${id}/photos`, fd);
+  //adicion 
+  // await api.post(`/api/v1/vehicles/${id}/photos`, fd);
+  await api.post(`/api/v1/vehicles/${id}/photos`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
   await refresh();
 };
 
@@ -779,7 +790,12 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
   if (categoryLabel) fd.append('categoryLabel', categoryLabel); // 👈 nombre visible
   if (label) fd.append('label', label);
   fd.append('bytes', String(bytes || 0));
-  await api.post(`/api/v1/vehicles/${id}/documents`, fd);
+  //Adicion
+  // await api.post(`/api/v1/vehicles/${id}/documents`, fd);
+  await api.post(`/api/v1/vehicles/${id}/documents`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
   await refresh();
 };
 
@@ -1545,19 +1561,46 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                           // <li key={d._id} className="break-words">
                           //   {d.label} — <a href={d.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">ver</a>
                           // {/* ADICION */}
+                          // <li key={d._id} className="break-words">
+                          //   <span className="font-medium">{d.categoryLabel || d.category}</span> — {d.label}
+                          //   {d.bytes ? (
+                          //     <span className="text-slate-500 text-xs"> ({fmtBytes(d.bytes)})</span>
+                          //   ) : null}
+                          //   {' — '}
+                          //   <a href={d.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">ver</a>
+                          //   <button
+                          //     type="button"
+                          //     onClick={() => handleDeleteDoc(d._id)}
+                          //     className="ml-3 text-red-600 hover:underline"
+                          //   >Eliminar</button>
+                          // </li>
+
                           <li key={d._id} className="break-words">
-                            <span className="font-medium">{d.categoryLabel || d.category}</span> — {d.label}
-                            {d.bytes ? (
-                              <span className="text-slate-500 text-xs"> ({fmtBytes(d.bytes)})</span>
-                            ) : null}
-                            {' — '}
-                            <a href={d.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">ver</a>
+                            {d.label}
+                            {typeof d.bytes === 'number' && d.bytes > 0 && (
+                              <span className="text-slate-500"> ({fmtBytes(d.bytes)})</span>
+                            )}{' '}
+                            — <a
+                                  href={normalizePdfUrl(d.url, d.format)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-blue-600 underline"
+                                >
+                                  ver
+                                </a>
                             <button
                               type="button"
                               onClick={() => handleDeleteDoc(d._id)}
                               className="ml-3 text-red-600 hover:underline"
-                            >Eliminar</button>
+                            >
+                              Eliminar
+                            </button>
                           </li>
+
+
+
+
+
                         ))}
                       </ul>
                     </div>
