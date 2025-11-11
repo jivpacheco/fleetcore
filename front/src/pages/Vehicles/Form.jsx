@@ -1323,8 +1323,7 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                 </div>
               ))}
 
-              {/* Auditoría */}
-              {id && <AuditBlock vehicleId={id} />}
+              
 
               <div className="flex justify-end gap-3 pb-4">
                 {readOnly ? (
@@ -1340,6 +1339,9 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                   </>
                 )}
               </div>
+
+              {/* Auditoría */}
+              {id && <AuditBlock vehicleId={id} />}
             </div>
           )}
 
@@ -1485,8 +1487,7 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                 </div>
               </div>
 
-              {/* Auditoría */}
-              {id && <AuditBlock vehicleId={id} />}
+              
 
               <div className="flex justify-end gap-3 pb-4">
                 {readOnly ? (
@@ -1502,6 +1503,8 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                   </>
                 )}
               </div>
+              {/* Auditoría */}
+              {id && <AuditBlock vehicleId={id} />}
             </div>
           )}
 
@@ -1522,35 +1525,7 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                     onUploadDoc={handleUploadDoc}
                   />
                 </div>
-              {/* <div className="bg-white shadow rounded-xl border">
-                <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-                  <h3 className="font-medium text-slate-700">Cargar medios (por categoría)</h3>
-                  <p className="text-xs text-slate-500">Selecciona categoría, asigna un título opcional y sube múltiples archivos (arrastrar, pegar o elegir).</p>
-                </div>
-
-                
-                <div className="p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {mediaCats.map(([label, cat]) => (
-                    <div key={cat} className="border rounded-lg p-3">
-                      <div className="font-medium mb-2">{label}</div>
-                      <MediaUploader
-                        onUpload={(p) =>
-                          // admite fotos, videos y PDF indistintamente
-                          (p?.file?.type?.toLowerCase?.()?.includes('pdf') || p?.file?.name?.toLowerCase?.()?.endsWith('.pdf'))
-                            ? handleUploadDoc({ ...p, category: cat, label: p.title })
-                            : handleUploadPhoto({ ...p, category: cat, title: p.title })
-                        }
-                        accept={'image/*,video/*,application/pdf'}
-                        category={cat}
-                        mode={'mixed'}
-                      />
-                      {!canUpload && <p className="text-xs text-slate-500 mt-2">Guarda el vehículo para habilitar la subida.</p>}
-                    </div>
-                  ))}
-                </div>
-              </div> */}
               
-
               {/* Contenido actual */}
               {vehicle && (
                 <div className="bg-white shadow rounded-xl border">
@@ -1591,8 +1566,6 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                                 <span className="text-slate-500 text-xs"> ({fmtBytes(ph.bytes)})</span>
                               ) : null}
                               </div>
-
-
                               <button
                                 type="button"
                                 onClick={() => handleDeletePhoto(ph._id)}
@@ -1608,24 +1581,6 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                       <div className="font-medium mb-1">Documentos</div>
                       <ul className="list-disc pl-5 text-sm space-y-1">
                         {(vehicle.documents || []).map(d => (
-                          // OMITIR
-                          // <li key={d._id} className="break-words">
-                          //   {d.label} — <a href={d.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">ver</a>
-                          // {/* ADICION */}
-                          // <li key={d._id} className="break-words">
-                          //   <span className="font-medium">{d.categoryLabel || d.category}</span> — {d.label}
-                          //   {d.bytes ? (
-                          //     <span className="text-slate-500 text-xs"> ({fmtBytes(d.bytes)})</span>
-                          //   ) : null}
-                          //   {' — '}
-                          //   <a href={d.url} target="_blank" rel="noreferrer" className="text-blue-600 underline">ver</a>
-                          //   <button
-                          //     type="button"
-                          //     onClick={() => handleDeleteDoc(d._id)}
-                          //     className="ml-3 text-red-600 hover:underline"
-                          //   >Eliminar</button>
-                          // </li>
-
                           <li key={d._id} className="break-words">
                             {d.label}
                             {typeof d.bytes === 'number' && d.bytes > 0 && (
@@ -1648,11 +1603,6 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                               Eliminar
                             </button>
                           </li>
-
-
-
-
-
                         ))}
                       </ul>
                     </div>
@@ -1670,21 +1620,44 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                         <div className="text-sm">{vehicle.photos[viewerIndex]?.title}</div>
                       </div>
                     </div>
-                    <div className="relative">
-                      <button
-                        type="button" 
-                        className="absolute left-2 top-1/2 -translate-y-1/2 px-3 py-2 border rounded bg-white/90"
-                        onClick={prevViewer}
+
+                     <div className="relative">
+                      {/* Zonas clickables grandes (no solo el botón) */}
+                      <div
+                        className="absolute inset-y-0 left-0 w-1/5 z-50 cursor-pointer flex items-center"
+                        onClick={(e) => { e.stopPropagation(); prevViewer(); }}
+                        onMouseDown={(e) => e.preventDefault()}
                         aria-label="Anterior"
                       >
-                        ◀
-                      </button>
-                      <div className="w-full">
-                        {/* Mostrar imagen o video en el visor */}
+                        <button
+                          type="button"
+                          className="ml-2 px-3 py-2 border rounded bg-white/90 shadow"
+                          onClick={(e) => { e.stopPropagation(); prevViewer(); }}
+                        >
+                          ◀
+                        </button>
+                      </div>
+
+                      <div className="absolute inset-y-0 right-0 w-1/5 z-50 cursor-pointer flex items-center justify-end"
+                        onClick={(e) => { e.stopPropagation(); nextViewer(); }}
+                        onMouseDown={(e) => e.preventDefault()}
+                        aria-label="Siguiente"
+                      >
+                        <button
+                          type="button"
+                          className="mr-2 px-3 py-2 border rounded bg-white/90 shadow"
+                          onClick={(e) => { e.stopPropagation(); nextViewer(); }}
+                        >
+                          ▶
+                        </button>
+                      </div>
+
+                      {/* Contenedor del medio (media por debajo de las zonas laterales) */}
+                      <div className="w-full z-10">
                         {/^(mp4|mov|webm)$/i.test(vehicle.photos[viewerIndex]?.format || '')
                           ? (
                             <video
-                              className="max-h-[75vh] mx-auto rounded border"
+                              className="max-h-[75vh] mx-auto rounded border block"
                               controls
                               autoPlay
                             >
@@ -1694,20 +1667,15 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                             <img
                               src={vehicle.photos[viewerIndex]?.url}
                               alt={vehicle.photos[viewerIndex]?.title || ''}
-                              className="max-h-[75vh] mx-auto object-contain rounded border"
+                              className="max-h-[75vh] mx-auto object-contain rounded border block"
                             />
                           )
                         }
                       </div>
-                      <button
-                        type="button" 
-                        className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 border rounded bg-white/90"
-                        onClick={nextViewer}
-                        aria-label="Siguiente"
-                      >
-                        ▶
-                      </button>
                     </div>
+
+
+
                   </div>
                 </div>
               )}
@@ -1725,8 +1693,7 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
           {['INVENTARIO', 'ACCIDENTES', 'COMBUSTIBLE'].includes(tab) && (
             <div className="bg-white shadow rounded-xl border p-6 text-slate-600">
               Este módulo está en desarrollo.
-              {/* Auditoría */}
-              {id && <AuditBlock vehicleId={id} />}
+              
               <div className="flex justify-end mt-4">
                 {readOnly ? (
                   <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
@@ -1741,6 +1708,8 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                   </>
                 )}
               </div>
+              {/* Auditoría */}
+              {id && <AuditBlock vehicleId={id} />}
             </div>
           )}
 
@@ -1748,10 +1717,7 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
           {tab === 'TICKETS' && (
             <div className="bg-white shadow rounded-xl border p-6 text-slate-600">
               Este módulo está en desarrollo.
-              {/* Si más adelante decides montar <TicketsBlock />:
-                 <TicketsBlock vehicleId={id} />
-              */}
-              {id && <AuditBlock vehicleId={id} />}
+              
               <div className="flex justify-end mt-4">
                 {readOnly ? (
                   <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
@@ -1766,6 +1732,10 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                   </>
                 )}
               </div>
+              {/* Si más adelante decides montar <TicketsBlock />:
+                 <TicketsBlock vehicleId={id} />
+              */}
+              {id && <AuditBlock vehicleId={id} />}
             </div>
           )}
         {/* </fieldset> */}
