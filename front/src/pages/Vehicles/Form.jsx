@@ -75,12 +75,63 @@ function naturalSortBranches(list) {
   })
 }
 
-function normalizePdfUrl(url, format) {
-  if (!url) return url;
-  const isPdf = String(format || '').toLowerCase() === 'pdf' || /\.pdf(\?|$)/i.test(url);
-  if (!isPdf) return url;
-  return url.replace('/upload/', '/upload/fl_attachment/'); // fuerza Content-Disposition
+// function normalizePdfUrl(url, format) {
+//   if (!url) return url;
+//   const isPdf = String(format || '').toLowerCase() === 'pdf' || /\.pdf(\?|$)/i.test(url);
+//   if (!isPdf) return url;
+//   return url.replace('/upload/', '/upload/fl_attachment/'); // fuerza Content-Disposition
+// }
+
+// PDFs: usa la URL tal cual viene de Cloudinary (evita transformaciones como fl_attachment
+// que requieren firma si tu cuenta tiene "Strict Transformations" activado).
+function normalizePdfUrl(u /*, format */) {
+//   if (!url) return '#';
+//   // Si por alguna razón guardaste URLs con fl_attachment, límpialas:
+//   // - forma con directorio de transformación: /raw/upload/fl_attachment/v...
+//   // - forma con query ?fl_attachment
+//   try {
+//     const u = new URL(url);
+//     // elimina query "fl_attachment" si existe
+//     u.searchParams.delete('fl_attachment');
+
+//     // si el path incluye "/raw/upload/fl_attachment/", quítalo
+//     u.pathname = u.pathname.replace('/raw/upload/fl_attachment/', '/raw/upload/');
+//     return u.toString();
+//   } catch {
+//     // fallback: quitar patrón por string
+//     return url.replace('/raw/upload/fl_attachment/', '/raw/upload/');
+//   }
+// }
+/// cambio 10/11 23:5?
+// if (!url) return '';
+//   try {
+//     const u = new URL(url);
+//     // limpia fl_attachment de la "ruta" (no es query)
+//     u.pathname = u.pathname.replace('/fl_attachment', '');
+//     // si accidentalmente quedó como /image/upload/, lo pasamos a /raw/upload/
+//     u.pathname = u.pathname.replace('/image/upload/', '/raw/upload/');
+//     return u.toString();
+//   } catch {
+//     return url;
+//   }
+// }
+
+
+  try {
+    const url = new URL(u);
+    // Si alguien metió fl_attachment, lo quitamos:
+    const parts = url.pathname.split('/');
+    const sinFlags = parts.filter(p => !p.startsWith('fl_')).join('/');
+    url.pathname = sinFlags;
+    return url.toString();
+  } catch {
+    return u;
+  }
 }
+
+
+//fin // cambio 10/11 23:5?
+
 
 function UnsavedChangesGuard({ isDirty }) {
   useEffect(() => {
@@ -1581,7 +1632,8 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                               <span className="text-slate-500"> ({fmtBytes(d.bytes)})</span>
                             )}{' '}
                             — <a
-                                  href={normalizePdfUrl(d.url, d.format)}
+                                  // href={normalizePdfUrl(d.url, d.format)}
+                                  href={normalizePdfUrl(d.url)}
                                   target="_blank"
                                   rel="noreferrer"
                                   className="text-blue-600 underline"
@@ -1612,7 +1664,7 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
               {viewerOpen && vehicle?.photos?.length > 0 && (
                 <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center" ref={viewerRef}>
                   <div className="bg-white rounded-lg max-w-5xl w-full mx-4 p-3 relative">
-                    <button className="absolute top-2 right-2 text-slate-700" onClick={closeViewer}>✕</button>
+                    <button type="button" className="absolute top-2 right-2 text-slate-700" onClick={closeViewer}>✕</button>
                     <div className="w-full flex items-center justify-between my-2">
                       <div className="flex-1 flex justify-center">
                         <div className="text-sm">{vehicle.photos[viewerIndex]?.title}</div>
@@ -1620,6 +1672,7 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                     </div>
                     <div className="relative">
                       <button
+                        type="button" 
                         className="absolute left-2 top-1/2 -translate-y-1/2 px-3 py-2 border rounded bg-white/90"
                         onClick={prevViewer}
                         aria-label="Anterior"
@@ -1647,6 +1700,7 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                         }
                       </div>
                       <button
+                        type="button" 
                         className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 border rounded bg-white/90"
                         onClick={nextViewer}
                         aria-label="Siguiente"
@@ -1657,13 +1711,13 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                   </div>
                 </div>
               )}
-
-              {/* Auditoría */}
-              {id && <AuditBlock vehicleId={id} />}
-
+             
               <div className="flex justify-end">
                 <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
               </div>
+
+             {/* Auditoría */}
+              {id && <AuditBlock vehicleId={id} />}
             </div>
           )}
 

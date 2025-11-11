@@ -1612,19 +1612,19 @@ function normalizeLegalDates(body = {}) {
 
   // SOAP
   body.legal.soap.validFrom = normDate(body.legal.soap.validFrom);
-  body.legal.soap.validTo   = normDate(body.legal.soap.validTo);
+  body.legal.soap.validTo = normDate(body.legal.soap.validTo);
 
   // SEGURO
   body.legal.insurance.validFrom = normDate(body.legal.insurance.validFrom);
-  body.legal.insurance.validTo   = normDate(body.legal.insurance.validTo);
+  body.legal.insurance.validTo = normDate(body.legal.insurance.validTo);
 
   // REVISIÓN TÉCNICA
   body.legal.technicalReview.reviewedAt = normDate(body.legal.technicalReview.reviewedAt);
-  body.legal.technicalReview.validTo    = normDate(body.legal.technicalReview.validTo);
+  body.legal.technicalReview.validTo = normDate(body.legal.technicalReview.validTo);
 
   // PERMISO DE CIRCULACIÓN
   body.legal.circulationPermit.reviewedAt = normDate(body.legal.circulationPermit.reviewedAt);
-  body.legal.circulationPermit.validTo    = normDate(body.legal.circulationPermit.validTo);
+  body.legal.circulationPermit.validTo = normDate(body.legal.circulationPermit.validTo);
 
   // TARJETA DE COMBUSTIBLE
   body.legal.fuelCard.validTo = normDate(body.legal.fuelCard.validTo);
@@ -1935,7 +1935,7 @@ export async function startSupport(req, res) {
 //       await target.save();
 //     }
 //   }
-  
+
 //   auditPush(v, 'SUPPORT_FINISH', {
 //     // detail: `${fromCode} → ${toCode}`,
 //     // detail: `${fromCode} → ${toCode} — tramo=${tramoHuman}, total=${totalHuman}`,  
@@ -1973,7 +1973,7 @@ export async function finishSupport(req, res) {
   const tramoHuman = humanizeDuration(startedAt, now);
 
   // Restaurar apoyador
-  v.support.active  = false;
+  v.support.active = false;
   v.support.endedAt = now;
   v.status = 'ACTIVE';
   // NO tocar internalCode por apoyo:
@@ -2003,7 +2003,7 @@ export async function finishSupport(req, res) {
 
   // Flecha inversa para auditoría
   const fromCode = v.support?.replacementCode || (target?.internalCode ?? target?.plate ?? 'OBJETIVO');
-  const toCode   = v.support?.originalInternalCode || v.internalCode;
+  const toCode = v.support?.originalInternalCode || v.internalCode;
 
   auditPush(
     v,
@@ -2123,7 +2123,7 @@ export async function finishSupport(req, res) {
 // }
 
 // ====================== MEDIA: FOTOS ======================
-  // omitir
+// omitir
 export async function addVehiclePhoto(req, res) {
   try {
     // omitir //
@@ -2161,9 +2161,9 @@ export async function addVehiclePhoto(req, res) {
       bytes,
       format,
       resourceType;
-      
-      //modificacion
-      const mimetype = file.mimetype;
+
+    //modificacion
+    const mimetype = file.mimetype;
 
     // multer-storage-cloudinary → file.path https y con filename/public_id
     // omitir ///
@@ -2204,93 +2204,125 @@ export async function addVehiclePhoto(req, res) {
       //Adcion
       const name = file.originalname || file.name || '';
       const preIsPdf = (mimetype?.toLowerCase().includes('pdf') || /\.pdf$/i.test(name));
-      
-      const opts = {
-        folder: `${folder}/vehicles/${id}/photos`,
-        // resource_type: 'auto',
-         resource_type: preIsPdf ? 'raw' : 'auto',
-      };
+
+      //anterior
+      //   const opts = {
+      //     folder: `${folder}/vehicles/${id}/photos`,
+      //     // resource_type: 'auto',
+      //     resource_type: preIsPdf ? 'raw' : 'auto',
+      //   };
 
 
-      const up = await cloud.uploader.upload(file.path, opts);
+      //   const up = await cloud.uploader.upload(file.path, opts);
+      //   url = up.secure_url;
+      //   publicId = up.public_id;
+      //   bytes = Number(bytesRaw || up.bytes || 0);
+      //   format = up.format;
+      //   resourceType = up.resource_type;
+      // }
+
+      //cierre anterior
+
+      //Adicion
+      const up = await cloud.uploader.upload(file.path, {
+        folder: `${folder}/vehicles/${id}/documents`,
+        resource_type: 'raw',                // 👈 antes 'auto'
+        //cambio 10/11 23:4?
+        type: 'upload',            // 👈 forzar público
+        access_mode: 'public',     // 👈 forzar público
+        use_filename: true,
+        unique_filename: true,
+        overwrite: false,
+        //fin //cambio 10/11 23:4?
+      });
       url = up.secure_url;
       publicId = up.public_id;
       bytes = Number(bytesRaw || up.bytes || 0);
       format = up.format;
       resourceType = up.resource_type;
+
     }
+
+
+    //fin adicion
 
     // Si realmente es PDF/RAW, lo redirigimos a documentos
     //omitir//
-//     if (resourceType === 'raw' || isPdf(format, mimetype)) {
-//       const uniformLabel = baseLabel
-//         ? `${cat} — ${U(baseLabel)} — ${seq}`
-//         : `${cat} — ${seq}`;
-//       v.documents.push({
-//         category: cat,
-//         label: uniformLabel,
-//         url,
-//         publicId,
-//         bytes,
-//         format,
-//         createdAt: new Date(),
-//       });
-//       auditPush(
-//         v,
-//         'MEDIA_ADD',
-//         { type: 'DOCUMENT', category: cat, label: uniformLabel, url },
-//         req.user?.email || req.user?.id
-//       );
-//       await v.save();
-//       return res
-//         .status(201)
-//         .json({ ok: true, redirected: 'document', document: v.documents.at(-1) });
-//     }
+    //     if (resourceType === 'raw' || isPdf(format, mimetype)) {
+    //       const uniformLabel = baseLabel
+    //         ? `${cat} — ${U(baseLabel)} — ${seq}`
+    //         : `${cat} — ${seq}`;
+    //       v.documents.push({
+    //         category: cat,
+    //         label: uniformLabel,
+    //         url,
+    //         publicId,
+    //         bytes,
+    //         format,
+    //         createdAt: new Date(),
+    //       });
+    //       auditPush(
+    //         v,
+    //         'MEDIA_ADD',
+    //         { type: 'DOCUMENT', category: cat, label: uniformLabel, url },
+    //         req.user?.email || req.user?.id
+    //       );
+    //       await v.save();
+    //       return res
+    //         .status(201)
+    //         .json({ ok: true, redirected: 'document', document: v.documents.at(-1) });
+    //     }
 
-//     const uniformTitle = baseLabel
-//       ? `${cat} — ${U(baseLabel)} — ${seq}`
-//       : `${cat} — ${seq}`;
+    //     const uniformTitle = baseLabel
+    //       ? `${cat} — ${U(baseLabel)} — ${seq}`
+    //       : `${cat} — ${seq}`;
 
-//     v.photos.push({
-//       category: cat,
-//       title: uniformTitle,
-//       url,
-//       publicId,
-//       bytes,
-//       format,
-//       createdAt: new Date(),
-//     });
+    //     v.photos.push({
+    //       category: cat,
+    //       title: uniformTitle,
+    //       url,
+    //       publicId,
+    //       bytes,
+    //       format,
+    //       createdAt: new Date(),
+    //     });
 
-//     auditPush(
-//       v,
-//       'MEDIA_ADD',
-//       {
-//         type: resourceType === 'video' ? 'VIDEO' : 'PHOTO',
-//         category: cat,
-//         title: uniformTitle,
-//         url,
-//       },
-//       req.user?.email || req.user?.id
-//     );
-//     await v.save();
+    //     auditPush(
+    //       v,
+    //       'MEDIA_ADD',
+    //       {
+    //         type: resourceType === 'video' ? 'VIDEO' : 'PHOTO',
+    //         category: cat,
+    //         title: uniformTitle,
+    //         url,
+    //       },
+    //       req.user?.email || req.user?.id
+    //     );
+    //     await v.save();
 
-//     res
-//       .status(201)
-//       .json({ ok: true, photo: v.photos.at(-1), isVideo: resourceType === 'video' });
-//   } catch (err) {
-//     console.error('[addVehiclePhoto] ❌', err);
-//     res.status(500).json({ message: 'Error subiendo foto', error: err.message });
-//   }
-// }
+    //     res
+    //       .status(201)
+    //       .json({ ok: true, photo: v.photos.at(-1), isVideo: resourceType === 'video' });
+    //   } catch (err) {
+    //     console.error('[addVehiclePhoto] ❌', err);
+    //     res.status(500).json({ message: 'Error subiendo foto', error: err.message });
+    //   }
+    // }
 
-/// adicion ///
+    /// adicion ///
     // Si es PDF → a documentos, y normalizar URL para inline
     if (resourceType === 'raw' || isPdf(format, mimetype)) {
       // Fuerza extensión .pdf si falta
-      const pdfUrl = url.includes('.pdf') ? url : `${url}.pdf`;
+      // const pdfUrl = url.includes('.pdf') ? url : `${url}.pdf`;
+      const pdfUrl = url; // up.secure_url ya apunta a /raw/upload/..../file.pdf
 
-      const uniformLabel = baseLabel
-        ? `${catLabel} — ${U(baseLabel)} — ${seq}`
+
+      // const uniformLabel = baseLabel
+      //   ? `${catLabel} — ${U(baseLabel)} — ${seq}`
+      //   : `${catLabel} — ${seq}`;
+      const seq = nextSeq(v.documents, cat);
+      const uniformLabel = lbl
+        ? `${catLabel} — ${U(lbl)} — ${seq}`
         : `${catLabel} — ${seq}`;
 
       v.documents.push({
@@ -2521,7 +2553,16 @@ export async function addVehicleDocument(req, res) {
       const folder = process.env.CLOUDINARY_FOLDER || 'fleetcore';
       const up = await cloud.uploader.upload(file.path, {
         folder: `${folder}/vehicles/${id}/documents`,
-        resource_type: 'auto',
+        // resource_type: 'auto',
+         //cambio 10/11 23:4?
+        resource_type: 'raw',
+        type: 'upload',            // 👈 forzar público
+        access_mode: 'public',     // 👈 forzar público
+        use_filename: true,
+        unique_filename: true,
+        overwrite: false,
+        //fin //cambio 10/11 23:4?
+
       });
       url = up.secure_url;
       publicId = up.public_id;
