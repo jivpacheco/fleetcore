@@ -85,36 +85,36 @@ function naturalSortBranches(list) {
 // PDFs: usa la URL tal cual viene de Cloudinary (evita transformaciones como fl_attachment
 // que requieren firma si tu cuenta tiene "Strict Transformations" activado).
 function normalizePdfUrl(u /*, format */) {
-//   if (!url) return '#';
-//   // Si por alguna razón guardaste URLs con fl_attachment, límpialas:
-//   // - forma con directorio de transformación: /raw/upload/fl_attachment/v...
-//   // - forma con query ?fl_attachment
-//   try {
-//     const u = new URL(url);
-//     // elimina query "fl_attachment" si existe
-//     u.searchParams.delete('fl_attachment');
+  //   if (!url) return '#';
+  //   // Si por alguna razón guardaste URLs con fl_attachment, límpialas:
+  //   // - forma con directorio de transformación: /raw/upload/fl_attachment/v...
+  //   // - forma con query ?fl_attachment
+  //   try {
+  //     const u = new URL(url);
+  //     // elimina query "fl_attachment" si existe
+  //     u.searchParams.delete('fl_attachment');
 
-//     // si el path incluye "/raw/upload/fl_attachment/", quítalo
-//     u.pathname = u.pathname.replace('/raw/upload/fl_attachment/', '/raw/upload/');
-//     return u.toString();
-//   } catch {
-//     // fallback: quitar patrón por string
-//     return url.replace('/raw/upload/fl_attachment/', '/raw/upload/');
-//   }
-// }
-/// cambio 10/11 23:5?
-// if (!url) return '';
-//   try {
-//     const u = new URL(url);
-//     // limpia fl_attachment de la "ruta" (no es query)
-//     u.pathname = u.pathname.replace('/fl_attachment', '');
-//     // si accidentalmente quedó como /image/upload/, lo pasamos a /raw/upload/
-//     u.pathname = u.pathname.replace('/image/upload/', '/raw/upload/');
-//     return u.toString();
-//   } catch {
-//     return url;
-//   }
-// }
+  //     // si el path incluye "/raw/upload/fl_attachment/", quítalo
+  //     u.pathname = u.pathname.replace('/raw/upload/fl_attachment/', '/raw/upload/');
+  //     return u.toString();
+  //   } catch {
+  //     // fallback: quitar patrón por string
+  //     return url.replace('/raw/upload/fl_attachment/', '/raw/upload/');
+  //   }
+  // }
+  /// cambio 10/11 23:5?
+  // if (!url) return '';
+  //   try {
+  //     const u = new URL(url);
+  //     // limpia fl_attachment de la "ruta" (no es query)
+  //     u.pathname = u.pathname.replace('/fl_attachment', '');
+  //     // si accidentalmente quedó como /image/upload/, lo pasamos a /raw/upload/
+  //     u.pathname = u.pathname.replace('/image/upload/', '/raw/upload/');
+  //     return u.toString();
+  //   } catch {
+  //     return url;
+  //   }
+  // }
 
 
   try {
@@ -309,187 +309,187 @@ export default function VehiclesForm() {
   // =============== Cargador Universal =================
 
   function UnifiedMediaUploader({ canUpload, mediaCats, onUploadPhoto, onUploadDoc }) {
-  const [category, setCategory] = useState(mediaCats?.[0]?.[1] || '');
-  const [title, setTitle] = useState('');
-  const [files, setFiles] = useState([]);
-  const dropRef = useRef(null);
-  // const [category, setCategory] = React.useState(mediaCats?.[0]?.[1] || '');
-  // const [title, setTitle] = React.useState('');
-  // const [files, setFiles] = React.useState([]);
-  // const dropRef = React.useRef(null);
+    const [category, setCategory] = useState(mediaCats?.[0]?.[1] || '');
+    const [title, setTitle] = useState('');
+    const [files, setFiles] = useState([]);
+    const dropRef = useRef(null);
+    // const [category, setCategory] = React.useState(mediaCats?.[0]?.[1] || '');
+    // const [title, setTitle] = React.useState('');
+    // const [files, setFiles] = React.useState([]);
+    // const dropRef = React.useRef(null);
 
-  // Arrastrar/soltar
-  const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
-  const onDrop = (e) => {
-    prevent(e);
-    if (!canUpload) return;
-    const list = Array.from(e.dataTransfer?.files || []);
-    if (list.length) setFiles(prev => [...prev, ...list]);
-  };
-
-  // Pegar (Ctrl+V imágenes desde clipboard)
-  useEffect(() => {
-    const onPaste = (e) => {
+    // Arrastrar/soltar
+    const prevent = (e) => { e.preventDefault(); e.stopPropagation(); };
+    const onDrop = (e) => {
+      prevent(e);
       if (!canUpload) return;
-      const items = e.clipboardData?.items || [];
-      const pasted = [];
-      for (const it of items) {
-        if (it.kind === 'file') {
-          const f = it.getAsFile();
-          if (f) pasted.push(f);
-        }
-      }
-      if (pasted.length) setFiles(prev => [...prev, ...pasted]);
+      const list = Array.from(e.dataTransfer?.files || []);
+      if (list.length) setFiles(prev => [...prev, ...list]);
     };
-    const el = dropRef.current || window;
-    el.addEventListener('paste', onPaste);
-    return () => el.removeEventListener('paste', onPaste);
-  }, [canUpload]);
 
-  const onInputFiles = (e) => {
-    const list = Array.from(e.target.files || []);
-    if (list.length) setFiles(prev => [...prev, ...list]);
-    e.target.value = ''; // reset input
-  };
-
-  const removeAt = (idx) => setFiles(prev => prev.filter((_, i) => i !== idx));
-
-  const doUpload = async () => {
-    if (!canUpload) return alert('Guarda el vehículo antes de subir.');
-    if (!category) return alert('Selecciona una categoría.');
-    if (!files.length) return alert('Selecciona al menos un archivo.');
-
-    //adicion
-
-    const pair = (mediaCats || []).find(([label, cat]) => cat === category);
-    const displayCategory = (pair?.[0] || category).toUpperCase(); // ← NOMBRE VISIBLE EN MAYÚSCULAS
-
-
-    for (const file of files) {
-      const isPdf = (file.type?.toLowerCase?.()?.includes('pdf') || file.name?.toLowerCase?.()?.endsWith('.pdf'));
-      // const payload = { file, category, title: title?.trim() || file.name };
-
-      //adicion//
-      const payload = { 
-      file, 
-      category,               // code (p.ej. 'MOTOR')
-      categoryLabel: displayCategory,  // 'MOTOR' pero desde el label visible en mayúsculas
-      title: title?.trim() || file.name ,
-      bytes: file.size || 0,    // peso del archivo
-      };
-
-      try {
-        if (isPdf) {
-          await onUploadDoc({ ...payload, label: payload.title }); // mantiene tu API actual
-        } else {
-          await onUploadPhoto(payload);
+    // Pegar (Ctrl+V imágenes desde clipboard)
+    useEffect(() => {
+      const onPaste = (e) => {
+        if (!canUpload) return;
+        const items = e.clipboardData?.items || [];
+        const pasted = [];
+        for (const it of items) {
+          if (it.kind === 'file') {
+            const f = it.getAsFile();
+            if (f) pasted.push(f);
+          }
         }
-      } catch (err) {
-        console.error('Upload error:', err);
-        alert('No se pudo subir uno de los archivos.');
+        if (pasted.length) setFiles(prev => [...prev, ...pasted]);
+      };
+      const el = dropRef.current || window;
+      el.addEventListener('paste', onPaste);
+      return () => el.removeEventListener('paste', onPaste);
+    }, [canUpload]);
+
+    const onInputFiles = (e) => {
+      const list = Array.from(e.target.files || []);
+      if (list.length) setFiles(prev => [...prev, ...list]);
+      e.target.value = ''; // reset input
+    };
+
+    const removeAt = (idx) => setFiles(prev => prev.filter((_, i) => i !== idx));
+
+    const doUpload = async () => {
+      if (!canUpload) return alert('Guarda el vehículo antes de subir.');
+      if (!category) return alert('Selecciona una categoría.');
+      if (!files.length) return alert('Selecciona al menos un archivo.');
+
+      //adicion
+
+      const pair = (mediaCats || []).find(([label, cat]) => cat === category);
+      const displayCategory = (pair?.[0] || category).toUpperCase(); // ← NOMBRE VISIBLE EN MAYÚSCULAS
+
+
+      for (const file of files) {
+        const isPdf = (file.type?.toLowerCase?.()?.includes('pdf') || file.name?.toLowerCase?.()?.endsWith('.pdf'));
+        // const payload = { file, category, title: title?.trim() || file.name };
+
+        //adicion//
+        const payload = {
+          file,
+          category,               // code (p.ej. 'MOTOR')
+          categoryLabel: displayCategory,  // 'MOTOR' pero desde el label visible en mayúsculas
+          title: title?.trim() || file.name,
+          bytes: file.size || 0,    // peso del archivo
+        };
+
+        try {
+          if (isPdf) {
+            await onUploadDoc({ ...payload, label: payload.title }); // mantiene tu API actual
+          } else {
+            await onUploadPhoto(payload);
+          }
+        } catch (err) {
+          console.error('Upload error:', err);
+          alert('No se pudo subir uno de los archivos.');
+        }
       }
-    }
 
-    // Limpieza tras subir
-    setFiles([]);
-    // conservamos la categoría elegida; limpiamos título
-    setTitle('');
-  };
+      // Limpieza tras subir
+      setFiles([]);
+      // conservamos la categoría elegida; limpiamos título
+      setTitle('');
+    };
 
-  return (
-    <div className="p-4 space-y-4">
-      {/* 1) Categorías (radio) */}
-      <div>
-        <div className="text-sm font-medium text-slate-700 mb-2">Categoría</div>
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-y-2">
-          {mediaCats.map(([label, cat]) => (
-            <label key={cat} className="inline-flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="media-cat"
-                value={cat}
-                checked={category === cat}
-                onChange={() => setCategory(cat)}
-                disabled={!canUpload}
-              />
-              <span className="text-sm">{label}</span>
-            </label>
-          ))}
+    return (
+      <div className="p-4 space-y-4">
+        {/* 1) Categorías (radio) */}
+        <div>
+          <div className="text-sm font-medium text-slate-700 mb-2">Categoría</div>
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-y-2">
+            {mediaCats.map(([label, cat]) => (
+              <label key={cat} className="inline-flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="media-cat"
+                  value={cat}
+                  checked={category === cat}
+                  onChange={() => setCategory(cat)}
+                  disabled={!canUpload}
+                />
+                <span className="text-sm">{label}</span>
+              </label>
+            ))}
+          </div>
+          {!canUpload && (
+            <p className="text-xs text-slate-500 mt-1">Guarda el vehículo para habilitar la subida.</p>
+          )}
         </div>
-        {!canUpload && (
-          <p className="text-xs text-slate-500 mt-1">Guarda el vehículo para habilitar la subida.</p>
-        )}
-      </div>
 
-      {/* 2) Título */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Título</label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full border p-2 rounded"
-          placeholder="Frente, lateral, número de serie, etc."
-          disabled={!canUpload}
-        />
-      </div>
-
-      {/* 3) Selección / Drag&Drop / Pegar */}
-      <div
-        ref={dropRef}
-        onDragEnter={prevent}
-        onDragOver={prevent}
-        onDrop={onDrop}
-        className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center ${canUpload ? 'bg-white' : 'bg-slate-50 opacity-60'}`}
-      >
-        <p className="text-sm">Arrastra y suelta aquí, o pega (Ctrl+V) imágenes.</p>
-        <p className="text-xs text-slate-500 mt-1">También puedes seleccionar archivos:</p>
-        <label className="mt-3 inline-block px-3 py-2 border rounded cursor-pointer hover:bg-slate-50">
-          Elegir archivos…
+        {/* 2) Título */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1">Título</label>
           <input
-            type="file"
-            className="hidden"
-            multiple
-            accept="image/*,video/*,application/pdf"
-            onChange={onInputFiles}
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full border p-2 rounded"
+            placeholder="Frente, lateral, número de serie, etc."
             disabled={!canUpload}
           />
-        </label>
+        </div>
 
-        {/* Lista de archivos seleccionados */}
-        {files.length > 0 && (
-          <div className="w-full mt-4">
-            <div className="text-sm font-medium mb-2">A subir ({files.length}):</div>
-            <ul className="text-sm space-y-1 max-h-40 overflow-y-auto">
-              {files.map((f, i) => (
-                <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-2">
-                  <span className="truncate">{f.name}</span>
-                  <button
-                    type="button"
-                    className="text-red-600 hover:underline text-xs"
-                    onClick={() => removeAt(i)}
-                  >Quitar</button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* 4) Botón subir */}
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={doUpload}
-          disabled={!canUpload || !category || files.length === 0}
-          className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+        {/* 3) Selección / Drag&Drop / Pegar */}
+        <div
+          ref={dropRef}
+          onDragEnter={prevent}
+          onDragOver={prevent}
+          onDrop={onDrop}
+          className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center ${canUpload ? 'bg-white' : 'bg-slate-50 opacity-60'}`}
         >
-          Subir
-        </button>
+          <p className="text-sm">Arrastra y suelta aquí, o pega (Ctrl+V) imágenes.</p>
+          <p className="text-xs text-slate-500 mt-1">También puedes seleccionar archivos:</p>
+          <label className="mt-3 inline-block px-3 py-2 border rounded cursor-pointer hover:bg-slate-50">
+            Elegir archivos…
+            <input
+              type="file"
+              className="hidden"
+              multiple
+              accept="image/*,video/*,application/pdf"
+              onChange={onInputFiles}
+              disabled={!canUpload}
+            />
+          </label>
+
+          {/* Lista de archivos seleccionados */}
+          {files.length > 0 && (
+            <div className="w-full mt-4">
+              <div className="text-sm font-medium mb-2">A subir ({files.length}):</div>
+              <ul className="text-sm space-y-1 max-h-40 overflow-y-auto">
+                {files.map((f, i) => (
+                  <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-2">
+                    <span className="truncate">{f.name}</span>
+                    <button
+                      type="button"
+                      className="text-red-600 hover:underline text-xs"
+                      onClick={() => removeAt(i)}
+                    >Quitar</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* 4) Botón subir */}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={doUpload}
+            disabled={!canUpload || !category || files.length === 0}
+            className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+          >
+            Subir
+          </button>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   // Para detectar cambios
   const [initialForm, setInitialForm] = useState(null)
@@ -501,35 +501,45 @@ export default function VehiclesForm() {
     'max-w-6xl mx-auto h-[calc(100vh-140px)] overflow-y-auto px-1 sm:px-0'
   const contentWrap = 'max-w-6xl mx-auto'
   const scrollBox = 'h-[calc(100vh-140px)] overflow-y-auto px-3'
-  
+
+  // version para el ancho completo
+
+  const contentWrapBase = 'mx-auto';
+  const scrollContainerBase = 'h-[calc(100vh-140px)] overflow-y-auto px-1 sm:px-0';
+  const scrollBoxBase = 'h-[calc(100vh-140px)] overflow-y-auto px-3';
+
+  const contentWrapFull = `${contentWrapBase} w-full`;
+  const scrollContainerFull = `${scrollContainerBase} w-full`;
+  const scrollBoxFull = `${scrollBoxBase} w-full`;
+
 
   //============= Incluir Peso de Archivos ======================
 
   function prettyBytes(n = 0) {
-  if (!n || isNaN(n)) return '';
-  const kb = n / 1024;
-  if (kb < 1024) return `${Math.round(kb)} KB`;
-  const mb = kb / 1024;
-  return `${mb.toFixed(mb < 10 ? 1 : 0)} MB`;
-}
+    if (!n || isNaN(n)) return '';
+    const kb = n / 1024;
+    if (kb < 1024) return `${Math.round(kb)} KB`;
+    const mb = kb / 1024;
+    return `${mb.toFixed(mb < 10 ? 1 : 0)} MB`;
+  }
 
 
 
   /// ============= Manejo de pestañas ==========================
 
   // Cambiar pestaña + actualizar la URL
-function handleChangeTab(code) {
-  setTab(code);
-  setSearchParams({ tab: code }); // (si prefieres no apilar historial: setSearchParams({ tab: code }, { replace: true })
-}
+  function handleChangeTab(code) {
+    setTab(code);
+    setSearchParams({ tab: code }); // (si prefieres no apilar historial: setSearchParams({ tab: code }, { replace: true })
+  }
 
-// Ref al contenedor con scroll (tu form con `${scrollBox}`)
-const scrollRef = useRef(null);
+  // Ref al contenedor con scroll (tu form con `${scrollBox}`)
+  const scrollRef = useRef(null);
 
-// Al cambiar de pestaña, sube el scroll del contenedor
-useEffect(() => {
-  scrollRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' }); // 'smooth' si quieres animación
-}, [tab]);
+  // Al cambiar de pestaña, sube el scroll del contenedor
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' }); // 'smooth' si quieres animación
+  }, [tab]);
 
 
   // ===================== Cargar catálogos =====================
@@ -715,7 +725,7 @@ useEffect(() => {
       // Payload clonado
       const payload = structuredClone(form)
 
-            // === Conversión segura de fechas ===
+      // === Conversión segura de fechas ===
       const toDateOrNull = (v) => {
         if (!v) return null;
         if (v instanceof Date) return isNaN(v) ? null : v;
@@ -735,22 +745,22 @@ useEffect(() => {
 
       // SOAP
       payload.legal.soap.validFrom = toDateOrNull(form.legal.soap.validFrom);
-      payload.legal.soap.validTo   = toDateOrNull(form.legal.soap.validTo);
+      payload.legal.soap.validTo = toDateOrNull(form.legal.soap.validTo);
 
       // SEGURO
       payload.legal.insurance.validFrom = toDateOrNull(form.legal.insurance.validFrom);
-      payload.legal.insurance.validTo   = toDateOrNull(form.legal.insurance.validTo);
+      payload.legal.insurance.validTo = toDateOrNull(form.legal.insurance.validTo);
 
       // TARJETA COMBUSTIBLE
       payload.legal.fuelCard.validTo = toDateOrNull(form.legal.fuelCard.validTo);
 
       // REVISIÓN TÉCNICA
       payload.legal.technicalReview.reviewedAt = toDateOrNull(form.legal.technicalReview.reviewedAt);
-      payload.legal.technicalReview.validTo    = toDateOrNull(form.legal.technicalReview.validTo);
+      payload.legal.technicalReview.validTo = toDateOrNull(form.legal.technicalReview.validTo);
 
       // PERMISO CIRCULACIÓN
       payload.legal.circulationPermit.reviewedAt = toDateOrNull(form.legal.circulationPermit.reviewedAt);
-      payload.legal.circulationPermit.validTo    = toDateOrNull(form.legal.circulationPermit.validTo);
+      payload.legal.circulationPermit.validTo = toDateOrNull(form.legal.circulationPermit.validTo);
 
       // Uppercase inteligente (excepto branch y fechas)
       const up = (obj) => {
@@ -817,38 +827,38 @@ useEffect(() => {
   // }
 
   const handleUploadPhoto = async ({ file, category = 'BASIC', categoryLabel, title = '', bytes = 0 }) => {
-  if (!id) throw new Error('Guarda el vehículo antes de subir medios');
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('category', category);
-  if (categoryLabel) fd.append('categoryLabel', categoryLabel); // 👈 nombre visible
-  if (title) fd.append('title', title);
-  fd.append('bytes', String(bytes || 0));
-  //adicion 
-  // await api.post(`/api/v1/vehicles/${id}/photos`, fd);
-  await api.post(`/api/v1/vehicles/${id}/photos`, fd, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+    if (!id) throw new Error('Guarda el vehículo antes de subir medios');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('category', category);
+    if (categoryLabel) fd.append('categoryLabel', categoryLabel); // 👈 nombre visible
+    if (title) fd.append('title', title);
+    fd.append('bytes', String(bytes || 0));
+    //adicion 
+    // await api.post(`/api/v1/vehicles/${id}/photos`, fd);
+    await api.post(`/api/v1/vehicles/${id}/photos`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
 
-  await refresh();
-};
+    await refresh();
+  };
 
-const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label = '', bytes = 0 }) => {
-  if (!id) throw new Error('Guarda el vehículo antes de subir documentos');
-  const fd = new FormData();
-  fd.append('file', file);
-  fd.append('category', category);
-  if (categoryLabel) fd.append('categoryLabel', categoryLabel); // 👈 nombre visible
-  if (label) fd.append('label', label);
-  fd.append('bytes', String(bytes || 0));
-  //Adicion
-  // await api.post(`/api/v1/vehicles/${id}/documents`, fd);
-  await api.post(`/api/v1/vehicles/${id}/documents`, fd, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+  const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label = '', bytes = 0 }) => {
+    if (!id) throw new Error('Guarda el vehículo antes de subir documentos');
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('category', category);
+    if (categoryLabel) fd.append('categoryLabel', categoryLabel); // 👈 nombre visible
+    if (label) fd.append('label', label);
+    fd.append('bytes', String(bytes || 0));
+    //Adicion
+    // await api.post(`/api/v1/vehicles/${id}/documents`, fd);
+    await api.post(`/api/v1/vehicles/${id}/documents`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
 
-  await refresh();
-};
+    await refresh();
+  };
 
   const handleDeletePhoto = async (photoId) => {
     if (!confirm('¿Eliminar foto?')) return
@@ -906,7 +916,7 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
       setSupportActiveInfo(null)
       setSupportBranch(''); setSupportVehicles([]); setSupportTarget('')
       alert('Reemplazo finalizado')
-      navigate('/vehicles')  
+      navigate('/vehicles')
     } catch (e) {
       alert(e?.response?.data?.message || 'No se pudo finalizar el reemplazo')
     } finally {
@@ -939,7 +949,7 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
   }
 
   // ===================== Render =====================
-  
+
   if (loading) return <div className={`${contentWrap} bg-white shadow rounded p-4 mt-3`}>Cargando…</div>
 
   const TabButton = ({ code, label }) => (
@@ -969,12 +979,12 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
   ]
 
 
-    return (
+  return (
     <div className="flex flex-col h-full">
       {/* Guard global de cambios sin guardar */}
       <UnsavedChangesGuard isDirty={isDirty} />
 
-        <header className={`${contentWrap} mt-2 `}>
+      <header className={`${contentWrap} mt-2 `}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">
@@ -1002,516 +1012,517 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
       {error && <div className={`${contentWrap} px-3 py-2 bg-red-50 text-red-700 rounded text-sm mt-2`}>{error}</div>}
       {notice && <div className={`${contentWrap} px-3 py-2 bg-amber-50 text-amber-800 rounded text-sm mt-2`}>{notice}</div>}
 
-        {/* Contenedor con scroll propio, independiente del menú */}
+      {/* Contenedor con scroll propio, independiente del menú */}
       {/* <form onSubmit={handleSubmit} className={`${scrollContainerClass} my-3`}> */}
-      <form ref={scrollRef}  onSubmit={handleSubmit} className={`${contentWrap} ${scrollBox} my-3`}>
+      <form ref={scrollRef} onSubmit={handleSubmit} className={`${contentWrapFull} ${scrollBoxFull} my-3`}>
+        {/* <form ref={scrollRef} onSubmit={handleSubmit} className={`${contentWrap} ${scrollBox} my-3`}>*/}
         {/* <fieldset disabled={readOnly} className="space-y-4"> */}
 
-          {/* ====================== BASICO ====================== */}
-          {tab === 'BASICO' && (
-            <div className="space-y-4">
-              <div className="bg-white shadow rounded-xl border">
-                <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-                  <h3 className="font-medium text-slate-700">Información básica</h3>
-                </div>
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {[
-                    ['Placa / Patente', 'plate', 'ABC-123', 'text'],
-                    ['Código interno', 'internalCode', 'B-10', 'text'],
-                    ['Tipo de vehículo', 'type', 'CARRO BOMBA, CAMIÓN...', 'text'],
-                    ['Marca', 'brand', 'SCANIA', 'text'],
-                    ['Modelo', 'model', 'P340', 'text'],
-                  ].map(([label, key, ph, type]) => (
-                    <div key={key}>
-                      <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
+        {/* ====================== BASICO ====================== */}
+        <div className="mt-4 w-full">
+          <div className="max-w-[1200px] mx-auto w-full">
+
+            {tab === 'BASICO' && (
+              <div className="space-y-4 min-h-[60vh] w-full">
+
+                <div className="bg-white shadow rounded-xl border">
+                  <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+                    <h3 className="font-medium text-slate-700">Información básica</h3>
+                  </div>
+
+                  <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      ['Placa / Patente', 'plate', 'ABC-123', 'text'],
+                      ['Código interno', 'internalCode', 'B-10', 'text'],
+                      ['Tipo de vehículo', 'type', 'CARRO BOMBA, CAMIÓN...', 'text'],
+                      ['Marca', 'brand', 'SCANIA', 'text'],
+                      ['Modelo', 'model', 'P340', 'text'],
+                    ].map(([label, key, ph, type]) => (
+                      <div key={key}>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
+                        <input
+                          type={type}
+                          value={form[key]}
+                          onChange={(e) => update(key, e.target.value)}
+                          className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
+                          placeholder={ph}
+                          required
+                          disabled={readOnly || Boolean(supportActiveInfo)}
+                          readOnly={readOnly || Boolean(supportActiveInfo)}
+                        />
+                      </div>
+                    ))}
+
+                    {/* Año */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 mb-1">Año</label>
                       <input
-                        type={type}
-                        value={form[key]}
-                        onChange={(e) => update(key, e.target.value)}
+                        type="number"
+                        min={YEAR_MIN}
+                        max={YEAR_MAX}
+                        value={form.year}
+                        onChange={(e) => update('year', e.target.value)}
                         className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
-                        placeholder={ph}
+                        placeholder={String(currentYear)}
                         required
-                        disabled={readOnly || Boolean(supportActiveInfo)}  // ← bloquea si está en apoyo
-                        readOnly={readOnly || Boolean(supportActiveInfo)} 
-                        // disabled={readOnly}
-                        // readOnly={readOnly}
+                        disabled={readOnly}
+                        readOnly={readOnly}
+                      />
+                      <p className="text-xs text-slate-500 mt-1">Permitido: {YEAR_MIN}–{YEAR_MAX}</p>
+                    </div>
+
+                    {/* Color */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-600 mb-1">Color</label>
+                      <input
+                        type="text"
+                        value={form.color}
+                        onChange={(e) => update('color', e.target.value)}
+                        className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
+                        placeholder="ROJO"
+                        required
+                        disabled={readOnly}
+                        readOnly={readOnly}
                       />
                     </div>
-                  ))}
 
-                  {/* Año */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Año</label>
-                    <input
-                      type="number"
-                      min={YEAR_MIN}
-                      max={YEAR_MAX}
-                      value={form.year}
-                      onChange={(e) => update('year', e.target.value)}
-                      className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
-                      placeholder={String(currentYear)}
-                      required
-                      disabled={readOnly}
-                      readOnly={readOnly}
-                    />
-                    <p className="text-xs text-slate-500 mt-1">Permitido: {YEAR_MIN}–{YEAR_MAX}</p>
-                  </div>
+                    {/* Sucursal */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal</label>
+                      <select
+                        required
+                        value={form.branch}
+                        onChange={(e) => update('branch', e.target.value)}
+                        className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200 bg-white"
+                      >
+                        <option value="" disabled>Selecciona sucursal</option>
+                        {branches.map(b => (
+                          <option key={b._id} value={b._id}>
+                            {b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  {/* Color */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Color</label>
-                    <input
-                      type="text"
-                      value={form.color}
-                      onChange={(e) => update('color', e.target.value)}
-                      className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200"
-                      placeholder="ROJO"
-                      required
-                      disabled={readOnly}
-                      readOnly={readOnly}
-                    />
-                  </div>
-
-                  {/* Sucursal */}
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal</label>
-                    <select
-                      required
-                      value={form.branch}
-                      onChange={(e) => update('branch', e.target.value)}
-                      className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200 bg-white"
-                    >
-                      <option value="" disabled>Selecciona sucursal</option>
-                      {branches.map(b => (
-                        <option key={b._id} value={b._id}>
-                          {b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Estado */}
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Estado</label>
-                    <select
-                      required
-                      value={form.status}
-                      // disabled={readOnly || statusLoading}
-                      onChange={(e) => update('status', e.target.value)}
-                      className="w-full border p-2 rounded bg-white"
-                    >
-                      <option value="" disabled>Selecciona estado</option>
-                      {statusOptions.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                    {/* Estado */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-medium text-slate-600 mb-1">Estado</label>
+                      <select
+                        required
+                        value={form.status}
+                        onChange={(e) => update('status', e.target.value)}
+                        className="w-full border p-2 rounded bg-white"
+                      >
+                        <option value="" disabled>Selecciona estado</option>
+                        {statusOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-               {/* ====================== APOYO A OTRAS SUCURSALES ====================== */}
+                {/* ====================== APOYO A OTRAS SUCURSALES ====================== */}
+                
+                  <div className="bg-white shadow rounded-xl border">
+                    <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+                      <h3 className="font-medium text-slate-700">Servicios de Apoyo a otras Sucursales</h3>
+                    </div>
+                    <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal objetivo</label>
+                        <select
+                          value={supportBranch}
+                          onChange={(e) => { setSupportBranch(e.target.value); setSupportTarget(''); }}
+                          className="w-full border p-2 rounded bg-white"
+                          disabled={readOnly}
+                        >
+                          <option value="">— Selecciona sucursal —</option>
+                          {branches.map(b => (
+                            <option key={b._id} value={b._id}>
+                              {b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-slate-600 mb-1">Vehículo a reemplazar</label>
+                        <select
+                          value={supportTarget}
+                          onChange={(e) => setSupportTarget(e.target.value)}
+                          className="w-full border p-2 rounded bg-white"
+                          disabled={readOnly || !supportBranch}
+                        >
+                          <option value="">— Selecciona vehículo —</option>
+                          {supportVehicles.map(v => (
+                            <option key={v._id} value={v._id}>
+                              {(v.internalCode || v.plate || v._id)} — {v.brand} {v.model}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex gap-2">
+                        {supportActiveInfo ? (
+                          <button
+                            type="button"
+                            onClick={finishSupport}
+                            disabled={readOnly || supportBusy}
+                            className="px-3 py-2 bg-emerald-600 text-white rounded disabled:opacity-50"
+                          >
+                            {supportBusy ? 'Finalizando…' : 'Finalizar reemplazo'}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={startSupport}
+                            disabled={readOnly || supportBusy || !supportBranch || !supportTarget}
+                            className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+                          >
+                            {supportBusy ? 'Iniciando…' : 'Iniciar reemplazo'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
-              <div className="bg-white shadow rounded-xl border">
-              <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-                <h3 className="font-medium text-slate-700">Servicios de Apoyo a otras Sucursales</h3>
-              </div>
-              <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                <div>
-                  <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal objetivo</label>
-                  <select
-                    value={supportBranch}
-                    onChange={(e) => {setSupportBranch(e.target.value); setSupportTarget(''); }}
-                    className="w-full border p-2 rounded bg-white"
-                    disabled={readOnly}
-                  >
-                    <option value="">— Selecciona sucursal —</option>
-                    {branches.map(b => (
-                      <option key={b._id} value={b._id}>
-                        {b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-600 mb-1">Vehículo a reemplazar</label>
-                  <select
-                    value={supportTarget}
-                    onChange={(e) => setSupportTarget(e.target.value)}
-                    className="w-full border p-2 rounded bg-white"
-                    disabled={readOnly || !supportBranch}
-                  >
-                    <option value="">— Selecciona vehículo —</option>
-                    {supportVehicles.map(v => (
-                      <option key={v._id} value={v._id}>
-                        {(v.internalCode || v.plate || v._id)} — {v.brand} {v.model}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex gap-2">
-                  {supportActiveInfo ? (
-                    <button
-                      type="button"
-                      onClick={finishSupport}
-                      disabled={readOnly || supportBusy}
-                      className="px-3 py-2 bg-emerald-600 text-white rounded disabled:opacity-50"
-                    >
-                      {supportBusy ? 'Finalizando…' : 'Finalizar reemplazo'}
-                    </button>
+                    {/* Leyenda de reemplazo requerida */}
+                    {supportActiveInfo && (
+                      <div className="px-4 pb-4 text-sm">
+                        <span className="font-medium">EN Reemplazo del vehículo:</span>{' '}
+                        <span className="font-semibold">{supportActiveInfo.targetCode}</span>{' '}
+                        desde {fmtDateTimeCL(supportActiveInfo.from)}
+                      </div>
+                    )}
+                  </div>
+
+            
+
+                {/* Botonera (sin cambios) */}
+                <div className="flex justify-end gap-3 pb-4">
+                  {readOnly ? (
+                    <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={startSupport}
-                      disabled={readOnly || supportBusy || !supportBranch || !supportTarget}
-                      className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-                    >
-                      {supportBusy ? 'Iniciando…' : 'Iniciar reemplazo'}
-                    </button>
+                    <>
+                      <button type="button" onClick={handleCancel} className="px-3 py-2 border rounded">
+                        {isDirty ? 'Cancelar' : 'Volver'}
+                      </button>
+                      <button type="submit" disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded">
+                        {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
+                      </button>
+                    </>
                   )}
                 </div>
+
+                {id && <AuditBlock vehicleId={id} />}
               </div>
+            )}
 
-              {/* Leyenda de reemplazo requerida */}
-              {supportActiveInfo && (
-                <div className="px-4 pb-4 text-sm">
-                  <span className="font-medium">EN Reemplazo del vehículo:</span>{' '}
-                  <span className="font-semibold">{supportActiveInfo.targetCode}</span>{' '}
-                  desde {fmtDateTimeCL(supportActiveInfo.from)}
-                </div>
-              )}
-            </div>
-
-
-          
-
-              
-
-              {/* Botonera adaptativa Volver/Cancelar + Guardar */}
-              <div className="flex justify-end gap-3 pb-4">
-                {readOnly ? (
-                  <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
-                ) : (
-                  <>
-                    <button type="button" onClick={handleCancel} className="px-3 py-2 border rounded">
-                      {isDirty ? 'Cancelar' : 'Volver'}
-                    </button>
-                    <button type="submit" disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded">
-                      {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {/* Auditoría (mixta) */}
-              {id && <AuditBlock vehicleId={id} />}
-              
-            </div>
-          )}
-
-          {/* ====================== TECNICO ====================== */}
-          {tab === 'TECNICO' && (
-            <div className="space-y-4">
-              {/* Motor */}
-              <div className="bg-white shadow rounded-xl border">
-                <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-                  <h3 className="font-medium text-slate-700">Motor</h3>
-                </div>
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {[
-                    ['VIN', 'vin', ''],
-                    ['N° Motor', 'engineNumber', ''],
-                    ['Marca Motor', 'engineBrand', ''],
-                    ['Modelo Motor', 'engineModel', ''],
-                    ['Combustible', 'fuelType', 'DIESEL/GASOLINA'],
-                  ].map(([label, key, ph]) => (
-                    <div key={key}>
-                      <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
-                      <input
-                        value={form[key]}
-                        onChange={(e) => update(key, e.target.value)}
-                        className="w-full border p-2 rounded"
-                        placeholder={ph}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Transmisión */}
-              <div className="bg-white shadow rounded-xl border">
-                <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-                  <h3 className="font-medium text-slate-700">Transmisión</h3>
-                </div>
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-5 gap-4">
-                  {[
-                    ['Tipo', 'transmission.type', 'MANUAL/AUTOMATIC/AMT/CVT'],
-                    ['Marca', 'transmission.brand', 'ALLISON/ZF/EATON'],
-                    ['Modelo', 'transmission.model', '4500 RDS'],
-                    ['Serie', 'transmission.serial', ''],
-                    ['Marchas', 'transmission.gears', '6', 'text'],
-                  ].map(([label, path, ph, type]) => {
-                    const val = path.split('.').reduce((acc, k) => acc?.[k], form) ?? ''
-                    return (
-                      <div key={path}>
-                        <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
-                        <input
-                          type={type || 'text'}
-                          value={val}
-                          onChange={(e) => updateNested(path, e.target.value)}
-                          className="w-full border p-2 rounded"
-                          placeholder={ph}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Medidores */}
-              <div className="bg-white shadow rounded-xl border">
-                <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-                  <h3 className="font-medium text-slate-700">Medidores</h3>
-                </div>
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-5 gap-4">
-                  {[
-                    ['Odómetro (km)', 'meters.odometerKm', '0'],
-                    ['Horómetro motor (h)', 'meters.engineHours', '0'],
-                    ['Horas escala (h)', 'meters.ladderHours', '0'],
-                    ['Horas generador (h)', 'meters.generatorHours', '0'],
-                    ['Horas cuerpo bomba (h)', 'meters.pumpHours', '0'],
-                  ].map(([label, path, ph]) => {
-                    const val = path.split('.').reduce((acc, k) => acc?.[k], form) ?? ''
-                    return (
-                      <div key={path}>
-                        <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
-                        <input
-                          value={val}
-                          onChange={(e) => updateNested(path, e.target.value)}
-                          className="w-full border p-2 rounded"
-                          placeholder={ph}
-                        />
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Equipos */}
-              {[
-                ['Generador', 'generator'],
-                ['Motobomba', 'pump'],
-                ['Cuerpo de bomba', 'body'],
-              ].map(([title, key]) => (
-                <div className="bg-white shadow rounded-xl border" key={key}>
+            {/* ====================== TECNICO ====================== */}
+            {tab === 'TECNICO' && (
+              <div className="space-y-4 min-h-[60vh] w-full">
+                {/* Motor */}
+                <div className="bg-white shadow rounded-xl border">
                   <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-                    <h3 className="font-medium text-slate-700">{title}</h3>
+                    <h3 className="font-medium text-slate-700">Motor</h3>
                   </div>
                   <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {['brand', 'model', 'serial'].map((f) => (
-                      <div key={f}>
-                        <label className="block text-sm font-medium text-slate-600 mb-1">
-                          {f === 'brand' ? 'Marca' : f === 'model' ? 'Modelo' : 'Serie'}
-                        </label>
+                    {[
+                      ['VIN', 'vin', ''],
+                      ['N° Motor', 'engineNumber', ''],
+                      ['Marca Motor', 'engineBrand', ''],
+                      ['Modelo Motor', 'engineModel', ''],
+                      ['Combustible', 'fuelType', 'DIESEL/GASOLINA'],
+                    ].map(([label, key, ph]) => (
+                      <div key={key}>
+                        <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
                         <input
-                          value={form[key]?.[f] ?? ''}
-                          onChange={(e) => updateNested(`${key}.${f}`, e.target.value)}
+                          value={form[key]}
+                          onChange={(e) => update(key, e.target.value)}
                           className="w-full border p-2 rounded"
+                          placeholder={ph}
                         />
                       </div>
                     ))}
                   </div>
                 </div>
-              ))}
 
-              
-
-              <div className="flex justify-end gap-3 pb-4">
-                {readOnly ? (
-                  <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
-                ) : (
-                  <>
-                    <button type="button" onClick={handleCancel} className="px-3 py-2 border rounded">
-                      {isDirty ? 'Cancelar' : 'Volver'}
-                    </button>
-                    <button type="submit" disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded">
-                      {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {/* Auditoría */}
-              {id && <AuditBlock vehicleId={id} />}
-            </div>
-          )}
-
-          {/* ====================== DOCUMENTOS ====================== */}
-          {tab === 'DOCUMENTOS' && (
-            <div className="space-y-4">
-              <div className="bg-white shadow rounded-xl border">
-                <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-                  <h3 className="font-medium text-slate-700">Legal</h3>
-                </div>
-                <div className="p-4 grid grid-cols-1 gap-6">
-                  {/* Padrón extendido */}
-                  <div className="grid sm:grid-cols-6 gap-3 items-end">
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-slate-600">Padrón | N°</label>
-                      <input maxLength={20} value={form.legal.padron.number} onChange={(e) => updateNested('legal.padron.number', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Emisor</label>
-                      <input value={form.legal.padron.issuer} onChange={(e) => updateNested('legal.padron.issuer', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">F. Adquisición</label>
-                      <input type="date" value={form.legal.padron.acquisitionDate || ''} onChange={(e) => updateNested('legal.padron.acquisitionDate', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">F. Inscripción</label>
-                      <input type="date" value={form.legal.padron.inscriptionDate || ''} onChange={(e) => updateNested('legal.padron.inscriptionDate', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">F. Emisión</label>
-                      <input type="date" value={form.legal.padron.issueDate || ''} onChange={(e) => updateNested('legal.padron.issueDate', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
+                {/* Transmisión */}
+                <div className="bg-white shadow rounded-xl border">
+                  <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+                    <h3 className="font-medium text-slate-700">Transmisión</h3>
                   </div>
-
-                  {/* SOAP */}
-                  <div className="grid sm:grid-cols-6 gap-3 items-end">
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-slate-600">SOAP | Póliza</label>
-                      <input value={form.legal.soap.policy} onChange={(e) => updateNested('legal.soap.policy', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Aseguradora</label>
-                      <input value={form.legal.soap.issuer} onChange={(e) => updateNested('legal.soap.issuer', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Inicio</label>
-                      <input type="date" value={form.legal.soap.validFrom || ''} onChange={(e) => updateNested('legal.soap.validFrom', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Fin</label>
-                      <input type="date" value={form.legal.soap.validTo || ''} onChange={(e) => updateNested('legal.soap.validTo', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                  </div>
-
-                  {/* Seguro */}
-                  <div className="grid sm:grid-cols-6 gap-3 items-end">
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-slate-600">Seguro | Póliza</label>
-                      <input value={form.legal.insurance.policy} onChange={(e) => updateNested('legal.insurance.policy', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Aseguradora</label>
-                      <input value={form.legal.insurance.issuer} onChange={(e) => updateNested('legal.insurance.issuer', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Inicio</label>
-                      <input type="date" value={form.legal.insurance.validFrom || ''} onChange={(e) => updateNested('legal.insurance.validFrom', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Fin</label>
-                      <input type="date" value={form.legal.insurance.validTo || ''} onChange={(e) => updateNested('legal.insurance.validTo', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                  </div>
-
-                  {/* TAG */}
-                  <div className="grid sm:grid-cols-3 gap-3 items-end">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">TAG | N°</label>
-                      <input value={form.legal.tag.number} onChange={(e) => updateNested('legal.tag.number', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Emisor</label>
-                      <input value={form.legal.tag.issuer} onChange={(e) => updateNested('legal.tag.issuer', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                  </div>
-
-                  {/* Tarjeta combustible */}
-                  <div className="grid sm:grid-cols-3 gap-3 items-end">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Tarj. combustible | Emisor</label>
-                      <input value={form.legal.fuelCard.issuer} onChange={(e) => updateNested('legal.fuelCard.issuer', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">N° Tarjeta</label>
-                      <input value={form.legal.fuelCard.number} onChange={(e) => updateNested('legal.fuelCard.number', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Vence</label>
-                      <input type="date" value={form.legal.fuelCard.validTo || ''} onChange={(e) => updateNested('legal.fuelCard.validTo', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                  </div>
-
-                  {/* Revisión técnica */}
-                  <div className="grid sm:grid-cols-6 gap-3 items-end">
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-slate-600">Revisión técnica | N°</label>
-                      <input value={form.legal.technicalReview.number} onChange={(e) => updateNested('legal.technicalReview.number', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Emisor</label>
-                      <input value={form.legal.technicalReview.issuer} onChange={(e) => updateNested('legal.technicalReview.issuer', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Fecha revisión</label>
-                      <input type="date" value={form.legal.technicalReview.reviewedAt || ''} onChange={(e) => updateNested('legal.technicalReview.reviewedAt', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Vencimiento</label>
-                      <input type="date" value={form.legal.technicalReview.validTo || ''} onChange={(e) => updateNested('legal.technicalReview.validTo', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                  </div>
-
-                  {/* Permiso de circulación */}
-                  <div className="grid sm:grid-cols-6 gap-3 items-end">
-                    <div className="sm:col-span-2">
-                      <label className="block text-sm font-medium text-slate-600">Permiso de circulación | N°</label>
-                      <input value={form.legal.circulationPermit.number} onChange={(e) => updateNested('legal.circulationPermit.number', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Emisor</label>
-                      <input value={form.legal.circulationPermit.issuer} onChange={(e) => updateNested('legal.circulationPermit.issuer', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Fecha revisión</label>
-                      <input type="date" value={form.legal.circulationPermit.reviewedAt || ''} onChange={(e) => updateNested('legal.circulationPermit.reviewedAt', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-600">Vencimiento</label>
-                      <input type="date" value={form.legal.circulationPermit.validTo || ''} onChange={(e) => updateNested('legal.circulationPermit.validTo', e.target.value)} className="w-full border p-2 rounded" />
-                    </div>
+                  <div className="p-4 grid grid-cols-1 sm:grid-cols-5 gap-4">
+                    {[
+                      ['Tipo', 'transmission.type', 'MANUAL/AUTOMATIC/AMT/CVT'],
+                      ['Marca', 'transmission.brand', 'ALLISON/ZF/EATON'],
+                      ['Modelo', 'transmission.model', '4500 RDS'],
+                      ['Serie', 'transmission.serial', ''],
+                      ['Marchas', 'transmission.gears', '6', 'text'],
+                    ].map(([label, path, ph, type]) => {
+                      const val = path.split('.').reduce((acc, k) => acc?.[k], form) ?? ''
+                      return (
+                        <div key={path}>
+                          <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
+                          <input
+                            type={type || 'text'}
+                            value={val}
+                            onChange={(e) => updateNested(path, e.target.value)}
+                            className="w-full border p-2 rounded"
+                            placeholder={ph}
+                          />
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
+
+                {/* Medidores */}
+                <div className="bg-white shadow rounded-xl border">
+                  <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+                    <h3 className="font-medium text-slate-700">Medidores</h3>
+                  </div>
+                  <div className="p-4 grid grid-cols-1 sm:grid-cols-5 gap-4">
+                    {[
+                      ['Odómetro (km)', 'meters.odometerKm', '0'],
+                      ['Horómetro motor (h)', 'meters.engineHours', '0'],
+                      ['Horas escala (h)', 'meters.ladderHours', '0'],
+                      ['Horas generador (h)', 'meters.generatorHours', '0'],
+                      ['Horas cuerpo bomba (h)', 'meters.pumpHours', '0'],
+                    ].map(([label, path, ph]) => {
+                      const val = path.split('.').reduce((acc, k) => acc?.[k], form) ?? ''
+                      return (
+                        <div key={path}>
+                          <label className="block text-sm font-medium text-slate-600 mb-1">{label}</label>
+                          <input
+                            value={val}
+                            onChange={(e) => updateNested(path, e.target.value)}
+                            className="w-full border p-2 rounded"
+                            placeholder={ph}
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Equipos */}
+                {[
+                  ['Generador', 'generator'],
+                  ['Motobomba', 'pump'],
+                  ['Cuerpo de bomba', 'body'],
+                ].map(([title, key]) => (
+                  <div className="bg-white shadow rounded-xl border" key={key}>
+                    <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+                      <h3 className="font-medium text-slate-700">{title}</h3>
+                    </div>
+                    <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {['brand', 'model', 'serial'].map((f) => (
+                        <div key={f}>
+                          <label className="block text-sm font-medium text-slate-600 mb-1">
+                            {f === 'brand' ? 'Marca' : f === 'model' ? 'Modelo' : 'Serie'}
+                          </label>
+                          <input
+                            value={form[key]?.[f] ?? ''}
+                            onChange={(e) => updateNested(`${key}.${f}`, e.target.value)}
+                            className="w-full border p-2 rounded"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+
+
+                <div className="flex justify-end gap-3 pb-4">
+                  {readOnly ? (
+                    <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
+                  ) : (
+                    <>
+                      <button type="button" onClick={handleCancel} className="px-3 py-2 border rounded">
+                        {isDirty ? 'Cancelar' : 'Volver'}
+                      </button>
+                      <button type="submit" disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded">
+                        {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Auditoría */}
+                {id && <AuditBlock vehicleId={id} />}
+
               </div>
+            )}
 
-              
+            {/* ====================== DOCUMENTOS ====================== */}
 
-              <div className="flex justify-end gap-3 pb-4">
-                {readOnly ? (
-                  <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
-                ) : (
-                  <>
-                    <button type="button" onClick={handleCancel} className="px-3 py-2 border rounded">
-                      {isDirty ? 'Cancelar' : 'Volver'}
-                    </button>
-                    <button type="submit" disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded">
-                      {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
-                    </button>
-                  </>
-                )}
+            {tab === 'DOCUMENTOS' && (
+              <div className="space-y-4 min-h-[60vh] w-full">
+                <div className="bg-white shadow rounded-xl border">
+                  <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+                    <h3 className="font-medium text-slate-700">Legal</h3>
+                  </div>
+                  <div className="p-4 grid grid-cols-1 gap-6">
+                    {/* Padrón extendido */}
+                    <div className="grid sm:grid-cols-6 gap-3 items-end">
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-slate-600">Padrón | N°</label>
+                        <input maxLength={20} value={form.legal.padron.number} onChange={(e) => updateNested('legal.padron.number', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Emisor</label>
+                        <input value={form.legal.padron.issuer} onChange={(e) => updateNested('legal.padron.issuer', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">F. Adquisición</label>
+                        <input type="date" value={form.legal.padron.acquisitionDate || ''} onChange={(e) => updateNested('legal.padron.acquisitionDate', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">F. Inscripción</label>
+                        <input type="date" value={form.legal.padron.inscriptionDate || ''} onChange={(e) => updateNested('legal.padron.inscriptionDate', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">F. Emisión</label>
+                        <input type="date" value={form.legal.padron.issueDate || ''} onChange={(e) => updateNested('legal.padron.issueDate', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                    </div>
+
+                    {/* SOAP */}
+                    <div className="grid sm:grid-cols-6 gap-3 items-end">
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-slate-600">SOAP | Póliza</label>
+                        <input value={form.legal.soap.policy} onChange={(e) => updateNested('legal.soap.policy', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Aseguradora</label>
+                        <input value={form.legal.soap.issuer} onChange={(e) => updateNested('legal.soap.issuer', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Inicio</label>
+                        <input type="date" value={form.legal.soap.validFrom || ''} onChange={(e) => updateNested('legal.soap.validFrom', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Fin</label>
+                        <input type="date" value={form.legal.soap.validTo || ''} onChange={(e) => updateNested('legal.soap.validTo', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                    </div>
+
+                    {/* Seguro */}
+                    <div className="grid sm:grid-cols-6 gap-3 items-end">
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-slate-600">Seguro | Póliza</label>
+                        <input value={form.legal.insurance.policy} onChange={(e) => updateNested('legal.insurance.policy', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Aseguradora</label>
+                        <input value={form.legal.insurance.issuer} onChange={(e) => updateNested('legal.insurance.issuer', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Inicio</label>
+                        <input type="date" value={form.legal.insurance.validFrom || ''} onChange={(e) => updateNested('legal.insurance.validFrom', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Fin</label>
+                        <input type="date" value={form.legal.insurance.validTo || ''} onChange={(e) => updateNested('legal.insurance.validTo', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                    </div>
+
+                    {/* TAG */}
+                    <div className="grid sm:grid-cols-3 gap-3 items-end">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">TAG | N°</label>
+                        <input value={form.legal.tag.number} onChange={(e) => updateNested('legal.tag.number', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Emisor</label>
+                        <input value={form.legal.tag.issuer} onChange={(e) => updateNested('legal.tag.issuer', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                    </div>
+
+                    {/* Tarjeta combustible */}
+                    <div className="grid sm:grid-cols-3 gap-3 items-end">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Tarj. combustible | Emisor</label>
+                        <input value={form.legal.fuelCard.issuer} onChange={(e) => updateNested('legal.fuelCard.issuer', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">N° Tarjeta</label>
+                        <input value={form.legal.fuelCard.number} onChange={(e) => updateNested('legal.fuelCard.number', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Vence</label>
+                        <input type="date" value={form.legal.fuelCard.validTo || ''} onChange={(e) => updateNested('legal.fuelCard.validTo', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                    </div>
+
+                    {/* Revisión técnica */}
+                    <div className="grid sm:grid-cols-6 gap-3 items-end">
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-slate-600">Revisión técnica | N°</label>
+                        <input value={form.legal.technicalReview.number} onChange={(e) => updateNested('legal.technicalReview.number', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Emisor</label>
+                        <input value={form.legal.technicalReview.issuer} onChange={(e) => updateNested('legal.technicalReview.issuer', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Fecha revisión</label>
+                        <input type="date" value={form.legal.technicalReview.reviewedAt || ''} onChange={(e) => updateNested('legal.technicalReview.reviewedAt', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Vencimiento</label>
+                        <input type="date" value={form.legal.technicalReview.validTo || ''} onChange={(e) => updateNested('legal.technicalReview.validTo', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                    </div>
+
+                    {/* Permiso de circulación */}
+                    <div className="grid sm:grid-cols-6 gap-3 items-end">
+                      <div className="sm:col-span-2">
+                        <label className="block text-sm font-medium text-slate-600">Permiso de circulación | N°</label>
+                        <input value={form.legal.circulationPermit.number} onChange={(e) => updateNested('legal.circulationPermit.number', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Emisor</label>
+                        <input value={form.legal.circulationPermit.issuer} onChange={(e) => updateNested('legal.circulationPermit.issuer', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Fecha revisión</label>
+                        <input type="date" value={form.legal.circulationPermit.reviewedAt || ''} onChange={(e) => updateNested('legal.circulationPermit.reviewedAt', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-600">Vencimiento</label>
+                        <input type="date" value={form.legal.circulationPermit.validTo || ''} onChange={(e) => updateNested('legal.circulationPermit.validTo', e.target.value)} className="w-full border p-2 rounded" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+
+
+                <div className="flex justify-end gap-3 pb-4">
+                  {readOnly ? (
+                    <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
+                  ) : (
+                    <>
+                      <button type="button" onClick={handleCancel} className="px-3 py-2 border rounded">
+                        {isDirty ? 'Cancelar' : 'Volver'}
+                      </button>
+                      <button type="submit" disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded">
+                        {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
+                      </button>
+                    </>
+                  )}
+                </div>
+                {/* Auditoría */}
+                {id && <AuditBlock vehicleId={id} />}
               </div>
-              {/* Auditoría */}
-              {id && <AuditBlock vehicleId={id} />}
-            </div>
-          )}
+            )}
 
-          {/* ====================== MEDIOS ====================== */}
-          {tab === 'MEDIOS' && (
-            <div className="space-y-4">
-              <div className="bg-white shadow rounded-xl border">
+            {/* ====================== MEDIOS ====================== */}
+
+            {tab === 'MEDIOS' && (
+              <div className="space-y-4 min-h-[60vh] w-full">
+                <div className="bg-white shadow rounded-xl border">
                   <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
                     <h3 className="font-medium text-slate-700">Cargar medios</h3>
                     <p className="text-xs text-slate-500">Selecciona categoría, asigna un título opcional y sube múltiples archivos (arrastrar, pegar o elegir).</p>
@@ -1525,219 +1536,229 @@ const handleUploadDoc = async ({ file, category = 'BASIC', categoryLabel, label 
                     onUploadDoc={handleUploadDoc}
                   />
                 </div>
-              
-              {/* Contenido actual */}
-              {vehicle && (
-                <div className="bg-white shadow rounded-xl border">
-                  <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-                    <h3 className="font-medium text-slate-700">Contenido actual</h3>
-                  </div>
-                  <div className="p-4 grid gap-6">
-                    {/* Fotos/Videos */}
-                    <div>
-                      <div className="font-medium mb-1">Fotos / Videos</div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                        {(vehicle.photos || []).map((ph, idx) => {
-                          const isVideo = /^(mp4|mov|webm)$/i.test(ph.format || '')
-                          return (
-                            <div key={ph._id} className="text-xs">
-                              {isVideo ? (
-                                <video
-                                  className="w-full h-24 rounded border object-cover"
-                                  controls
-                                  onClick={() => openViewer(idx)}
-                                >
-                                  <source src={ph.url} />
-                                </video>
-                              ) : (
-                                <img
-                                  src={ph.url}
-                                  alt={ph.title || ''}
-                                  className="w-full h-24 object-cover rounded border cursor-pointer"
-                                  onClick={() => openViewer(idx)}
-                                />
-                              )}
-                              {/* OMITIR */}
-                              {/* <div className="mt-1 break-words">{ph.title}</div> */}
-                              {/* ADICION */}
-                              <div className="mt-1 break-words">
-                              {ph.title}
-                              {ph.bytes ? (
-                                <span className="text-slate-500 text-xs"> ({fmtBytes(ph.bytes)})</span>
-                              ) : null}
+
+                {/* Contenido actual */}
+                {vehicle && (
+                  <div className="bg-white shadow rounded-xl border">
+                    <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+                      <h3 className="font-medium text-slate-700">Contenido actual</h3>
+                    </div>
+                    <div className="p-4 grid gap-6">
+                      {/* Fotos/Videos */}
+                      <div>
+                        <div className="font-medium mb-1">Fotos / Videos</div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                          {(vehicle.photos || []).map((ph, idx) => {
+                            const isVideo = /^(mp4|mov|webm)$/i.test(ph.format || '')
+                            return (
+                              <div key={ph._id} className="text-xs">
+                                {isVideo ? (
+                                  <video
+                                    className="w-full h-24 rounded border object-cover"
+                                    controls
+                                    onClick={() => openViewer(idx)}
+                                  >
+                                    <source src={ph.url} />
+                                  </video>
+                                ) : (
+                                  <img
+                                    src={ph.url}
+                                    alt={ph.title || ''}
+                                    className="w-full h-24 object-cover rounded border cursor-pointer"
+                                    onClick={() => openViewer(idx)}
+                                  />
+                                )}
+                                {/* OMITIR */}
+                                {/* <div className="mt-1 break-words">{ph.title}</div> */}
+                                {/* ADICION */}
+                                <div className="mt-1 break-words">
+                                  {ph.title}
+                                  {ph.bytes ? (
+                                    <span className="text-slate-500 text-xs"> ({fmtBytes(ph.bytes)})</span>
+                                  ) : null}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeletePhoto(ph._id)}
+                                  className="mt-1 text-red-600 hover:underline"
+                                >Eliminar</button>
                               </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      {/* Documentos/PDF */}
+                      <div>
+                        <div className="font-medium mb-1">Documentos</div>
+                        <ul className="list-disc pl-5 text-sm space-y-1">
+                          {(vehicle.documents || []).map(d => (
+                            <li key={d._id} className="break-words">
+                              {d.label}
+                              {typeof d.bytes === 'number' && d.bytes > 0 && (
+                                <span className="text-slate-500"> ({fmtBytes(d.bytes)})</span>
+                              )}{' '}
+                              — <a
+                                // href={normalizePdfUrl(d.url, d.format)}
+                                href={normalizePdfUrl(d.url)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-blue-600 underline"
+                              >
+                                ver
+                              </a>
                               <button
                                 type="button"
-                                onClick={() => handleDeletePhoto(ph._id)}
-                                className="mt-1 text-red-600 hover:underline"
-                              >Eliminar</button>
-                            </div>
-                          )
-                        })}
+                                onClick={() => handleDeleteDoc(d._id)}
+                                className="ml-3 text-red-600 hover:underline"
+                              >
+                                Eliminar
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                    </div>
-                    {/* Documentos/PDF */}
-                    <div>
-                      <div className="font-medium mb-1">Documentos</div>
-                      <ul className="list-disc pl-5 text-sm space-y-1">
-                        {(vehicle.documents || []).map(d => (
-                          <li key={d._id} className="break-words">
-                            {d.label}
-                            {typeof d.bytes === 'number' && d.bytes > 0 && (
-                              <span className="text-slate-500"> ({fmtBytes(d.bytes)})</span>
-                            )}{' '}
-                            — <a
-                                  // href={normalizePdfUrl(d.url, d.format)}
-                                  href={normalizePdfUrl(d.url)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-blue-600 underline"
-                                >
-                                  ver
-                                </a>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteDoc(d._id)}
-                              className="ml-3 text-red-600 hover:underline"
-                            >
-                              Eliminar
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* MODAL VISOR - Flechas centradas, teclas ← → */}
-              {viewerOpen && vehicle?.photos?.length > 0 && (
-                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center" ref={viewerRef}>
-                  <div className="bg-white rounded-lg max-w-5xl w-full mx-4 p-3 relative">
-                    <button type="button" className="absolute top-2 right-2 text-slate-700" onClick={closeViewer}>✕</button>
-                    <div className="w-full flex items-center justify-between my-2">
-                      <div className="flex-1 flex justify-center">
-                        <div className="text-sm">{vehicle.photos[viewerIndex]?.title}</div>
+                {/* MODAL VISOR - Flechas centradas, teclas ← → */}
+                {viewerOpen && vehicle?.photos?.length > 0 && (
+                  <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center" ref={viewerRef}>
+                    <div className="bg-white rounded-lg max-w-5xl w-full mx-4 p-3 relative">
+                      <button type="button" className="absolute top-2 right-2 text-slate-700" onClick={closeViewer}>✕</button>
+                      <div className="w-full flex items-center justify-between my-2">
+                        <div className="flex-1 flex justify-center">
+                          <div className="text-sm">{vehicle.photos[viewerIndex]?.title}</div>
+                        </div>
                       </div>
-                    </div>
 
-                     <div className="relative">
-                      {/* Zonas clickables grandes (no solo el botón) */}
-                      <div
-                        className="absolute inset-y-0 left-0 w-1/5 z-50 cursor-pointer flex items-center"
-                        onClick={(e) => { e.stopPropagation(); prevViewer(); }}
-                        onMouseDown={(e) => e.preventDefault()}
-                        aria-label="Anterior"
-                      >
-                        <button
-                          type="button"
-                          className="ml-2 px-3 py-2 border rounded bg-white/90 shadow"
+                      <div className="relative">
+                        {/* Zonas clickables grandes (no solo el botón) */}
+                        <div
+                          className="absolute inset-y-0 left-0 w-1/5 z-50 cursor-pointer flex items-center"
                           onClick={(e) => { e.stopPropagation(); prevViewer(); }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          aria-label="Anterior"
                         >
-                          ◀
-                        </button>
-                      </div>
+                          <button
+                            type="button"
+                            className="ml-2 px-3 py-2 border rounded bg-white/90 shadow"
+                            onClick={(e) => { e.stopPropagation(); prevViewer(); }}
+                          >
+                            ◀
+                          </button>
+                        </div>
 
-                      <div className="absolute inset-y-0 right-0 w-1/5 z-50 cursor-pointer flex items-center justify-end"
-                        onClick={(e) => { e.stopPropagation(); nextViewer(); }}
-                        onMouseDown={(e) => e.preventDefault()}
-                        aria-label="Siguiente"
-                      >
-                        <button
-                          type="button"
-                          className="mr-2 px-3 py-2 border rounded bg-white/90 shadow"
+                        <div className="absolute inset-y-0 right-0 w-1/5 z-50 cursor-pointer flex items-center justify-end"
                           onClick={(e) => { e.stopPropagation(); nextViewer(); }}
+                          onMouseDown={(e) => e.preventDefault()}
+                          aria-label="Siguiente"
                         >
-                          ▶
-                        </button>
+                          <button
+                            type="button"
+                            className="mr-2 px-3 py-2 border rounded bg-white/90 shadow"
+                            onClick={(e) => { e.stopPropagation(); nextViewer(); }}
+                          >
+                            ▶
+                          </button>
+                        </div>
+
+                        {/* Contenedor del medio (media por debajo de las zonas laterales) */}
+                        <div className="w-full z-10">
+                          {/^(mp4|mov|webm)$/i.test(vehicle.photos[viewerIndex]?.format || '')
+                            ? (
+                              <video
+                                className="max-h-[75vh] mx-auto rounded border block"
+                                controls
+                                autoPlay
+                              >
+                                <source src={vehicle.photos[viewerIndex]?.url} />
+                              </video>
+                            ) : (
+                              <img
+                                src={vehicle.photos[viewerIndex]?.url}
+                                alt={vehicle.photos[viewerIndex]?.title || ''}
+                                className="max-h-[75vh] mx-auto object-contain rounded border block"
+                              />
+                            )
+                          }
+                        </div>
                       </div>
 
-                      {/* Contenedor del medio (media por debajo de las zonas laterales) */}
-                      <div className="w-full z-10">
-                        {/^(mp4|mov|webm)$/i.test(vehicle.photos[viewerIndex]?.format || '')
-                          ? (
-                            <video
-                              className="max-h-[75vh] mx-auto rounded border block"
-                              controls
-                              autoPlay
-                            >
-                              <source src={vehicle.photos[viewerIndex]?.url} />
-                            </video>
-                          ) : (
-                            <img
-                              src={vehicle.photos[viewerIndex]?.url}
-                              alt={vehicle.photos[viewerIndex]?.title || ''}
-                              className="max-h-[75vh] mx-auto object-contain rounded border block"
-                            />
-                          )
-                        }
-                      </div>
+
+
                     </div>
-
-
-
                   </div>
+                )}
+
+                <div className="flex justify-end">
+                  <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
                 </div>
-              )}
-             
-              <div className="flex justify-end">
-                <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
-              </div>
 
-             {/* Auditoría */}
-              {id && <AuditBlock vehicleId={id} />}
-            </div>
-          )}
-
-          {/* ====================== INVENTARIO / ACCIDENTES / COMBUSTIBLE ====================== */}
-          {['INVENTARIO', 'ACCIDENTES', 'COMBUSTIBLE'].includes(tab) && (
-            <div className="bg-white shadow rounded-xl border p-6 text-slate-600">
-              Este módulo está en desarrollo.
-              
-              <div className="flex justify-end mt-4">
-                {readOnly ? (
-                  <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
-                ) : (
-                  <>
-                    <button type="button" onClick={handleCancel} className="px-3 py-2 border rounded">
-                      {isDirty ? 'Cancelar' : 'Volver'}
-                    </button>
-                    <button type="submit" disabled={saving} className="ml-2 px-3 py-2 bg-blue-600 text-white rounded">
-                      {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
-                    </button>
-                  </>
-                )}
+                {/* Auditoría */}
+                {id && <AuditBlock vehicleId={id} />}
               </div>
-              {/* Auditoría */}
-              {id && <AuditBlock vehicleId={id} />}
-            </div>
-          )}
+            )}
 
-          {/* ====================== TICKETS ====================== */}
-          {tab === 'TICKETS' && (
-            <div className="bg-white shadow rounded-xl border p-6 text-slate-600">
-              Este módulo está en desarrollo.
-              
-              <div className="flex justify-end mt-4">
-                {readOnly ? (
-                  <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
-                ) : (
-                  <>
-                    <button type="button" onClick={handleCancel} className="px-3 py-2 border rounded">
-                      {isDirty ? 'Cancelar' : 'Volver'}
-                    </button>
-                    <button type="submit" disabled={saving} className="ml-2 px-3 py-2 bg-blue-600 text-white rounded">
-                      {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
-                    </button>
-                  </>
-                )}
+            {/* ====================== INVENTARIO / ACCIDENTES / COMBUSTIBLE ====================== */}
+
+            {['INVENTARIO', 'ACCIDENTES', 'COMBUSTIBLE'].includes(tab) && (
+
+              <div className="space-y-4 min-h-[60vh] w-full">
+                <div className="bg-white shadow rounded-xl border p-6 text-slate-600">
+                  Este módulo está en desarrollo.
+
+                  <div className="flex justify-end mt-4">
+                    {readOnly ? (
+                      <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
+                    ) : (
+                      <>
+                        <button type="button" onClick={handleCancel} className="px-3 py-2 border rounded">
+                          {isDirty ? 'Cancelar' : 'Volver'}
+                        </button>
+                        <button type="submit" disabled={saving} className="ml-2 px-3 py-2 bg-blue-600 text-white rounded">
+                          {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {/* Auditoría */}
+                  {id && <AuditBlock vehicleId={id} />}
+                </div>
+
               </div>
-              {/* Si más adelante decides montar <TicketsBlock />:
-                 <TicketsBlock vehicleId={id} />
+            )}
+
+            {/* ====================== TICKETS ====================== */}
+            {tab === 'TICKETS' && (
+              <div className="space-y-4 min-h-[60vh] w-full">
+                <div className="bg-white shadow rounded-xl border p-6 text-slate-600">
+                  Este módulo está en desarrollo.
+
+                  <div className="flex justify-end mt-4">
+                    {readOnly ? (
+                      <button type="button" onClick={() => navigate('/vehicles')} className="px-3 py-2 border rounded">Volver</button>
+                    ) : (
+                      <>
+                        <button type="button" onClick={handleCancel} className="px-3 py-2 border rounded">
+                          {isDirty ? 'Cancelar' : 'Volver'}
+                        </button>
+                        <button type="submit" disabled={saving} className="ml-2 px-3 py-2 bg-blue-600 text-white rounded">
+                          {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {/* Si más adelante decides montar <TicketsBlock />:
+                <TicketsBlock vehicleId={id} />
               */}
-              {id && <AuditBlock vehicleId={id} />}
-            </div>
-          )}
+                  {id && <AuditBlock vehicleId={id} />}
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
         {/* </fieldset> */}
       </form>
     </div>

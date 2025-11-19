@@ -2,5 +2,8 @@
   "dependencies": {
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0"
+  },
+  "devDependencies": {
+    "baseline-browser-mapping": "^2.8.29"
   }
 }
