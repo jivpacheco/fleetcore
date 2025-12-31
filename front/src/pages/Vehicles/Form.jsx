@@ -226,15 +226,24 @@ function AuditBlock({ vehicleId }) {
 export default function VehiclesForm() {
   const navigate = useNavigate()
   const { id } = useParams()
-  const location = useLocation()
+
+  // modificacion //
+  /* const location = useLocation()
 
   // Modo lectura por query param
   const params = new URLSearchParams(location.search)
   const mode = params.get('mode')
-  const readOnly = mode === 'view'
+  const readOnly = mode === 'view' */
+  // fin modificacion
 
   // Tabs
   const [searchParams, setSearchParams] = useSearchParams();
+  // adicion modificacion //
+  const mode = searchParams.get('mode');
+  const readOnly = mode === 'view';
+  // fin adicion modificacion
+
+
   // Estado de pestaña inicial: si hay ?tab= úsalo; si no, BASICO
   const [tab, setTab] = useState(searchParams.get('tab') || 'BASICO');
   // const [tab, setTab] = useState('BASICO')
@@ -528,10 +537,22 @@ export default function VehiclesForm() {
   /// ============= Manejo de pestañas ==========================
 
   // Cambiar pestaña + actualizar la URL
+
+  // function handleChangeTab(code) {
+  //   setTab(code);
+  //   setSearchParams({ tab: code }); // (si prefieres no apilar historial: setSearchParams({ tab: code }, { replace: true })
+  // }
+
   function handleChangeTab(code) {
-    setTab(code);
-    setSearchParams({ tab: code }); // (si prefieres no apilar historial: setSearchParams({ tab: code }, { replace: true })
-  }
+  setTab(code);
+
+  setSearchParams((prev) => {
+    const next = new URLSearchParams(prev);
+    next.set('tab', code);
+    return next;
+  }, { replace: true });
+}
+
 
   // Ref al contenedor con scroll (tu form con `${scrollBox}`)
   const scrollRef = useRef(null);
@@ -1094,6 +1115,8 @@ export default function VehiclesForm() {
                         value={form.branch}
                         onChange={(e) => update('branch', e.target.value)}
                         className="w-full border p-2 rounded focus:outline-none focus:ring focus:ring-blue-200 bg-white"
+                        //adicion
+                         disabled={readOnly || Boolean(supportActiveInfo)}
                       >
                         <option value="" disabled>Selecciona sucursal</option>
                         {branches.map(b => (
@@ -1112,6 +1135,8 @@ export default function VehiclesForm() {
                         value={form.status}
                         onChange={(e) => update('status', e.target.value)}
                         className="w-full border p-2 rounded bg-white"
+                        //adicion
+                         disabled={readOnly || Boolean(supportActiveInfo)}
                       >
                         <option value="" disabled>Selecciona estado</option>
                         {statusOptions.map(opt => (
@@ -1123,7 +1148,7 @@ export default function VehiclesForm() {
                 </div>
 
                 {/* ====================== APOYO A OTRAS SUCURSALES ====================== */}
-                
+                {id && (                
                   <div className="bg-white shadow rounded-xl border">
                     <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
                       <h3 className="font-medium text-slate-700">Servicios de Apoyo a otras Sucursales</h3>
@@ -1193,6 +1218,7 @@ export default function VehiclesForm() {
                       </div>
                     )}
                   </div>
+                )}
 
             
 
@@ -1219,6 +1245,7 @@ export default function VehiclesForm() {
             {/* ====================== TECNICO ====================== */}
             {tab === 'TECNICO' && (
               <div className="space-y-4 min-h-[60vh] w-full">
+                <fieldset disabled={readOnly} className="space-y-4">
                 {/* Motor */}
                 <div className="bg-white shadow rounded-xl border">
                   <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
@@ -1330,6 +1357,7 @@ export default function VehiclesForm() {
                     </div>
                   </div>
                 ))}
+                </fieldset>
 
 
 
@@ -1358,6 +1386,7 @@ export default function VehiclesForm() {
 
             {tab === 'DOCUMENTOS' && (
               <div className="space-y-4 min-h-[60vh] w-full">
+                <fieldset disabled={readOnly} className="space-y-4">
                 <div className="bg-white shadow rounded-xl border">
                   <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
                     <h3 className="font-medium text-slate-700">Legal</h3>
@@ -1496,6 +1525,7 @@ export default function VehiclesForm() {
                     </div>
                   </div>
                 </div>
+                </fieldset>
 
 
 
@@ -1521,6 +1551,7 @@ export default function VehiclesForm() {
             {/* ====================== MEDIOS ====================== */}
 
             {tab === 'MEDIOS' && (
+                           
               <div className="space-y-4 min-h-[60vh] w-full">
                 <div className="bg-white shadow rounded-xl border">
                   <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
@@ -1530,8 +1561,8 @@ export default function VehiclesForm() {
 
                   {/* Uploader unificado */}
                   <UnifiedMediaUploader
-                    canUpload={canUpload}
-                    mediaCats={mediaCats /* [['Básico','BASICO'], ['Motor','MOTOR'], ...] */}
+                    canUpload={canUpload && !readOnly}
+                    mediaCats={mediaCats}
                     onUploadPhoto={handleUploadPhoto}
                     onUploadDoc={handleUploadDoc}
                   />
@@ -1580,6 +1611,7 @@ export default function VehiclesForm() {
                                 <button
                                   type="button"
                                   onClick={() => handleDeletePhoto(ph._id)}
+                                  disabled={readOnly}
                                   className="mt-1 text-red-600 hover:underline"
                                 >Eliminar</button>
                               </div>
@@ -1609,6 +1641,7 @@ export default function VehiclesForm() {
                               <button
                                 type="button"
                                 onClick={() => handleDeleteDoc(d._id)}
+                                disabled={readOnly}
                                 className="ml-3 text-red-600 hover:underline"
                               >
                                 Eliminar
