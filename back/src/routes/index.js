@@ -117,6 +117,11 @@ import usersRoutes from './users.routes.js';
 import accountRoutes from './account.routes.js';
 import vehiclesRoutes from './vehicles.routes.js';   // 👈 necesario p/ fotos & documentos
 import catalogsRoutes from './catalogs.routes.js';   // 👈 necesario p/ catálogos
+import peopleRoutes from './people.routes.js';
+import rolesRoutes from './roles.routes.js';
+import positionsRoutes from './positions.routes.js';
+
+
 
 const api = express.Router();
 api.use(requireAuth);
@@ -126,6 +131,8 @@ api.use('/users', usersRoutes);
 api.use('/account', accountRoutes);
 api.use('/vehicles', vehiclesRoutes);   // /:id/photos  /:id/documents
 api.use('/catalogs', catalogsRoutes);
+api.use('/roles', rolesRoutes);
+api.use('/positions', positionsRoutes);
 
 // Rutas genéricas (makeRoutes) — puedes añadir/quitar según tu necesidad.
 // ⚠️ NO dupliques /vehicles aquí si ya montaste vehiclesRoutes arriba.

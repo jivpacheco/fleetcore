@@ -23,7 +23,8 @@
 
 import express from 'express';
 import { requireAuth } from '../middleware/requireAuth.js';
-import { requirePermission } from '../middleware/requirePermission.js';
+// import { requirePermission } from '../middleware/requirePermission.js';
+import  requirePermission from '../middleware/requirePermission.js';
 import * as ctrl from '../controllers/catalogs.controller.js';
 
 const router = express.Router();

@@ -341,7 +341,8 @@
 
 import express from 'express';
 import { requireAuth } from '../middleware/requireAuth.js';
-import { requirePermission } from '../middleware/requirePermission.js';
+// import { requirePermission } from '../middleware/requirePermission.js';
+import  requirePermission  from '../middleware/requirePermission.js';
 import { uploadSingle } from '../middleware/upload.middleware.js';
 import * as ctrl from '../controllers/vehicles.controller.js';
 
