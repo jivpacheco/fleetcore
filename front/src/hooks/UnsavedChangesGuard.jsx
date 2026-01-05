@@ -1,56 +1,40 @@
-/**
- * UnsavedChangesGuard
- * Bloquea navegación (interna y cierre/recarga de pestaña) si `when` es true.
- *
- * - Navegación interna (links, NavLinks, navigate, back/forward):
- *   usa useBlocker (o unstable_useBlocker en versiones antiguas de RRv6).
- * - Cierre/recarga de pestaña:
- *   usa useBeforeUnload para mostrar el prompt del navegador.
- *
- * Props:
- *  - when: boolean → activa el guard.
- *  - getMessage?: () => string → mensaje a mostrar en confirmación.
- *
- * Uso:
- *  <UnsavedChangesGuard when={isDirty} getMessage={() => "Tienes cambios sin guardar. ¿Salir sin guardar?"} />
- */
-
+// front/src/hooks/UnsavedChangesGuard.jsx
 import { useEffect } from "react";
-import {
-    useBeforeUnload,
-    // Para soportar distintas versiones de RRv6:
-    unstable_useBlocker as useBlockerV6_Unstable,
-    useBlocker as useBlockerV6,
-} from "react-router-dom";
+import { useBlocker } from "react-router-dom";
 
+/**
+ * UnsavedChangesGuard (RRD v7 compatible)
+ * - Bloquea navegación interna con useBlocker(when)
+ * - Bloquea cierre/recarga con beforeunload nativo
+ */
 export default function UnsavedChangesGuard({ when, getMessage }) {
-    // 1) Bloqueo en cierre/recarga de pestaña
-    useBeforeUnload(when, (event) => {
-        // Algunos navegadores necesitan preventDefault para mostrar el prompt nativo
-        event.preventDefault();
-    });
+  const message =
+    (typeof getMessage === "function" && getMessage()) ||
+    "Tienes cambios sin guardar. ¿Quieres salir sin guardar?";
 
-    // 2) Bloqueo en navegación interna (router)
-    const blockerHook = useBlockerV6 || useBlockerV6_Unstable;
-    const blocker = blockerHook ? blockerHook(when) : null;
+  // 1) Cierre/recarga de pestaña
+  useEffect(() => {
+    if (!when) return;
 
-    useEffect(() => {
-        if (!blocker || blocker.state !== "blocked") return;
+    const onBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
 
-        const msg =
-            (typeof getMessage === "function" &&
-                getMessage()) ||
-            "Tienes cambios sin guardar. ¿Quieres salir sin guardar?";
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [when]);
 
-        // Puedes reemplazar window.confirm por tu modal propio si lo prefieres
-        const ok = window.confirm(msg);
+  // 2) Navegación interna (React Router)
+  const blocker = useBlocker(when);
 
-        if (ok) {
-            blocker.proceed(); // continúa la navegación
-        } else {
-            blocker.reset();   // cancela la navegación
-        }
-    }, [blocker, getMessage]);
+  useEffect(() => {
+    if (blocker.state !== "blocked") return;
 
-    return null;
+    const ok = window.confirm(message);
+    if (ok) blocker.proceed();
+    else blocker.reset();
+  }, [blocker, message]);
+
+  return null;
 }

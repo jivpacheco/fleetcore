@@ -1,212 +1,326 @@
 // front/src/pages/People/Form.jsx
 // -----------------------------------------------------------------------------
-// Formulario RRHH (Persona)
-// - Crea / edita
-// - Persona pertenece a UNA sucursal (branchId obligatorio).
-// - Cargo desde /positions (solo lectura para usuarios sin permiso de gestión).
+// RRHH - Ficha de Persona (Tabs)
+// - Modo Ver: ?mode=view (bloquea inputs y muestra solo "Volver")
+// - Modo Editar: default
+// - Guard cambios sin guardar: hooks/UnsavedChangesGuard (useBlocker)
 // -----------------------------------------------------------------------------
 
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import UnsavedChangesGuard from '../../hooks/UnsavedChangesGuard'
+import { api } from '../../services/http'
 import { PeopleAPI } from '../../api/people.api'
 import { PositionsAPI } from '../../api/positions.api'
-import { BranchesAPI } from '../../api/branches.api'
 
-const U = (v) => (typeof v === 'string' ? v.toUpperCase() : v)
+function deepEqual(a, b) {
+  try { return JSON.stringify(a) === JSON.stringify(b) } catch { return false }
+}
 
-export default function PeopleForm(){
-  const nav = useNavigate()
+const ymd = (d) => {
+  if (!d) return ''
+  const dt = new Date(d)
+  if (Number.isNaN(dt.getTime())) return ''
+  return dt.toISOString().slice(0, 10)
+}
+
+export default function PeopleForm() {
+  const navigate = useNavigate()
   const { id } = useParams()
+  const [sp, setSp] = useSearchParams()
 
-  const [loading, setLoading] = useState(Boolean(id))
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const mode = sp.get('mode')
+  const readOnly = mode === 'view'
+  const [tab, setTab] = useState(sp.get('tab') || 'BASICO')
+
+  const scrollRef = useRef(null)
+  useEffect(() => { scrollRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' }) }, [tab])
+
+  const handleChangeTab = (code) => {
+    setTab(code)
+    const next = new URLSearchParams(sp)
+    next.set('tab', code)
+    setSp(next, { replace: true })
+  }
+
   const [branches, setBranches] = useState([])
   const [positions, setPositions] = useState([])
 
+  const [loading, setLoading] = useState(!!id)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
   const [form, setForm] = useState({
-    dni: '',
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
     branchId: '',
     positionId: '',
-    active: true,
+    status: 'ACTIVE',
+    documentType: 'RUT',
+    documentId: '',
+    firstName: '',
+    lastName: '',
     birthDate: '',
-    birthPlace: '',
     nationality: '',
+    email: '',
+    phone: '',
+    address: '',
     hireDate: '',
+    licenses: [],
   })
 
-  const title = id ? 'Editar Persona' : 'Registrar Persona'
+  const [initialForm, setInitialForm] = useState(null)
+  const isDirty = !readOnly && !deepEqual(form, initialForm || form)
 
   useEffect(() => {
-    BranchesAPI.list({ page: 1, limit: 500, q: '' })
-      .then(r => {
-        const payload = r?.data?.data || r?.data?.items || r?.data?.data?.items || r?.data?.list || []
+    // branches
+    api.get('/api/v1/branches', { params: { page: 1, limit: 200 } })
+      .then(({ data }) => {
+        const payload = data?.items || data?.data?.items || data?.data || []
         setBranches(payload)
       })
       .catch(() => setBranches([]))
 
-    PositionsAPI.list({ page: 1, limit: 500, active: true })
-      .then(r => setPositions(r?.data?.data || []))
+    // positions
+    PositionsAPI.list({ page: 1, limit: 500 })
+      .then(({ data }) => {
+        const list = data?.items || data?.data?.items || data?.data || []
+        setPositions(list.filter(x => x.active !== false))
+      })
       .catch(() => setPositions([]))
   }, [])
 
   useEffect(() => {
-    if (!id) return
+    if (!id) { setInitialForm(form); return }
+
     setLoading(true)
     PeopleAPI.get(id)
-      .then(r => {
-        const p = r?.data?.item || r?.data
-        setForm({
-          dni: p?.dni || '',
-          firstName: p?.firstName || '',
-          lastName: p?.lastName || '',
-          email: p?.email || '',
-          phone: p?.phone || '',
-          branchId: p?.branchId?._id || p?.branchId || '',
-          positionId: p?.positionId?._id || p?.positionId || '',
-          active: p?.active !== false,
-          birthDate: p?.birthDate ? String(p.birthDate).slice(0,10) : '',
-          birthPlace: p?.birthPlace || '',
-          nationality: p?.nationality || '',
-          hireDate: p?.hireDate ? String(p.hireDate).slice(0,10) : '',
-        })
+      .then(({ data }) => {
+        const p = data?.item || data
+        const loaded = {
+          branchId: p.branchId?._id || p.branchId || '',
+          positionId: p.positionId?._id || p.positionId || '',
+          status: p.status || 'ACTIVE',
+          documentType: p.documentType || 'RUT',
+          documentId: p.documentId || '',
+          firstName: p.firstName || '',
+          lastName: p.lastName || '',
+          birthDate: ymd(p.birthDate),
+          nationality: p.nationality || '',
+          email: p.email || '',
+          phone: p.phone || '',
+          address: p.address || '',
+          hireDate: ymd(p.hireDate),
+          licenses: Array.isArray(p.licenses) ? p.licenses.map(l => ({
+            number: l.number || '',
+            type: l.type || '',
+            issuer: l.issuer || '',
+            issuedAt: ymd(l.issuedAt),
+            validTo: ymd(l.validTo),
+          })) : [],
+        }
+        setForm(loaded)
+        setInitialForm(loaded)
       })
-      .catch(e => setError(e?.response?.data?.message || 'No se pudo cargar'))
+      .catch((err) => setError(err?.response?.data?.message || 'No se pudo cargar la persona'))
       .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
-  function update(k, v){
-    setForm(f => ({ ...f, [k]: (k === 'email' ? v : U(v)) }))
-  }
+  const toDateOrNull = (v) => (v ? new Date(`${v}T00:00:00.000Z`) : null)
 
-  async function onSubmit(e){
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
-    setSaving(true)
-    try{
+    if (readOnly) return
+    setSaving(true); setError('')
+
+    try {
+      if (!form.branchId) throw new Error('Sucursal es obligatoria')
+      if (!form.positionId) throw new Error('Cargo es obligatorio')
+      if (!String(form.documentId || '').trim()) throw new Error('Documento es obligatorio')
+      if (!String(form.firstName || '').trim() || !String(form.lastName || '').trim()) throw new Error('Nombre y apellido son obligatorios')
+
       const payload = {
         ...form,
-        // Fechas: enviar null si vacío
-        birthDate: form.birthDate ? new Date(form.birthDate) : null,
-        hireDate: form.hireDate ? new Date(form.hireDate) : null,
+        birthDate: toDateOrNull(form.birthDate),
+        hireDate: toDateOrNull(form.hireDate),
+        licenses: (form.licenses || []).map(l => ({
+          ...l,
+          issuedAt: toDateOrNull(l.issuedAt),
+          validTo: toDateOrNull(l.validTo),
+        })),
       }
-      if (!payload.branchId) throw new Error('Sucursal es obligatoria')
-      if (!payload.dni || !payload.firstName || !payload.lastName) throw new Error('DNI, nombres y apellidos son obligatorios')
 
       if (id) await PeopleAPI.update(id, payload)
       else await PeopleAPI.create(payload)
 
-      nav('/people')
-    }catch(err){
-      setError(err?.response?.data?.message || err.message || 'Error')
-    }finally{
+      alert(id ? 'Persona actualizada con éxito' : 'Persona creada con éxito')
+      setInitialForm(form)
+      navigate('/people')
+    } catch (err) {
+      setError(err?.response?.data?.message || err.message || 'Datos inválidos')
+    } finally {
       setSaving(false)
     }
   }
 
-  if (loading) return <div className="max-w-4xl mx-auto bg-white border rounded p-4">Cargando…</div>
+  const TabButton = ({ code, label }) => (
+    <button
+      type="button"
+      onClick={() => handleChangeTab(code)}
+      className={`px-3 py-1.5 rounded ${tab === code ? 'bg-blue-600 text-white' : 'bg-white border'}`}
+    >
+      {label}
+    </button>
+  )
+
+  if (loading) return <div className="max-w-6xl mx-auto p-4 bg-white border rounded mt-3">Cargando…</div>
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h1 className="text-xl font-bold">{title}</h1>
-          <p className="text-sm text-slate-500">RRHH • Persona asociada a una sucursal</p>
+    <div className="flex flex-col h-full">
+      <UnsavedChangesGuard when={isDirty} getMessage={() => 'Tienes cambios sin guardar. ¿Salir sin guardar?'} />
+
+      <header className="max-w-6xl mx-auto mt-2 px-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">
+            {readOnly ? 'Consulta de persona' : id ? 'Editar persona' : 'Registrar persona'}
+          </h2>
         </div>
-        <button className="px-3 py-2 border rounded" type="button" onClick={() => nav('/people')}>Volver</button>
-      </div>
 
-      {error && <div className="mb-3 px-3 py-2 bg-red-50 text-red-700 rounded">{error}</div>}
+        <nav className="mt-2 flex justify-center gap-2">
+          <TabButton code="BASICO" label="Básico" />
+          <TabButton code="ORGANIZACION" label="Organización" />
+          <TabButton code="CONDUCCION" label="Conducción" />
+        </nav>
+      </header>
 
-      <form onSubmit={onSubmit} className="bg-white border rounded-xl shadow-sm">
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">DNI / Cédula</label>
-            <input value={form.dni} onChange={(e) => update('dni', e.target.value)} className="w-full border p-2 rounded" required />
-          </div>
+      {error && <div className="max-w-6xl mx-auto mt-2 px-3 py-2 bg-red-50 text-red-700 rounded text-sm">{error}</div>}
 
-          <div className="flex items-end gap-3">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-slate-600 mb-1">Estado</label>
-              <select value={String(form.active)} onChange={(e) => setForm(f => ({ ...f, active: e.target.value === 'true' }))} className="w-full border p-2 rounded bg-white">
-                <option value="true">ACTIVO</option>
-                <option value="false">INACTIVO</option>
-              </select>
+      <form ref={scrollRef} onSubmit={handleSubmit} className="max-w-6xl mx-auto w-full h-[calc(100vh-140px)] overflow-y-auto px-3 my-3">
+
+        {tab === 'BASICO' && (
+          <div className="bg-white shadow rounded-xl border">
+            <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+              <h3 className="font-medium text-slate-700">Datos personales</h3>
+            </div>
+
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">Documento</label>
+                <input
+                  className="w-full border p-2 rounded"
+                  value={form.documentId}
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                  onChange={(e) => setForm(f => ({ ...f, documentId: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">Estado</label>
+                <select
+                  className="w-full border p-2 rounded bg-white"
+                  value={form.status}
+                  disabled={readOnly}
+                  onChange={(e) => setForm(f => ({ ...f, status: e.target.value }))}
+                >
+                  <option value="ACTIVE">ACTIVO</option>
+                  <option value="INACTIVE">INACTIVO</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">Nombres</label>
+                <input
+                  className="w-full border p-2 rounded"
+                  value={form.firstName}
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                  onChange={(e) => setForm(f => ({ ...f, firstName: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">Apellidos</label>
+                <input
+                  className="w-full border p-2 rounded"
+                  value={form.lastName}
+                  disabled={readOnly}
+                  readOnly={readOnly}
+                  onChange={(e) => setForm(f => ({ ...f, lastName: e.target.value }))}
+                />
+              </div>
             </div>
           </div>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Nombres</label>
-            <input value={form.firstName} onChange={(e) => update('firstName', e.target.value)} className="w-full border p-2 rounded" required />
+        {tab === 'ORGANIZACION' && (
+          <div className="bg-white shadow rounded-xl border">
+            <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+              <h3 className="font-medium text-slate-700">Organización</h3>
+            </div>
+
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal</label>
+                <select
+                  className="w-full border p-2 rounded bg-white"
+                  value={form.branchId}
+                  disabled={readOnly}
+                  onChange={(e) => setForm(f => ({ ...f, branchId: e.target.value }))}
+                >
+                  <option value="" disabled>Selecciona sucursal</option>
+                  {branches.map(b => (
+                    <option key={b._id} value={b._id}>
+                      {b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1">Cargo</label>
+                <select
+                  className="w-full border p-2 rounded bg-white"
+                  value={form.positionId}
+                  disabled={readOnly}
+                  onChange={(e) => setForm(f => ({ ...f, positionId: e.target.value }))}
+                >
+                  <option value="" disabled>Selecciona cargo</option>
+                  {positions.map(p => (
+                    <option key={p._id} value={p._id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Apellidos</label>
-            <input value={form.lastName} onChange={(e) => update('lastName', e.target.value)} className="w-full border p-2 rounded" required />
+        {tab === 'CONDUCCION' && (
+          <div className="bg-white shadow rounded-xl border">
+            <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
+              <h3 className="font-medium text-slate-700">Conducción</h3>
+            </div>
+
+            <div className="p-4 text-sm text-slate-600">
+              Sprint 1: base lista. Sprint 2: licencias múltiples + validaciones + vehículos autorizados.
+            </div>
           </div>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
-            <input type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} className="w-full border p-2 rounded" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Teléfono</label>
-            <input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full border p-2 rounded" />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal</label>
-            <select value={form.branchId} onChange={(e) => setForm(f => ({ ...f, branchId: e.target.value }))} className="w-full border p-2 rounded bg-white" required>
-              <option value="" disabled>Selecciona sucursal</option>
-              {branches.map(b => (
-                <option key={b._id} value={b._id}>{b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-600 mb-1">Cargo</label>
-            <select value={form.positionId || ''} onChange={(e) => setForm(f => ({ ...f, positionId: e.target.value }))} className="w-full border p-2 rounded bg-white">
-              <option value="">— Sin cargo —</option>
-              {positions.map(p => (
-                <option key={p._id} value={p._id}>{p.code ? `${p.code} — ${p.name}` : p.name}</option>
-              ))}
-            </select>
-            <p className="text-xs text-slate-500 mt-1">La gestión de cargos está restringida (admin/global).</p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Fecha nacimiento</label>
-            <input type="date" value={form.birthDate} onChange={(e) => setForm(f => ({ ...f, birthDate: e.target.value }))} className="w-full border p-2 rounded" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Nacionalidad</label>
-            <input value={form.nationality} onChange={(e) => update('nationality', e.target.value)} className="w-full border p-2 rounded" placeholder="CHILENA, COLOMBIANA..." />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-slate-600 mb-1">Lugar de nacimiento</label>
-            <input value={form.birthPlace} onChange={(e) => update('birthPlace', e.target.value)} className="w-full border p-2 rounded" placeholder="CIUDAD / REGIÓN / PAÍS" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-600 mb-1">Fecha ingreso</label>
-            <input type="date" value={form.hireDate} onChange={(e) => setForm(f => ({ ...f, hireDate: e.target.value }))} className="w-full border p-2 rounded" />
-          </div>
-
-        </div>
-
-        <div className="p-4 border-t flex justify-end gap-2">
-          <button type="button" className="px-3 py-2 border rounded" onClick={() => nav('/people')}>Cancelar</button>
-          <button type="submit" disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-60">
-            {saving ? 'Guardando…' : 'Guardar'}
-          </button>
+        <div className="flex justify-end gap-3 pb-4 mt-4">
+          {readOnly ? (
+            <button type="button" onClick={() => navigate('/people')} className="px-3 py-2 border rounded">Volver</button>
+          ) : (
+            <>
+              <button type="button" onClick={() => navigate('/people')} className="px-3 py-2 border rounded">
+                {isDirty ? 'Cancelar' : 'Volver'}
+              </button>
+              <button type="submit" disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded">
+                {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
+              </button>
+            </>
+          )}
         </div>
       </form>
     </div>
