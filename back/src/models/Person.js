@@ -8,7 +8,7 @@ const LicenseSchema = new mongoose.Schema({
   issueDate:  Date,
   expiryDate: Date,
   issuer: { type: String, trim: true, uppercase: true },
-}, { _id:false });
+}, { _id:true });
 
 const PersonDocSchema = new mongoose.Schema({
   label: { type: String, trim: true },
@@ -44,8 +44,24 @@ const PersonSchema = new mongoose.Schema({
   authorizedVehicles: [{ type: mongoose.Schema.Types.ObjectId, ref:'Vehicle' }],
 
   // Adjuntos / documentos RRHH
-  photo: { url:String, format:String, bytes:Number, uploadedAt: Date },
-  documents: [PersonDocSchema],
+  // photo: { url:String, format:String, bytes:Number, uploadedAt: Date },
+  // documents: [PersonDocSchema],
+  photo: {
+  url: String,
+  format: String,
+  bytes: Number,
+  uploadedAt: Date,
+  publicId: String,   // ← CLAVE
+},
+
+documents: [{
+  label: { type: String, trim: true },
+  url: String,
+  format: String,
+  bytes: Number,
+  uploadedAt: Date,
+  publicId: String,   // ← CLAVE
+}],
 
   // Vinculación (si existe usuario)
   userId: { type: mongoose.Schema.Types.ObjectId, ref:'User', default:null, index:true },

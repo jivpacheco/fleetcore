@@ -8,6 +8,8 @@ const ROLE_PERMS = {
     'people:read','people:create','people:update','people:delete',
     'positions:read','positions:manage',
     'roles:read','roles:manage',
+    
+
   ],
 
   // Operación

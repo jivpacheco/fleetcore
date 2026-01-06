@@ -372,3 +372,96 @@ export async function remove(req, res, next) {
   }
 }
 
+function sanitizeLicense(l = {}) {
+  const out = { ...l };
+
+  if (typeof out.number === 'string') out.number = U(out.number.trim());
+  if (typeof out.type === 'string') out.type = U(out.type.trim());
+  if (typeof out.issuer === 'string') out.issuer = U(out.issuer.trim());
+
+  // Fechas: limpiar vacíos y normalizar string -> Date
+  for (const k of ['issueDate', 'expiryDate']) {
+    if (out[k] === '' || out[k] === undefined || out[k] === null) delete out[k];
+    if (typeof out[k] === 'string') {
+      const d = new Date(out[k]);
+      if (Number.isNaN(d.getTime())) delete out[k];
+      else out[k] = d;
+    }
+  }
+
+  return out;
+}
+
+export async function addLicense(req, res, next) {
+  try {
+    const { id } = req.params; // personId
+    await ensureInReadScope(req, id);
+
+    const person = await Person.findById(id);
+    if (!person) return res.status(404).json({ message: 'No encontrado' });
+
+    // Validar scope de escritura por sucursal
+    assertBranchWriteScope(req, person.branchId);
+
+    const lic = sanitizeLicense(req.body || {});
+    if (!lic.number) return res.status(400).json({ message: 'number es obligatorio' });
+    if (!lic.type) return res.status(400).json({ message: 'type es obligatorio' });
+
+    person.licenses.push(lic);
+    person.updatedBy = req.user?.uid;
+    await person.save();
+
+    return res.status(201).json({ item: person.licenses.at(-1) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateLicense(req, res, next) {
+  try {
+    const { id, licenseId } = req.params;
+    await ensureInReadScope(req, id);
+
+    const person = await Person.findById(id);
+    if (!person) return res.status(404).json({ message: 'No encontrado' });
+
+    assertBranchWriteScope(req, person.branchId);
+
+    const lic = person.licenses.id(licenseId);
+    if (!lic) return res.status(404).json({ message: 'Licencia no encontrada' });
+
+    const payload = sanitizeLicense(req.body || {});
+    Object.assign(lic, payload);
+
+    person.updatedBy = req.user?.uid;
+    await person.save();
+
+    return res.json({ item: lic });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function removeLicense(req, res, next) {
+  try {
+    const { id, licenseId } = req.params;
+    await ensureInReadScope(req, id);
+
+    const person = await Person.findById(id);
+    if (!person) return res.status(404).json({ message: 'No encontrado' });
+
+    assertBranchWriteScope(req, person.branchId);
+
+    const lic = person.licenses.id(licenseId);
+    if (!lic) return res.status(404).json({ message: 'Licencia no encontrada' });
+
+    lic.deleteOne();
+    person.updatedBy = req.user?.uid;
+    await person.save();
+
+    return res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+}
+
