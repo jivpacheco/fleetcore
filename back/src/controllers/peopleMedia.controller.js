@@ -202,6 +202,7 @@
 import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 import Person from '../models/Person.js';
+import path from 'path';
 
 export const uploadMemory = multer({ storage: multer.memoryStorage() });
 
@@ -244,7 +245,9 @@ export async function uploadPersonPhoto(req, res, next) {
 
     // Si había foto previa, la borramos
     if (person.photo?.publicId) {
-      await cloudinary.uploader.destroy(person.photo.publicId);
+      // await cloudinary.uploader.destroy(person.photo.publicId);
+      await cloudinary.uploader.destroy(person.photo.publicId, { resource_type: 'image' });
+      
     }
 
     person.photo = {
@@ -279,10 +282,14 @@ export async function uploadPersonDocument(req, res, next) {
       resource_type: 'raw',
     });
 
+    const extFromName = path.extname(req.file.originalname || '').replace('.', '').toLowerCase();
+    const extFromMime = (req.file.mimetype || '').split('/').pop() || '';
+    
     const doc = {
       label: req.body?.label?.trim() || req.file.originalname,
       url: result.secure_url,
-      format: result.format,
+      // format: result.format,
+      format: result.format || extFromName || extFromMime || '',
       bytes: result.bytes,
       uploadedAt: new Date(),
       publicId: result.public_id,
