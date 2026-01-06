@@ -199,10 +199,10 @@
 // }
 
 // back/src/controllers/peopleMedia.controller.js
-import { v2 as cloudinary } from 'cloudinary';
-import multer from 'multer';
-import Person from '../models/Person.js';
-import path from 'path';
+import { v2 as cloudinary } from "cloudinary";
+import multer from "multer";
+import Person from "../models/Person.js";
+import path from "path";
 
 export const uploadMemory = multer({ storage: multer.memoryStorage() });
 
@@ -233,29 +233,46 @@ export async function uploadPersonPhoto(req, res, next) {
   try {
     const { personId } = req.params;
     const person = await Person.findById(personId);
-    if (!person) return res.status(404).json({ message: 'Persona no encontrada' });
-    if (!req.file) return res.status(400).json({ message: 'Archivo requerido' });
+    if (!person)
+      return res.status(404).json({ message: "Persona no encontrada" });
+    if (!req.file)
+      return res.status(400).json({ message: "Archivo requerido" });
 
-    const folder = `${process.env.CLOUDINARY_FOLDER || 'fleetcore'}/people/${personId}/photo`;
+    const folder = `${
+      process.env.CLOUDINARY_FOLDER || "fleetcore"
+    }/people/${personId}/photo`;
 
     const result = await uploadBuffer(req.file.buffer, {
       folder,
-      resource_type: 'image',
+      resource_type: "image",
     });
 
     // Si había foto previa, la borramos
     if (person.photo?.publicId) {
       // await cloudinary.uploader.destroy(person.photo.publicId);
-      await cloudinary.uploader.destroy(person.photo.publicId, { resource_type: 'image' });
-      
+      await cloudinary.uploader.destroy(person.photo.publicId, {
+        resource_type: "image",
+      });
     }
 
+    //modificacion
+    // person.photo = {
+    //   url: result.secure_url,
+    //   format: result.format,
+    //   bytes: result.bytes,
+    //   uploadedAt: new Date(),
+    //   publicId: result.public_id,
+    // };
+
+    // dentro de uploadPersonPhoto(...)
     person.photo = {
       url: result.secure_url,
-      format: result.format,
+      format: result.format || "jpg", // si quieres mantenerlo
+      contentType: req.file.mimetype || "image/*", // ✅ ESTÁNDAR
       bytes: result.bytes,
       uploadedAt: new Date(),
       publicId: result.public_id,
+      provider: "cloudinary", // ✅ ESTÁNDAR (opcional, recomendado)
     };
 
     person.updatedBy = req.user?.uid;
@@ -272,27 +289,53 @@ export async function uploadPersonDocument(req, res, next) {
   try {
     const { personId } = req.params;
     const person = await Person.findById(personId);
-    if (!person) return res.status(404).json({ message: 'Persona no encontrada' });
-    if (!req.file) return res.status(400).json({ message: 'Archivo requerido' });
+    if (!person)
+      return res.status(404).json({ message: "Persona no encontrada" });
+    if (!req.file)
+      return res.status(400).json({ message: "Archivo requerido" });
 
-    const folder = `${process.env.CLOUDINARY_FOLDER || 'fleetcore'}/people/${personId}/documents`;
+    const folder = `${
+      process.env.CLOUDINARY_FOLDER || "fleetcore"
+    }/people/${personId}/documents`;
 
     const result = await uploadBuffer(req.file.buffer, {
       folder,
-      resource_type: 'raw',
+      resource_type: "raw",
     });
 
-    const extFromName = path.extname(req.file.originalname || '').replace('.', '').toLowerCase();
-    const extFromMime = (req.file.mimetype || '').split('/').pop() || '';
-    
+    //modificacion
+    // const extFromName = path
+    //   .extname(req.file.originalname || "")
+    //   .replace(".", "")
+    //   .toLowerCase();
+    // const extFromMime = (req.file.mimetype || "").split("/").pop() || "";
+
+    // const doc = {
+    //   label: req.body?.label?.trim() || req.file.originalname,
+    //   url: result.secure_url,
+    //   // format: result.format,
+    //   format: result.format || extFromName || extFromMime || "",
+    //   bytes: result.bytes,
+    //   uploadedAt: new Date(),
+    //   publicId: result.public_id,
+    // };
+
+    // dentro de uploadPersonDocument(...)
+    const extFromName = path
+      .extname(req.file.originalname || "")
+      .replace(".", "")
+      .toLowerCase();
+    const extFromMime = (req.file.mimetype || "").split("/").pop() || "";
+
     const doc = {
       label: req.body?.label?.trim() || req.file.originalname,
       url: result.secure_url,
-      // format: result.format,
-      format: result.format || extFromName || extFromMime || '',
+      format: result.format || extFromName || extFromMime || "",
+      contentType: req.file.mimetype || "", // ✅ ESTÁNDAR
       bytes: result.bytes,
       uploadedAt: new Date(),
       publicId: result.public_id,
+      provider: "cloudinary", // ✅ ESTÁNDAR (opcional, recomendado)
     };
 
     person.documents.push(doc);
@@ -309,13 +352,15 @@ export async function deletePersonDocument(req, res, next) {
   try {
     const { personId, docId } = req.params;
     const person = await Person.findById(personId);
-    if (!person) return res.status(404).json({ message: 'Persona no encontrada' });
+    if (!person)
+      return res.status(404).json({ message: "Persona no encontrada" });
 
     const doc = person.documents.id(docId);
-    if (!doc) return res.status(404).json({ message: 'Documento no encontrado' });
+    if (!doc)
+      return res.status(404).json({ message: "Documento no encontrado" });
 
     if (doc.publicId) {
-      await cloudinary.uploader.destroy(doc.publicId, { resource_type: 'raw' });
+      await cloudinary.uploader.destroy(doc.publicId, { resource_type: "raw" });
     }
 
     doc.deleteOne();
