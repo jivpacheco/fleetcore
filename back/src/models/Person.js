@@ -46,22 +46,43 @@ const PersonSchema = new mongoose.Schema({
   // Adjuntos / documentos RRHH
   // photo: { url:String, format:String, bytes:Number, uploadedAt: Date },
   // documents: [PersonDocSchema],
-  photo: {
+//   photo: {
+//   url: String,
+//   format: String,
+//   bytes: Number,
+//   uploadedAt: Date,
+//   publicId: String,   // ← CLAVE
+// },
+
+// documents: [{
+//   label: { type: String, trim: true },
+//   url: String,
+//   format: String,
+//   bytes: Number,
+//   uploadedAt: Date,
+//   publicId: String,   // ← CLAVE
+// }],
+
+photo: {
   url: String,
   format: String,
+  contentType: String,
   bytes: Number,
   uploadedAt: Date,
-  publicId: String,   // ← CLAVE
+  publicId: String,
+  provider: String,
 },
-
 documents: [{
   label: { type: String, trim: true },
   url: String,
   format: String,
+  contentType: String,
   bytes: Number,
   uploadedAt: Date,
-  publicId: String,   // ← CLAVE
+  publicId: String,
+  provider: String,
 }],
+
 
   // Vinculación (si existe usuario)
   userId: { type: mongoose.Schema.Types.ObjectId, ref:'User', default:null, index:true },

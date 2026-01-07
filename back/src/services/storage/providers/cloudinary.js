@@ -1,4 +1,4 @@
-// back/src/services/storage/providers/cloudinary.js
+// // back/src/services/storage/providers/cloudinary.js
 import { v2 as cloudinary } from 'cloudinary';
 
 let ready = false;
@@ -29,28 +29,28 @@ export default {
   async uploadImage({ buffer, folder }) {
     const result = await uploadStream(buffer, { folder, resource_type: 'image' });
     return {
+      provider: 'cloudinary',
       url: result.secure_url,
       publicId: result.public_id,
-      bytes: result.bytes,
+      bytes: result.bytes || 0,
       format: result.format || '',
-      provider: 'cloudinary',
     };
   },
 
   async uploadFile({ buffer, folder }) {
     const result = await uploadStream(buffer, { folder, resource_type: 'raw' });
     return {
+      provider: 'cloudinary',
       url: result.secure_url,
       publicId: result.public_id,
-      bytes: result.bytes,
+      bytes: result.bytes || 0,
       format: result.format || '',
-      provider: 'cloudinary',
     };
   },
 
-  async delete({ publicId, resourceType }) {
+  async delete({ publicId, resourceType = 'raw' }) {
     if (!publicId) return;
     ensure();
-    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType || 'raw' });
+    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   },
 };
