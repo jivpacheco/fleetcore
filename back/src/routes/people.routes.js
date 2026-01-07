@@ -119,7 +119,7 @@ function ensure(fn, name) {
 // ====================== CRUD ======================
 router.get('/',       requireAuth, requirePermission('people:read'),   branchScope, ensure(ctrl.list, 'list'));
 router.get('/:id',    requireAuth, requirePermission('people:read'),   branchScope, ensure(ctrl.get, 'get'));
-router.post('/',      requireAuth, requirePermission('people:create'),              ensure(ctrl.create, 'create'));
+router.post('/',      requireAuth, requirePermission('people:create'), branchScope, ensure(ctrl.create, 'create'));
 router.patch('/:id',  requireAuth, requirePermission('people:update'), branchScope, ensure(ctrl.update, 'update'));
 router.delete('/:id', requireAuth, requirePermission('people:delete'), branchScope, ensure(ctrl.remove, 'remove'));
 

@@ -23,6 +23,9 @@ import PeopleList from "../pages/People/List";
 import PeopleForm from "../pages/People/Form";
 import TicketsList from "../pages/Tickets/List";
 import VehicleStatusesCatalog from "../pages/Config/Catalogs/VehicleStatuses";
+import PositionsCatalog from "../pages/Config/Catalogs/Positions"
+import RolesCatalog from "../pages/Config/Catalogs/Roles"
+
 
 // Pantalla de carga
 function Splash() {
@@ -92,6 +95,9 @@ export default function AppRoutes() {
           <Route path="vehicles/new" element={<VehiclesForm />} />
           <Route path="vehicles/:id" element={<VehiclesForm />} />
           <Route path="config/catalogs/vehicle-statuses" element={<VehicleStatusesCatalog />} />
+          <Route path="config/catalogs/positions" element={<PositionsCatalog />} />
+          <Route path="config/catalogs/roles" element={<RolesCatalog />} />
+
 
           <Route path="tickets" element={<TicketsList />} />
 
