@@ -90,6 +90,61 @@
 
 
 // front/src/hooks/UnsavedChangesGuard.jsx
+// import { useEffect, useMemo } from 'react'
+// import * as RRD from 'react-router-dom'
+
+// /**
+//  * UnsavedChangesGuard
+//  * - Protege cierre/recarga (beforeunload)
+//  * - Bloquea navegación interna SOLO si la app está montada con Data Router (RouterProvider)
+//  *   y react-router-dom expone useBlocker disponible.
+//  *
+//  * Con BrowserRouter, useBlocker lanza:
+//  * "useBlocker must be used within a data router"
+//  * Por eso aquí se envuelve en try/catch.
+//  */
+// export default function UnsavedChangesGuard({ when, getMessage }) {
+//   const message = useMemo(() => {
+//     return (typeof getMessage === 'function' && getMessage())
+//       || 'Tienes cambios sin guardar. ¿Quieres salir sin guardar?'
+//   }, [getMessage])
+
+//   // 1) Cierre/recarga de pestaña
+//   useEffect(() => {
+//     if (!when) return
+//     const onBeforeUnload = (e) => {
+//       e.preventDefault()
+//       e.returnValue = ''
+//     }
+//     window.addEventListener('beforeunload', onBeforeUnload)
+//     return () => window.removeEventListener('beforeunload', onBeforeUnload)
+//   }, [when])
+
+//   // 2) Navegación interna (solo si RR lo soporta y estás en Data Router)
+//   const blockerHook = RRD.useBlocker
+//   let blocker = null
+
+//   if (blockerHook && when) {
+//     try {
+//       blocker = blockerHook(when)
+//     } catch (e) {
+//       // BrowserRouter: no es data router, evitamos romper la app
+//       blocker = null
+//     }
+//   }
+
+//   useEffect(() => {
+//     if (!blocker || blocker.state !== 'blocked') return
+//     const ok = window.confirm(message)
+//     if (ok) blocker.proceed()
+//     else blocker.reset()
+//   }, [blocker, message])
+
+//   return null
+// }
+
+
+// front/src/hooks/UnsavedChangesGuard.jsx
 import { useEffect, useMemo } from 'react'
 import * as RRD from 'react-router-dom'
 
@@ -108,6 +163,17 @@ export default function UnsavedChangesGuard({ when, getMessage }) {
     return (typeof getMessage === 'function' && getMessage())
       || 'Tienes cambios sin guardar. ¿Quieres salir sin guardar?'
   }, [getMessage])
+
+  // 0) Flag global para poder interceptar navegación desde sidebars/menús
+  //    (AppLayout usa BrowserRouter, donde useBlocker no funciona).
+  useEffect(() => {
+    window.__FLEETCORE_UNSAVED__ = Boolean(when)
+    window.__FLEETCORE_UNSAVED_MESSAGE__ = message
+    return () => {
+      window.__FLEETCORE_UNSAVED__ = false
+      window.__FLEETCORE_UNSAVED_MESSAGE__ = ''
+    }
+  }, [when, message])
 
   // 1) Cierre/recarga de pestaña
   useEffect(() => {

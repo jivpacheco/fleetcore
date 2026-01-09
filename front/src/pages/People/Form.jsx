@@ -1,333 +1,3 @@
-// // front/src/pages/People/Form.jsx
-// // -----------------------------------------------------------------------------
-// // RRHH - Ficha de Persona (Tabs)
-// // - Modo Ver: ?mode=view (bloquea inputs y muestra solo "Volver")
-// // - Modo Editar: default
-// // - Guard cambios sin guardar: hooks/UnsavedChangesGuard (useBlocker)
-// // -----------------------------------------------------------------------------
-
-// import { useEffect, useMemo, useRef, useState } from 'react'
-// import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-// import UnsavedChangesGuard from '../../hooks/UnsavedChangesGuard'
-// import { api } from '../../services/http'
-// import { PeopleAPI } from '../../api/people.api'
-// import { PositionsAPI } from '../../api/positions.api'
-
-// function deepEqual(a, b) {
-//   try { return JSON.stringify(a) === JSON.stringify(b) } catch { return false }
-// }
-
-// const ymd = (d) => {
-//   if (!d) return ''
-//   const dt = new Date(d)
-//   if (Number.isNaN(dt.getTime())) return ''
-//   return dt.toISOString().slice(0, 10)
-// }
-
-// export default function PeopleForm() {
-//   const navigate = useNavigate()
-//   const { id } = useParams()
-//   const [sp, setSp] = useSearchParams()
-
-//   const mode = sp.get('mode')
-//   const readOnly = mode === 'view'
-//   const [tab, setTab] = useState(sp.get('tab') || 'BASICO')
-
-//   const scrollRef = useRef(null)
-//   useEffect(() => { scrollRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' }) }, [tab])
-
-//   const handleChangeTab = (code) => {
-//     setTab(code)
-//     const next = new URLSearchParams(sp)
-//     next.set('tab', code)
-//     setSp(next, { replace: true })
-//   }
-
-//   const [branches, setBranches] = useState([])
-//   const [positions, setPositions] = useState([])
-
-//   const [loading, setLoading] = useState(!!id)
-//   const [saving, setSaving] = useState(false)
-//   const [error, setError] = useState('')
-
-//   const [form, setForm] = useState({
-//     branchId: '',
-//     positionId: '',
-//     status: 'ACTIVE',
-//     documentType: 'RUT',
-//     documentId: '',
-//     firstName: '',
-//     lastName: '',
-//     birthDate: '',
-//     nationality: '',
-//     email: '',
-//     phone: '',
-//     address: '',
-//     hireDate: '',
-//     licenses: [],
-//   })
-
-//   const [initialForm, setInitialForm] = useState(null)
-//   const isDirty = !readOnly && !deepEqual(form, initialForm || form)
-
-//   useEffect(() => {
-//     // branches
-//     api.get('/api/v1/branches', { params: { page: 1, limit: 200 } })
-//       .then(({ data }) => {
-//         const payload = data?.items || data?.data?.items || data?.data || []
-//         setBranches(payload)
-//       })
-//       .catch(() => setBranches([]))
-
-//     // positions
-//     PositionsAPI.list({ page: 1, limit: 500 })
-//       .then(({ data }) => {
-//         const list = data?.items || data?.data?.items || data?.data || []
-//         setPositions(list.filter(x => x.active !== false))
-//       })
-//       .catch(() => setPositions([]))
-//   }, [])
-
-//   useEffect(() => {
-//     if (!id) { setInitialForm(form); return }
-
-//     setLoading(true)
-//     PeopleAPI.get(id)
-//       .then(({ data }) => {
-//         const p = data?.item || data
-//         const loaded = {
-//           branchId: p.branchId?._id || p.branchId || '',
-//           positionId: p.positionId?._id || p.positionId || '',
-//           status: p.status || 'ACTIVE',
-//           documentType: p.documentType || 'RUT',
-//           documentId: p.documentId || '',
-//           firstName: p.firstName || '',
-//           lastName: p.lastName || '',
-//           birthDate: ymd(p.birthDate),
-//           nationality: p.nationality || '',
-//           email: p.email || '',
-//           phone: p.phone || '',
-//           address: p.address || '',
-//           hireDate: ymd(p.hireDate),
-//           licenses: Array.isArray(p.licenses) ? p.licenses.map(l => ({
-//             number: l.number || '',
-//             type: l.type || '',
-//             issuer: l.issuer || '',
-//             issuedAt: ymd(l.issuedAt),
-//             validTo: ymd(l.validTo),
-//           })) : [],
-//         }
-//         setForm(loaded)
-//         setInitialForm(loaded)
-//       })
-//       .catch((err) => setError(err?.response?.data?.message || 'No se pudo cargar la persona'))
-//       .finally(() => setLoading(false))
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, [id])
-
-//   const toDateOrNull = (v) => (v ? new Date(`${v}T00:00:00.000Z`) : null)
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault()
-//     if (readOnly) return
-//     setSaving(true); setError('')
-
-//     try {
-//       if (!form.branchId) throw new Error('Sucursal es obligatoria')
-//       if (!form.positionId) throw new Error('Cargo es obligatorio')
-//       if (!String(form.documentId || '').trim()) throw new Error('Documento es obligatorio')
-//       if (!String(form.firstName || '').trim() || !String(form.lastName || '').trim()) throw new Error('Nombre y apellido son obligatorios')
-
-//       const payload = {
-//         ...form,
-//         birthDate: toDateOrNull(form.birthDate),
-//         hireDate: toDateOrNull(form.hireDate),
-//         licenses: (form.licenses || []).map(l => ({
-//           ...l,
-//           issuedAt: toDateOrNull(l.issuedAt),
-//           validTo: toDateOrNull(l.validTo),
-//         })),
-//       }
-
-//       if (id) await PeopleAPI.update(id, payload)
-//       else await PeopleAPI.create(payload)
-
-//       alert(id ? 'Persona actualizada con éxito' : 'Persona creada con éxito')
-//       setInitialForm(form)
-//       navigate('/people')
-//     } catch (err) {
-//       setError(err?.response?.data?.message || err.message || 'Datos inválidos')
-//     } finally {
-//       setSaving(false)
-//     }
-//   }
-
-//   const TabButton = ({ code, label }) => (
-//     <button
-//       type="button"
-//       onClick={() => handleChangeTab(code)}
-//       className={`px-3 py-1.5 rounded ${tab === code ? 'bg-blue-600 text-white' : 'bg-white border'}`}
-//     >
-//       {label}
-//     </button>
-//   )
-
-//   if (loading) return <div className="max-w-6xl mx-auto p-4 bg-white border rounded mt-3">Cargando…</div>
-
-//   return (
-//     <div className="flex flex-col h-full">
-//       <UnsavedChangesGuard when={isDirty} getMessage={() => 'Tienes cambios sin guardar. ¿Salir sin guardar?'} />
-
-//       <header className="max-w-6xl mx-auto mt-2 px-3">
-//         <div className="flex items-center justify-between">
-//           <h2 className="text-lg font-semibold">
-//             {readOnly ? 'Consulta de persona' : id ? 'Editar persona' : 'Registrar persona'}
-//           </h2>
-//         </div>
-
-//         <nav className="mt-2 flex justify-center gap-2">
-//           <TabButton code="BASICO" label="Básico" />
-//           <TabButton code="ORGANIZACION" label="Organización" />
-//           <TabButton code="CONDUCCION" label="Conducción" />
-//         </nav>
-//       </header>
-
-//       {error && <div className="max-w-6xl mx-auto mt-2 px-3 py-2 bg-red-50 text-red-700 rounded text-sm">{error}</div>}
-
-//       <form ref={scrollRef} onSubmit={handleSubmit} className="max-w-6xl mx-auto w-full h-[calc(100vh-140px)] overflow-y-auto px-3 my-3">
-
-//         {tab === 'BASICO' && (
-//           <div className="bg-white shadow rounded-xl border">
-//             <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-//               <h3 className="font-medium text-slate-700">Datos personales</h3>
-//             </div>
-
-//             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-//               <div>
-//                 <label className="block text-sm font-medium text-slate-600 mb-1">Documento</label>
-//                 <input
-//                   className="w-full border p-2 rounded"
-//                   value={form.documentId}
-//                   disabled={readOnly}
-//                   readOnly={readOnly}
-//                   onChange={(e) => setForm(f => ({ ...f, documentId: e.target.value }))}
-//                 />
-//               </div>
-
-//               <div>
-//                 <label className="block text-sm font-medium text-slate-600 mb-1">Estado</label>
-//                 <select
-//                   className="w-full border p-2 rounded bg-white"
-//                   value={form.status}
-//                   disabled={readOnly}
-//                   onChange={(e) => setForm(f => ({ ...f, status: e.target.value }))}
-//                 >
-//                   <option value="ACTIVE">ACTIVO</option>
-//                   <option value="INACTIVE">INACTIVO</option>
-//                 </select>
-//               </div>
-
-//               <div>
-//                 <label className="block text-sm font-medium text-slate-600 mb-1">Nombres</label>
-//                 <input
-//                   className="w-full border p-2 rounded"
-//                   value={form.firstName}
-//                   disabled={readOnly}
-//                   readOnly={readOnly}
-//                   onChange={(e) => setForm(f => ({ ...f, firstName: e.target.value }))}
-//                 />
-//               </div>
-
-//               <div>
-//                 <label className="block text-sm font-medium text-slate-600 mb-1">Apellidos</label>
-//                 <input
-//                   className="w-full border p-2 rounded"
-//                   value={form.lastName}
-//                   disabled={readOnly}
-//                   readOnly={readOnly}
-//                   onChange={(e) => setForm(f => ({ ...f, lastName: e.target.value }))}
-//                 />
-//               </div>
-//             </div>
-//           </div>
-//         )}
-
-//         {tab === 'ORGANIZACION' && (
-//           <div className="bg-white shadow rounded-xl border">
-//             <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-//               <h3 className="font-medium text-slate-700">Organización</h3>
-//             </div>
-
-//             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-//               <div>
-//                 <label className="block text-sm font-medium text-slate-600 mb-1">Sucursal</label>
-//                 <select
-//                   className="w-full border p-2 rounded bg-white"
-//                   value={form.branchId}
-//                   disabled={readOnly}
-//                   onChange={(e) => setForm(f => ({ ...f, branchId: e.target.value }))}
-//                 >
-//                   <option value="" disabled>Selecciona sucursal</option>
-//                   {branches.map(b => (
-//                     <option key={b._id} value={b._id}>
-//                       {b.code ? `${b.code} — ${b.name}` : (b.name || b._id)}
-//                     </option>
-//                   ))}
-//                 </select>
-//               </div>
-
-//               <div>
-//                 <label className="block text-sm font-medium text-slate-600 mb-1">Cargo</label>
-//                 <select
-//                   className="w-full border p-2 rounded bg-white"
-//                   value={form.positionId}
-//                   disabled={readOnly}
-//                   onChange={(e) => setForm(f => ({ ...f, positionId: e.target.value }))}
-//                 >
-//                   <option value="" disabled>Selecciona cargo</option>
-//                   {positions.map(p => (
-//                     <option key={p._id} value={p._id}>
-//                       {p.name}
-//                     </option>
-//                   ))}
-//                 </select>
-//               </div>
-//             </div>
-//           </div>
-//         )}
-
-//         {tab === 'CONDUCCION' && (
-//           <div className="bg-white shadow rounded-xl border">
-//             <div className="px-4 py-3 border-b bg-slate-50 rounded-t-xl">
-//               <h3 className="font-medium text-slate-700">Conducción</h3>
-//             </div>
-
-//             <div className="p-4 text-sm text-slate-600">
-//               Sprint 1: base lista. Sprint 2: licencias múltiples + validaciones + vehículos autorizados.
-//             </div>
-//           </div>
-//         )}
-
-//         <div className="flex justify-end gap-3 pb-4 mt-4">
-//           {readOnly ? (
-//             <button type="button" onClick={() => navigate('/people')} className="px-3 py-2 border rounded">Volver</button>
-//           ) : (
-//             <>
-//               <button type="button" onClick={() => navigate('/people')} className="px-3 py-2 border rounded">
-//                 {isDirty ? 'Cancelar' : 'Volver'}
-//               </button>
-//               <button type="submit" disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded">
-//                 {saving ? 'Guardando…' : (id ? 'Guardar cambios' : 'Guardar')}
-//               </button>
-//             </>
-//           )}
-//         </div>
-//       </form>
-//     </div>
-//   )
-// }
-
-// //v2 01082026
 // // // front/src/pages/People/Form.jsx
 // // // -----------------------------------------------------------------------------
 // // // RRHH - Ficha de Persona (Tabs)
@@ -338,6 +8,7 @@
 
 // import { useEffect, useMemo, useState } from "react";
 // import { Link, useNavigate, useParams } from "react-router-dom";
+// import { computeRunDV, formatRUN, isValidRUN, parseRUN } from '../../utils/run';
 // import UnsavedChangesGuard from "../../hooks/UnsavedChangesGuard";
 // import { PeopleAPI } from "../../api/people.api";
 // import { PositionsAPI } from "../../api/positions.api";
@@ -393,6 +64,10 @@
 //     positionId: "",
 //   });
 
+//   const [{ number: runNumber, dv: runDv }, setRun] = useState(() => parseRUN(''))
+//   const [runDvTouched, setRunDvTouched] = useState(false)
+//   const [runError, setRunError] = useState('')
+
 //   const isDirty = useMemo(() => {
 //     if (!initial) return false;
 //     return JSON.stringify(form) !== JSON.stringify(initial);
@@ -443,6 +118,9 @@
 //       setPersonDoc(null);
 //       const base = { ...form };
 //       setInitial(base);
+//       setRun(parseRUN(base.dni));
+//       setRunDvTouched(false);
+//       setRunError('');
 //       return;
 //     }
 
@@ -454,7 +132,10 @@
 
 //       const mapped = mapToForm(p);
 //       setForm(mapped);
-//       setInitial(mapped);
+//       setRun(parseRUN(mapped.dni));
+//       setRunDvTouched(false);
+//       setRunError('');
+// setInitial(mapped);
 //     } finally {
 //       setLoading(false);
 //     }
@@ -480,6 +161,10 @@
 //   const payload = useMemo(() => {
 //     const out = { ...form };
 
+//     // Normaliza RUN a formato NNNNNNNN-DV
+//     out.dni = formatRUN(runNumber, runDv)
+
+
 //     out.birthDate = toDateOrNull(out.birthDate);
 //     out.hireDate = toDateOrNull(out.hireDate);
 
@@ -487,11 +172,19 @@
 //     if (!out.email) delete out.email;
 
 //     return out;
-//   }, [form]);
+//   }, [form, runNumber, runDv]);
 
 //   const save = async () => {
 //     setSaving(true);
 //     try {
+//       // RUN (Chile) validation (módulo 11)
+//       const dni = formatRUN(runNumber, runDv)
+//       if (!dni) throw new Error('RUN es obligatorio')
+//       if (!isValidRUN(runNumber, runDv)) throw new Error('RUN inválido (dígito verificador no coincide)')
+//       setRunError('')
+//       // mantenemos compatibilidad: backend actual usa form.dni
+//       // (form se actualiza por setForm al vuelo, pero lo forzamos aquí por seguridad)
+      
 //       const { data } = isNew
 //         ? await PeopleAPI.create(payload)
 //         : await PeopleAPI.update(id, payload);
@@ -504,7 +197,9 @@
 //       await loadPerson();
 //     } catch (err) {
 //       console.error(err);
-//       alert("No fue posible guardar");
+//       const msg = err?.response?.data?.message || err?.message || 'No fue posible guardar';
+//       if (String(msg).toUpperCase().includes('RUN')) setRunError(msg);
+//       alert(msg);
 //     } finally {
 //       setSaving(false);
 //     }
@@ -537,17 +232,17 @@
 //         </div>
 //       </div>
 
-//       <div className="border-b flex gap-2">
+//       <div className="flex flex-wrap gap-2">
 //         {TABS.map((t) => (
 //           <button
 //             key={t.key}
 //             type="button"
-//             className={`px-3 py-2 text-sm border-b-2 ${
-//               tab === t.key
-//                 ? "border-black font-semibold"
-//                 : "border-transparent text-gray-600"
-//             }`}
 //             onClick={() => setTab(t.key)}
+//             className={`px-3 py-1.5 rounded ${
+//               tab === t.key
+//                 ? "bg-blue-600 text-white shadow-[0_0_0_3px_rgba(37,99,235,0.25)]"
+//                 : "bg-white border"
+//             }`}
 //           >
 //             {t.label}
 //           </button>
@@ -560,14 +255,30 @@
 //         <>
 //           {tab === "basic" && (
 //             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 border rounded p-4">
-//               <input
-//                 className="border rounded px-3 py-2"
-//                 placeholder="DNI *"
-//                 value={form.dni}
-//                 onChange={(e) =>
-//                   setForm((s) => ({ ...s, dni: e.target.value }))
-//                 }
-//               />
+//               <div className="grid grid-cols-3 gap-2 md:col-span-1">
+//                 <input
+//                   className="border rounded px-3 py-2 col-span-2"
+//                   placeholder="RUN (número) *"
+//                   value={runNumber}
+//                   onChange={(e) => {
+//                     const num = String(e.target.value || "").replace(/\D/g, "");
+//                     const nextDv = runDvTouched ? runDv : computeRunDV(num);
+//                     setRun({ number: num, dv: nextDv });
+//                     setForm((s) => ({ ...s, dni: formatRUN(num, nextDv) }));
+//                   }}
+//                 />
+//                 <input
+//                   className="border rounded px-3 py-2"
+//                   placeholder="DV"
+//                   value={runDv}
+//                   onChange={(e) => {
+//                     const dv = String(e.target.value || "").trim().toUpperCase().replace(/[^0-9K]/g, "").slice(0, 1);
+//                     setRunDvTouched(true);
+//                     setRun((s) => ({ ...s, dv }));
+//                     setForm((s) => ({ ...s, dni: formatRUN(runNumber, dv) }));
+//                   }}
+//                 />
+//               </div>
 //               <input
 //                 className="border rounded px-3 py-2"
 //                 placeholder="Nombres *"
@@ -724,6 +435,7 @@
 
 //           {tab === "tests" && (
 //             <DrivingTestsTab
+//               onPersonReload={loadPerson}
 //               person={
 //                 personDoc || { _id: isNew ? null : id, branchId: form.branchId }
 //               }
@@ -738,9 +450,31 @@
 //           )}
 //         </>
 //       )}
+//       <div className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-slate-200 p-3 flex justify-end gap-2">
+//         <button
+//           type="button"
+//           className="px-3 py-2 border rounded"
+//           onClick={() => {
+//             if (!isDirty) return navigate('/people')
+//             const ok = window.confirm('Tienes cambios sin guardar. ¿Salir sin guardar?')
+//             if (ok) navigate('/people')
+//           }}
+//         >
+//           Volver
+//         </button>
+//         <button
+//           type="button"
+//           className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700"
+//           onClick={save}
+//           disabled={saving || loading}
+//         >
+//           Guardar
+//         </button>
+//       </div>
 //     </div>
 //   );
 // }
+
 
 // // front/src/pages/People/Form.jsx
 // // -----------------------------------------------------------------------------
@@ -752,7 +486,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { computeRunDV, formatRUN, isValidRUN, parseRUN } from '../../utils/run';
 import UnsavedChangesGuard from "../../hooks/UnsavedChangesGuard";
 import { PeopleAPI } from "../../api/people.api";
 import { PositionsAPI } from "../../api/positions.api";
@@ -774,6 +507,35 @@ function pickId(v) {
   if (!v) return "";
   if (typeof v === "string") return v;
   return v._id || "";
+}
+
+// RUN (Chile) - validación Módulo 11
+const normalizeRun = (v) =>
+  String(v || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\./g, '')
+    .replace(/\s+/g, '')
+
+const isValidRun = (v) => {
+  const run = normalizeRun(v)
+  if (!run) return true
+
+  const clean = run.replace(/-/g, '')
+  if (clean.length < 2) return false
+  const body = clean.slice(0, -1)
+  const dv = clean.slice(-1)
+  if (!/^\d+$/.test(body)) return false
+
+  let sum = 0
+  let mul = 2
+  for (let i = body.length - 1; i >= 0; i--) {
+    sum += Number(body[i]) * mul
+    mul = mul === 7 ? 2 : mul + 1
+  }
+  const mod = 11 - (sum % 11)
+  const expected = mod === 11 ? '0' : mod === 10 ? 'K' : String(mod)
+  return dv === expected
 }
 
 export default function PeopleForm() {
@@ -804,26 +566,53 @@ export default function PeopleForm() {
     hireDate: "",
     active: true,
 
+    // Dirección (opcional)
+    addressLine1: "",
+    addressCity: "",
+    addressRegion: "",
+    addressCountry: "CL",
+
     branchId: "",
     positionId: "",
   });
-
-  const [{ number: runNumber, dv: runDv }, setRun] = useState(() => parseRUN(''))
-  const [runDvTouched, setRunDvTouched] = useState(false)
-  const [runError, setRunError] = useState('')
 
   const isDirty = useMemo(() => {
     if (!initial) return false;
     return JSON.stringify(form) !== JSON.stringify(initial);
   }, [form, initial]);
 
+  const runOk = useMemo(() => isValidRun(form.dni), [form.dni])
+
+  const normalizeBranchesPayload = (data) => {
+    // Compatibilidad con las distintas formas usadas en el proyecto (Vehículos)
+    return (
+      data?.items ||
+      data?.data?.items ||
+      data?.data ||
+      data?.list ||
+      []
+    );
+  };
+
+  const sortBranches = (list) => {
+    const copy = Array.isArray(list) ? [...list] : [];
+    copy.sort((a, b) => {
+      const ac = (a?.code || "").toString();
+      const bc = (b?.code || "").toString();
+      if (ac && bc && ac !== bc) return ac.localeCompare(bc, undefined, { numeric: true });
+      return (a?.name || "").toString().localeCompare((b?.name || "").toString(), undefined, { numeric: true });
+    });
+    return copy;
+  };
+
   const loadRefs = async () => {
-    // branches
+    // branches (misma lógica robusta que Vehículos)
     try {
       const { data } = await api.get(`${API_PREFIX}/branches`, {
-        params: { page: 1, limit: 200 },
+        params: { page: 1, limit: 500 },
       });
-      setBranches(data.items || []);
+      const payload = normalizeBranchesPayload(data);
+      setBranches(sortBranches(payload));
     } catch {
       setBranches([]);
     }
@@ -853,6 +642,11 @@ export default function PeopleForm() {
     hireDate: p.hireDate ? String(p.hireDate).slice(0, 10) : "",
     active: p.active !== false,
 
+    addressLine1: p.address?.line1 || "",
+    addressCity: p.address?.city || "",
+    addressRegion: p.address?.region || "",
+    addressCountry: p.address?.country || "CL",
+
     branchId: pickId(p.branchId),
     positionId: pickId(p.positionId),
   });
@@ -862,9 +656,6 @@ export default function PeopleForm() {
       setPersonDoc(null);
       const base = { ...form };
       setInitial(base);
-      setRun(parseRUN(base.dni));
-      setRunDvTouched(false);
-      setRunError('');
       return;
     }
 
@@ -876,10 +667,7 @@ export default function PeopleForm() {
 
       const mapped = mapToForm(p);
       setForm(mapped);
-      setRun(parseRUN(mapped.dni));
-      setRunDvTouched(false);
-      setRunError('');
-setInitial(mapped);
+      setInitial(mapped);
     } finally {
       setLoading(false);
     }
@@ -905,30 +693,50 @@ setInitial(mapped);
   const payload = useMemo(() => {
     const out = { ...form };
 
-    // Normaliza RUN a formato NNNNNNNN-DV
-    out.dni = formatRUN(runNumber, runDv)
-
-
     out.birthDate = toDateOrNull(out.birthDate);
     out.hireDate = toDateOrNull(out.hireDate);
+
+    // address (opcional): solo enviamos si hay datos reales.
+    const address = {
+      line1: (out.addressLine1 || '').trim(),
+      city: (out.addressCity || '').trim(),
+      region: (out.addressRegion || '').trim(),
+      country: ((out.addressCountry || 'CL').trim() || 'CL').toUpperCase(),
+    };
+    delete out.addressLine1;
+    delete out.addressCity;
+    delete out.addressRegion;
+    delete out.addressCountry;
+
+    const hasAddress = Boolean(address.line1 || address.city || address.region);
+    if (hasAddress) out.address = address;
 
     if (!out.positionId) out.positionId = null;
     if (!out.email) delete out.email;
 
     return out;
-  }, [form, runNumber, runDv]);
+  }, [form]);
+
+  const cancelChanges = async () => {
+    if (!isDirty) {
+      navigate('/people');
+      return;
+    }
+    // Modo edición con cambios → "Cancelar" (restaurar)
+    if (isNew) {
+      setForm(initial || form);
+      return;
+    }
+    await loadPerson();
+  };
 
   const save = async () => {
+    if (!isValidRun(form.dni)) {
+      alert('RUN inválido. Verifica el dígito verificador (Módulo 11).')
+      return
+    }
     setSaving(true);
     try {
-      // RUN (Chile) validation (módulo 11)
-      const dni = formatRUN(runNumber, runDv)
-      if (!dni) throw new Error('RUN es obligatorio')
-      if (!isValidRUN(runNumber, runDv)) throw new Error('RUN inválido (dígito verificador no coincide)')
-      setRunError('')
-      // mantenemos compatibilidad: backend actual usa form.dni
-      // (form se actualiza por setForm al vuelo, pero lo forzamos aquí por seguridad)
-      
       const { data } = isNew
         ? await PeopleAPI.create(payload)
         : await PeopleAPI.update(id, payload);
@@ -941,9 +749,7 @@ setInitial(mapped);
       await loadPerson();
     } catch (err) {
       console.error(err);
-      const msg = err?.response?.data?.message || err?.message || 'No fue posible guardar';
-      if (String(msg).toUpperCase().includes('RUN')) setRunError(msg);
-      alert(msg);
+      alert("No fue posible guardar");
     } finally {
       setSaving(false);
     }
@@ -962,31 +768,19 @@ setInitial(mapped);
           <h1 className="text-xl font-bold">{title}</h1>
           <p className="text-sm text-gray-600">RRHH — ficha por pestañas.</p>
         </div>
-        <div className="flex gap-2">
-          <Link className="px-3 py-2 rounded border" to="/people">
-            Volver
-          </Link>
-          <button
-            className="px-3 py-2 rounded bg-black text-white disabled:opacity-50"
-            onClick={save}
-            disabled={saving || loading}
-          >
-            Guardar
-          </button>
-        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="border-b flex gap-2">
         {TABS.map((t) => (
           <button
             key={t.key}
             type="button"
-            onClick={() => setTab(t.key)}
-            className={`px-3 py-1.5 rounded ${
+            className={`px-4 py-2 text-sm rounded-xl border transition ${
               tab === t.key
-                ? "bg-blue-600 text-white shadow-[0_0_0_3px_rgba(37,99,235,0.25)]"
-                : "bg-white border"
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
             }`}
+            onClick={() => setTab(t.key)}
           >
             {t.label}
           </button>
@@ -999,30 +793,19 @@ setInitial(mapped);
         <>
           {tab === "basic" && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 border rounded p-4">
-              <div className="grid grid-cols-3 gap-2 md:col-span-1">
-                <input
-                  className="border rounded px-3 py-2 col-span-2"
-                  placeholder="RUN (número) *"
-                  value={runNumber}
-                  onChange={(e) => {
-                    const num = String(e.target.value || "").replace(/\D/g, "");
-                    const nextDv = runDvTouched ? runDv : computeRunDV(num);
-                    setRun({ number: num, dv: nextDv });
-                    setForm((s) => ({ ...s, dni: formatRUN(num, nextDv) }));
-                  }}
-                />
-                <input
-                  className="border rounded px-3 py-2"
-                  placeholder="DV"
-                  value={runDv}
-                  onChange={(e) => {
-                    const dv = String(e.target.value || "").trim().toUpperCase().replace(/[^0-9K]/g, "").slice(0, 1);
-                    setRunDvTouched(true);
-                    setRun((s) => ({ ...s, dv }));
-                    setForm((s) => ({ ...s, dni: formatRUN(runNumber, dv) }));
-                  }}
-                />
-              </div>
+              <input
+                className="border rounded px-3 py-2"
+                placeholder="RUN *"
+                value={form.dni}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, dni: e.target.value }))
+                }
+              />
+              {!runOk && (
+                <div className="text-xs text-red-600 md:col-span-3">
+                  RUN inválido (verificación Módulo 11).
+                </div>
+              )}
               <input
                 className="border rounded px-3 py-2"
                 placeholder="Nombres *"
@@ -1085,6 +868,45 @@ setInitial(mapped);
                   setForm((s) => ({ ...s, nationality: e.target.value }))
                 }
               />
+
+
+              {/* Dirección (opcional) */}
+              <input
+                className="border rounded px-3 py-2 md:col-span-3"
+                placeholder="Dirección (línea 1)"
+                value={form.addressLine1}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, addressLine1: e.target.value }))
+                }
+              />
+              <input
+                className="border rounded px-3 py-2"
+                placeholder="Ciudad"
+                value={form.addressCity}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, addressCity: e.target.value }))
+                }
+              />
+              <input
+                className="border rounded px-3 py-2"
+                placeholder="Región"
+                value={form.addressRegion}
+                onChange={(e) =>
+                  setForm((s) => ({ ...s, addressRegion: e.target.value }))
+                }
+              />
+              <label className="text-sm">
+                <div className="text-gray-600 mb-1">País</div>
+                <select
+                  className="border rounded px-3 py-2 w-full"
+                  value={form.addressCountry}
+                  onChange={(e) =>
+                    setForm((s) => ({ ...s, addressCountry: e.target.value }))
+                  }
+                >
+                  <option value="CL">CL</option>
+                </select>
+              </label>
 
               <label className="flex items-center gap-2 text-sm md:col-span-3">
                 <input
@@ -1179,7 +1001,6 @@ setInitial(mapped);
 
           {tab === "tests" && (
             <DrivingTestsTab
-              onPersonReload={loadPerson}
               person={
                 personDoc || { _id: isNew ? null : id, branchId: form.branchId }
               }
@@ -1194,21 +1015,20 @@ setInitial(mapped);
           )}
         </>
       )}
+
+      {/* Acciones inferiores (únicas) */}
       <div className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-slate-200 p-3 flex justify-end gap-2">
         <button
           type="button"
-          className="px-3 py-2 border rounded"
-          onClick={() => {
-            if (!isDirty) return navigate('/people')
-            const ok = window.confirm('Tienes cambios sin guardar. ¿Salir sin guardar?')
-            if (ok) navigate('/people')
-          }}
+          className="rounded-xl border px-4 py-2"
+          onClick={cancelChanges}
+          disabled={saving || loading}
         >
-          Volver
+          {isDirty ? 'Cancelar' : 'Volver'}
         </button>
         <button
           type="button"
-          className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700"
+          className="rounded-xl bg-blue-600 text-white px-4 py-2 disabled:opacity-50"
           onClick={save}
           disabled={saving || loading}
         >
