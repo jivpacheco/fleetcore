@@ -3,11 +3,36 @@
 // // Layout principal con Sidebar básico + Topbar + Outlet.
 // // Agrega sección "Configuración" y enlace a "Catálogos → Estados de vehículo".
 // // -----------------------------------------------------------------------------
-// import { Outlet, NavLink } from 'react-router-dom';
+// import { Outlet, NavLink, useLocation } from 'react-router-dom';
 // import Topbar from './Topbar';
 // import { useState } from 'react';
 
 // function Item({ to, icon, children, collapsed }) {
+//   const location = useLocation();
+
+//   const handleClick = (e) => {
+//     // Guardia de "cambios sin guardar".
+//     // Importante: este sidebar está dentro de AppLayout (no Sidebar.jsx),
+//     // por lo que el bloqueo debe implementarse aquí.
+//     try {
+//       const isUnsaved = Boolean(window.__FLEETCORE_UNSAVED__);
+//       if (!isUnsaved) return;
+
+//       // Si ya estás en la misma ruta, no bloquees.
+//       if (location?.pathname === to) return;
+
+//       const msg =
+//         window.__FLEETCORE_UNSAVED_MESSAGE__ ||
+//         'Hay cambios sin guardar. ¿Deseas salir sin guardar?';
+//       const ok = window.confirm(msg);
+//       if (!ok) {
+//         e.preventDefault();
+//         e.stopPropagation();
+//       }
+//     } catch {
+//       // no-op
+//     }
+//   };
 //   return (
 //     <NavLink
 //       to={to}
@@ -16,6 +41,7 @@
 //          ${isActive ? 'bg-blue-100 text-blue-700' : 'hover:bg-slate-200 dark:hover:bg-slate-700'}
 //          text-sm text-slate-700 dark:text-slate-200`
 //       }
+//       onClick={handleClick}
 //     >
 //       <span className="w-5 h-5 inline-flex items-center justify-center">{icon}</span>
 //       {!collapsed && <span className="truncate">{children}</span>}
@@ -59,6 +85,12 @@
 //           {!collapsed && <div className="mt-3 px-4 text-xs uppercase tracking-wide text-slate-500">Configuración</div>}
 //           <Item to="/config/catalogs/vehicle-statuses" icon="🗂️" collapsed={collapsed}>
 //             Catálogos → Estados de vehículo
+//           </Item>
+//           <Item to="/config/catalogs/positions" icon="🧩" collapsed={collapsed}>
+//             Catálogos → Cargos
+//           </Item>
+//           <Item to="/config/catalogs/roles" icon="🛡️" collapsed={collapsed}>
+//             Catálogos → Roles
 //           </Item>
 //         </nav>
 //       </aside>
@@ -168,6 +200,9 @@ export default function AppLayout() {
           </Item>
           <Item to="/config/catalogs/roles" icon="🛡️" collapsed={collapsed}>
             Catálogos → Roles
+          </Item>
+          <Item to="/config/users" icon="👤" collapsed={collapsed}>
+            Usuarios
           </Item>
         </nav>
       </aside>
