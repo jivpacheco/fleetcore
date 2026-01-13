@@ -61,7 +61,10 @@ function normalizePerm(p) {
 }
 
 async function getPermsForRoleCode(code) {
-  const c = String(code || '').trim()
+  // const c = String(code || '').trim()
+  const c = String(code || '').trim().toUpperCase()
+
+
   if (!c) return new Set()
 
   const hit = rolePermCache.get(c)

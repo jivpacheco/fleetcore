@@ -14,28 +14,49 @@
 
 // export default r
 
+// //v2 12012026
+
+// // back/src/routes/catalogs.routes.js
+// // -----------------------------------------------------------------------------
+// // Rutas dedicadas a Catálogos
+// // - Permite listar, crear y eliminar ítems por clave (key)
+// // - Protegidas por requireAuth + requirePermission
+// // -----------------------------------------------------------------------------
+
+// import express from 'express';
+// import { requireAuth } from '../middleware/requireAuth.js';
+// // import { requirePermission } from '../middleware/requirePermission.js';
+// import  requirePermission from '../middleware/requirePermission.js';
+// import * as ctrl from '../controllers/catalogs.controller.js';
+
+// const router = express.Router();
+
+// // 📋 Listar ítems de catálogo (por key)
+// router.get('/', requireAuth, requirePermission('catalogs.view'), ctrl.list);
+
+// // ➕ Crear nuevo ítem
+// router.post('/', requireAuth, requirePermission('catalogs.create'), ctrl.create);
+
+// // ❌ Eliminar ítem
+// router.delete('/:id', requireAuth, requirePermission('catalogs.delete'), ctrl.remove);
+
+// export default router;
+
+
 // back/src/routes/catalogs.routes.js
-// -----------------------------------------------------------------------------
-// Rutas dedicadas a Catálogos
-// - Permite listar, crear y eliminar ítems por clave (key)
-// - Protegidas por requireAuth + requirePermission
-// -----------------------------------------------------------------------------
+import express from 'express'
+import { requireAuth } from '../middleware/requireAuth.js'
+import requirePermission from '../middleware/requirePermission.js'
+import * as ctrl from '../controllers/catalogs.controller.js'
 
-import express from 'express';
-import { requireAuth } from '../middleware/requireAuth.js';
-// import { requirePermission } from '../middleware/requirePermission.js';
-import  requirePermission from '../middleware/requirePermission.js';
-import * as ctrl from '../controllers/catalogs.controller.js';
+const router = express.Router()
 
-const router = express.Router();
+router.get('/', requireAuth, requirePermission('catalogs.view'), ctrl.list)
+router.post('/', requireAuth, requirePermission('catalogs.create'), ctrl.create)
 
-// 📋 Listar ítems de catálogo (por key)
-router.get('/', requireAuth, requirePermission('catalogs.view'), ctrl.list);
+// ✅ NUEVO: actualizar ítem
+router.patch('/:id', requireAuth, requirePermission('catalogs.update'), ctrl.update)
 
-// ➕ Crear nuevo ítem
-router.post('/', requireAuth, requirePermission('catalogs.create'), ctrl.create);
+router.delete('/:id', requireAuth, requirePermission('catalogs.delete'), ctrl.remove)
 
-// ❌ Eliminar ítem
-router.delete('/:id', requireAuth, requirePermission('catalogs.delete'), ctrl.remove);
-
-export default router;
+export default router
