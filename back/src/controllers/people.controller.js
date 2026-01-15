@@ -1,5 +1,6 @@
 // // back/src/controllers/people.controller.js
 // import Person from '../models/Person.js';
+// import { normalizeRUN } from '../utils/run.js';
 
 // const U = (v) => (typeof v === 'string' ? v.toUpperCase() : v);
 
@@ -11,6 +12,9 @@
 //   for (const k of upperFields) {
 //     if (typeof out[k] === 'string') out[k] = U(out[k].trim());
 //   }
+
+//   // RUN (Chile): normalizar a 12345678-K (sin puntos)
+//   if (typeof out.dni === 'string') out.dni = normalizeRUN(out.dni);
 //   if (typeof out.email === 'string') out.email = out.email.trim().toLowerCase();
 
 //   // Fechas: si vienen vacías, elimínalas (evita Date inválidas)
@@ -22,12 +26,33 @@
 //   // Licencias (subdocumento licenses[])
 //   if (Array.isArray(out.licenses)) {
 //     out.licenses = out.licenses.map((l) => ({
+//       // Legacy
 //       number: typeof l.number === 'string' ? U(l.number.trim()) : l.number,
-//       type: typeof l.type === 'string' ? U(l.type.trim()) : l.type,
 //       issueDate: l.issueDate || null,
 //       expiryDate: l.expiryDate || null,
+
+//       // Nuevo
+//       folioNumber: typeof l.folioNumber === 'string' ? U(l.folioNumber.trim()) : l.folioNumber,
+//       type: typeof l.type === 'string' ? U(l.type.trim()) : l.type,
+//       firstIssuedAt: l.firstIssuedAt || null,
+//       issuedAt: l.issuedAt || null,
+//       nextControlAt: l.nextControlAt || null,
+
 //       issuer: typeof l.issuer === 'string' ? U(l.issuer.trim()) : l.issuer,
 //     }));
+//   }
+
+//   // Autorización de conducción (tab Pruebas)
+//   if (out.driverAuthorization && typeof out.driverAuthorization === 'object') {
+//     const da = { ...out.driverAuthorization };
+//     if (da.authorizedAt === '' || da.authorizedAt === undefined) delete da.authorizedAt;
+//     if (typeof da.authorizedAt === 'string') {
+//       const d = new Date(da.authorizedAt);
+//       if (Number.isNaN(d.getTime())) delete da.authorizedAt;
+//       else da.authorizedAt = d;
+//     }
+//     if (typeof da.note === 'string') da.note = da.note.trim();
+//     out.driverAuthorization = da;
 //   }
 
 //   return out;
@@ -191,15 +216,27 @@
 //   }
 // }
 
+// const LICENSE_TYPES_CL = ['C','B','A4','A5','A2','A2*','A1','A1*','A3','D','E','F'];
+
 // function sanitizeLicense(l = {}) {
 //   const out = { ...l };
 
+//   // Legacy
 //   if (typeof out.number === 'string') out.number = U(out.number.trim());
+
+//   // Nuevo
+//   if (typeof out.folioNumber === 'string') out.folioNumber = U(out.folioNumber.trim());
 //   if (typeof out.type === 'string') out.type = U(out.type.trim());
 //   if (typeof out.issuer === 'string') out.issuer = U(out.issuer.trim());
 
+//   if (out.type && !LICENSE_TYPES_CL.includes(out.type)) {
+//     const err = new Error(`Tipo de licencia inválido: ${out.type}`);
+//     err.status = 400;
+//     throw err;
+//   }
+
 //   // Fechas: limpiar vacíos y normalizar string -> Date
-//   for (const k of ['issueDate', 'expiryDate']) {
+//   for (const k of ['issueDate', 'expiryDate', 'firstIssuedAt', 'issuedAt', 'nextControlAt']) {
 //     if (out[k] === '' || out[k] === undefined || out[k] === null) delete out[k];
 //     if (typeof out[k] === 'string') {
 //       const d = new Date(out[k]);
@@ -223,8 +260,20 @@
 //     assertBranchWriteScope(req, person.branchId);
 
 //     const lic = sanitizeLicense(req.body || {});
-//     if (!lic.number) return res.status(400).json({ message: 'number es obligatorio' });
 //     if (!lic.type) return res.status(400).json({ message: 'type es obligatorio' });
+
+//     // Regla: evitar duplicados por tipo (Chile). Si existe, responder 409 con el licenseId.
+//     const existing = person.licenses.find((x) => String(x.type || '') === String(lic.type || ''));
+//     if (existing) {
+//       // Permitir upsert explícito (útil si el front quiere resolver sin 2 llamadas)
+//       if (String(req.query.upsert || '').toLowerCase() === 'true') {
+//         Object.assign(existing, lic);
+//         person.updatedBy = req.user?.uid;
+//         await person.save();
+//         return res.json({ item: existing, upserted: true });
+//       }
+//       return res.status(409).json({ message: 'Ya existe una licencia con ese tipo', licenseId: existing._id });
+//     }
 
 //     person.licenses.push(lic);
 //     person.updatedBy = req.user?.uid;
@@ -400,6 +449,7 @@ export async function list(req, res, next) {
       page,
       limit,
       sort: { lastName: 1, firstName: 1 },
+      // sort: { dni: 1 },
       populate: [
         { path: 'branchId', select: 'code name' },
         { path: 'positionId', select: 'code name' },
@@ -432,7 +482,7 @@ export async function create(req, res, next) {
   try {
     const body = sanitizeBody(req.body || {});
     if (!body.branchId) {
-      const err = new Error('branchId es obligatorio');
+      const err = new Error('Sucursal es obligatorio');
       err.status = 400;
       throw err;
     }

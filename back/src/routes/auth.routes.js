@@ -13,6 +13,7 @@
 // import cookieParser from 'cookie-parser'
 // import { Issuer, generators } from 'openid-client'
 // import User from '../models/User.js'
+// import { requireAuth } from '../middleware/auth.js'
 
 // const r = Router()
 // r.use(cookieParser())
@@ -23,6 +24,17 @@
 
 // function signToken(user) {
 //   return jwt.sign(user, process.env.JWT_SECRET || 'change_me', { expiresIn: '2h' })
+// }
+
+// function buildSessionUser(userDoc) {
+//   return {
+//     uid: String(userDoc._id),
+//     email: userDoc.email,
+//     name: userDoc.name,
+//     roles: userDoc.roles || ['user'],
+//     branchIds: userDoc.branchIds || [],
+//     mustChangePassword: Boolean(userDoc?.local?.mustChangePassword),
+//   }
 // }
 
 // let oidcClient
@@ -60,8 +72,9 @@
 //   password = String(password).trim()
 
 //   const userDoc = await User.findOne({ email: normEmail })
+//   // Respuesta uniforme para evitar enumeración de usuarios.
 //   if (!userDoc) {
-//     return res.status(401).json({ message: 'Credenciales incorrectas' })
+//     return res.status(401).json({ message: 'Credenciales inválidas' })
 //   }
 //   if (!userDoc.isActive) {
 //     return res.status(403).json({ message: 'Usuario desactivado' })
@@ -77,16 +90,9 @@
 //     ? await userDoc.checkPassword(password)
 //     : await bcrypt.compare(password, userDoc.local.passwordHash)
 
-//   if (!ok) return res.status(401).json({ message: 'Credenciales incorrectas' })
+//   if (!ok) return res.status(401).json({ message: 'Credenciales inválidas' })
 
-//   const user = {
-//     uid: String(userDoc._id),
-//     email: userDoc.email,
-//     name: userDoc.name,
-//     roles: userDoc.roles || ['user'],
-//     branchIds: userDoc.branchIds || [],
-//      mustChangePassword: Boolean(userDoc.local?.mustChangePassword),
-//   }
+//   const user = buildSessionUser(userDoc)
 //   const token = signToken(user)
 
 //   // ⬇️  **CLAVE**: persistir sesión como con Microsoft
@@ -175,13 +181,7 @@
 //       await userDoc.save()
 //     }
 
-//     const user = {
-//       uid: String(userDoc._id),
-//       email: userDoc.email,
-//       name: userDoc.name,
-//       roles: userDoc.roles || ['user'],
-//       branchIds: userDoc.branchIds || [],
-//     }
+//     const user = buildSessionUser(userDoc)
 //     const token = signToken(user)
 
 //     res.clearCookie('fc_pkce', { path: '/' })
@@ -193,6 +193,10 @@
 //       path: '/',
 //     })
 
+//     // Si tiene clave temporal, forzar cambio antes de entrar.
+//     if (user.mustChangePassword) {
+//       return res.redirect(`${CLIENT_URL}/account/change-password?force=1`)
+//     }
 //     return res.redirect(`${CLIENT_URL}/dashboard`)
 //   } catch (e) {
 //     console.error('[auth] callback error:', e?.message || e)
@@ -205,83 +209,76 @@
 // // -----------------------------------------------------------------------------
 // // GET /api/v1/auth/me
 // // -----------------------------------------------------------------------------
-// r.get('/me', async (req, res) => {
+// r.get('/me', (req, res) => {
 //   const bearer = (req.headers.authorization || '').replace(/^Bearer\s+/, '')
 //   const token = req.cookies?.fc_token || bearer
 //   if (!token) return res.status(401).json({ message: 'No autenticado' })
-
 //   try {
 //     const payload = jwt.verify(token, process.env.JWT_SECRET || 'change_me')
-
-//     // Rehidratar desde DB para flags dinámicos (mustChangePassword, isActive, scopes)
-//     const userDoc = await User.findById(payload.uid).select('email name roles branchIds isActive local.mustChangePassword')
-//     if (!userDoc) return res.status(401).json({ message: 'No autenticado' })
-//     if (!userDoc.isActive) return res.status(403).json({ message: 'Usuario desactivado' })
-
-//     const user = {
-//       uid: String(userDoc._id),
-//       email: userDoc.email,
-//       name: userDoc.name,
-//       roles: userDoc.roles || ['user'],
-//       branchIds: userDoc.branchIds || [],
-//       mustChangePassword: Boolean(userDoc.local?.mustChangePassword),
-//     }
-
-//     return res.json({ user })
+//     // Rehidratar bandera mustChangePassword (puede cambiar en DB)
+//     return User.findById(payload.uid)
+//       .lean()
+//       .then((doc) => {
+//         if (!doc || doc.isActive === false) return res.status(401).json({ message: 'No autenticado' })
+//         const user = {
+//           ...payload,
+//           mustChangePassword: Boolean(doc?.local?.mustChangePassword),
+//           roles: doc.roles || payload.roles || ['user'],
+//           branchIds: doc.branchIds || payload.branchIds || [],
+//           name: doc.name || payload.name,
+//           email: doc.email || payload.email,
+//         }
+//         return res.json({ user })
+//       })
+//       .catch(() => res.status(401).json({ message: 'No autenticado' }))
 //   } catch {
 //     return res.status(401).json({ message: 'Token inválido' })
 //   }
 // })
 
-
 // // -----------------------------------------------------------------------------
-// // POST /api/v1/auth/change-password  → cambio de clave (usuario logueado)
+// // POST /api/v1/auth/change-password
+// // - Requiere sesión
+// // - Verifica clave actual
+// // - Establece nueva clave local y limpia mustChangePassword
+// // - Emite nuevo JWT + cookie
 // // Body: { currentPassword, newPassword }
-// // - Verifica currentPassword contra passwordHash
-// // - setPassword(newPassword) y limpia mustChangePassword
 // // -----------------------------------------------------------------------------
-// r.post('/change-password', async (req, res) => {
-//   const bearer = (req.headers.authorization || '').replace(/^Bearer\s+/, '')
-//   const token = req.cookies?.fc_token || bearer
-//   if (!token) return res.status(401).json({ message: 'No autenticado' })
-
+// r.post('/change-password', requireAuth, async (req, res) => {
 //   const { currentPassword, newPassword } = req.body || {}
-//   if (!newPassword || typeof newPassword !== 'string') {
-//     return res.status(400).json({ message: 'Nueva clave es requerida' })
+//   if (!currentPassword || !newPassword) {
+//     return res.status(400).json({ message: 'Faltan datos' })
 //   }
-//   if (!currentPassword || typeof currentPassword !== 'string') {
-//     return res.status(400).json({ message: 'Clave actual es requerida' })
-//   }
-//   if (String(newPassword).trim().length < 8) {
-//     return res.status(400).json({ message: 'La nueva clave debe tener al menos 8 caracteres' })
+//   if (String(newPassword).length < 8) {
+//     return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 8 caracteres' })
 //   }
 
-//   try {
-//     const payload = jwt.verify(token, process.env.JWT_SECRET || 'change_me')
-//     const userDoc = await User.findById(payload.uid)
-//     if (!userDoc) return res.status(401).json({ message: 'No autenticado' })
-//     if (!userDoc.isActive) return res.status(403).json({ message: 'Usuario desactivado' })
-//     if (!userDoc.local?.passwordHash) {
-//       return res.status(400).json({ message: 'Este usuario no tiene contraseña local' })
-//     }
-//     if (userDoc.local?.allowLocalLogin === false) {
-//       return res.status(403).json({ message: 'Login local deshabilitado para esta cuenta' })
-//     }
-
-//     const ok = typeof userDoc.checkPassword === 'function'
-//       ? await userDoc.checkPassword(String(currentPassword))
-//       : await bcrypt.compare(String(currentPassword), userDoc.local.passwordHash)
-
-//     if (!ok) return res.status(401).json({ message: 'Clave actual incorrecta' })
-
-//     await userDoc.setPassword(String(newPassword))
-//     userDoc.local.mustChangePassword = false
-//     await userDoc.save()
-
-//     return res.json({ ok: true })
-//   } catch (err) {
-//     return res.status(401).json({ message: 'Token inválido' })
+//   const userDoc = await User.findById(req.user?.uid)
+//   if (!userDoc || userDoc.isActive === false) {
+//     return res.status(401).json({ message: 'No autenticado' })
 //   }
+
+//   const ok = typeof userDoc.checkPassword === 'function'
+//     ? await userDoc.checkPassword(String(currentPassword))
+//     : await bcrypt.compare(String(currentPassword), userDoc.local?.passwordHash || '')
+
+//   if (!ok) return res.status(401).json({ message: 'Contraseña actual incorrecta' })
+
+//   await userDoc.setPassword(String(newPassword))
+//   userDoc.local.mustChangePassword = false
+//   await userDoc.save()
+
+//   const user = buildSessionUser(userDoc)
+//   const token = signToken(user)
+//   res.cookie('fc_token', token, {
+//     httpOnly: true,
+//     sameSite: 'lax',
+//     secure: false,
+//     maxAge: 2 * 60 * 60 * 1000,
+//     path: '/',
+//   })
+
+//   return res.json({ ok: true, user, token })
 // })
 
 // // -----------------------------------------------------------------------------
@@ -293,7 +290,6 @@
 // })
 
 // export default r
-
 
 // back/src/routes/auth.routes.js
 // -----------------------------------------------------------------------------
@@ -397,7 +393,6 @@ r.post('/login', async (req, res) => {
     httpOnly: true,
     sameSite: 'lax',
     secure: false,          // PROD: true con HTTPS
-    maxAge: 2 * 60 * 60 * 1000,
     path: '/',              // explícito
   })
 
@@ -486,8 +481,7 @@ r.get('/microsoft/callback', async (req, res) => {
       httpOnly: true,
       sameSite: 'lax',
       secure: false,       // PROD: true con HTTPS
-      maxAge: 2 * 60 * 60 * 1000,
-      path: '/',
+        path: '/',
     })
 
     // Si tiene clave temporal, forzar cambio antes de entrar.
@@ -571,7 +565,6 @@ r.post('/change-password', requireAuth, async (req, res) => {
     httpOnly: true,
     sameSite: 'lax',
     secure: false,
-    maxAge: 2 * 60 * 60 * 1000,
     path: '/',
   })
 

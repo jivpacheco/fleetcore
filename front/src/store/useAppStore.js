@@ -1,11 +1,11 @@
-//*** FUNCIONAL
+// // front/src/store/useAppStore.js
+// // -----------------------------------------------------------
+// // Store global (Zustand) con persistencia del user y bootstrapping.
+// // - Guardamos user (no el token, ya que va en cookie httpOnly).
+// // - flag authBootstrapped: evita redirección temprana en refresh.
+// // - Agrega control de sidebar (abrir/cerrar en modo responsive).
+// // -----------------------------------------------------------
 
-// front/src/store/useAppStore.js
-// -----------------------------------------------------------
-// Store global (Zustand) con persistencia del user y bootstrapping.
-// - guardamos user (no el token, ya que va en cookie httpOnly).
-// - flag authBootstrapped: evita redirección temprana en refresh.
-// -----------------------------------------------------------
 // import { create } from 'zustand'
 // import { persist } from 'zustand/middleware'
 
@@ -24,105 +24,54 @@
 
 //       // logout local
 //       clearSession: () => set({ user: null, token: null }),
+
+//       // ⬇️ NUEVO: control de sidebar
+//       sidebarOpen: true,
+//       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 //     }),
 //     {
 //       name: 'fc-app', // clave en localStorage
 //       partialize: (state) => ({
 //         user: state.user,
-//         token: state.token,               // si prefieres no persistir token, bórralo
+//         token: state.token, // si prefieres no persistir token, bórralo
 //       }),
 //     }
 //   )
 // )
 
-////NUEVA
-
 // front/src/store/useAppStore.js
-// -----------------------------------------------------------
-// Store global (Zustand) con persistencia del user y bootstrapping.
-// - Guardamos user (no el token, ya que va en cookie httpOnly).
-// - flag authBootstrapped: evita redirección temprana en refresh.
-// - Agrega control de sidebar (abrir/cerrar en modo responsive).
-// -----------------------------------------------------------
+// -----------------------------------------------------------------------------
+// Store global (Zustand)
+// Revisión 2026-01-14 (seguridad + responsive):
+// - NO persiste user/token (evita quedar logueado al cerrar navegador)
+// - Persiste únicamente el estado del sidebar (UI)
+// -----------------------------------------------------------------------------
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export const useAppStore = create(
   persist(
-    (set, get) => ({
-      // sesión
+    (set) => ({
+      // sesión (NO persistente)
       user: null,
-      token: null, // opcional si usas Bearer además de cookie
+      token: null, // opcional (si además de cookie usas Bearer). No persistimos por seguridad.
       setUser: (user) => set({ user }),
       setToken: (token) => set({ token }),
+      clearSession: () => set({ user: null, token: null }),
 
       // bootstrap de auth
       authBootstrapped: false,
       setAuthBootstrapped: (v) => set({ authBootstrapped: Boolean(v) }),
 
-      // logout local
-      clearSession: () => set({ user: null, token: null }),
-
-      // ⬇️ NUEVO: control de sidebar
+      // UI
       sidebarOpen: true,
-      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+      setSidebarOpen: (v) => set({ sidebarOpen: Boolean(v) }),
     }),
     {
-      name: 'fc-app', // clave en localStorage
-      partialize: (state) => ({
-        user: state.user,
-        token: state.token, // si prefieres no persistir token, bórralo
-      }),
+      name: 'fc-ui',
+      partialize: (state) => ({ sidebarOpen: state.sidebarOpen }),
     }
   )
 )
-
-
-
-
-// // front/src/store/useAppStore.js
-// // -----------------------------------------------------------------------------
-// // Store global de la app (Zustand)
-// // - user, token
-// // - sidebarOpen (si ya lo usas)
-// // - authChecked: indica si ya corrimos la verificación inicial (/auth/me)
-// // -----------------------------------------------------------------------------
-// import { create } from 'zustand'
-
-// export const useAppStore = create((set) => ({
-//   user: null,
-//   token: null,
-//   sidebarOpen: true,
-
-//   // Flag para gating de rutas protegidas
-//   authChecked: false,
-
-//   setUser: (user) => set({ user }),
-//   setToken: (token) => set({ token }),
-//   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-
-//   // Marcar que ya verificamos sesión (ok o no)
-//   setAuthChecked: (v) => set({ authChecked: !!v }),
-// }))
-
-
-
-// import { create } from 'zustand'
-
-
-// // Estado global (auth + UI)
-// export const useAppStore = create((set) => ({
-// user: null, // { id, email, role }
-// token: null,
-// sidebarOpen: true,
-
-// // Flag para gating de rutas protegidas
-//   authChecked: false,
-
-
-
-// setUser: (user) => set({ user }),
-// setToken: (token) => set({ token }),
-// toggleSidebar: () => set((s)=>({ sidebarOpen: !s.sidebarOpen }))
-// }))
