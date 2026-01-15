@@ -185,6 +185,7 @@ function extractItems(data) {
     if (Array.isArray(data.items)) return data.items
     if (Array.isArray(data.result?.items)) return data.result.items
     if (Array.isArray(data.data?.items)) return data.data.items
+    if (Array.isArray(data.data)) return data.data
     return []
 }
 
@@ -200,8 +201,10 @@ export default function Positions() {
         setLoading(true)
         try {
             const { data } = await PositionsAPI.list({ q: '', limit: 500 })
+            
             const list = extractItems(data)
             const sorted = [...list].sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { numeric: true }))
+
             setItems(sorted)
         } catch (err) {
             console.error(err)
@@ -235,6 +238,7 @@ export default function Positions() {
                 await PositionsAPI.create(payload)
                 alert('Cargo creado con éxito')
             }
+            setQ('') // ✅ clave: limpia filtro visual
             await load()
             reset()
         } catch (err) {
@@ -302,7 +306,7 @@ export default function Positions() {
 
                 <div className="md:col-span-4 flex gap-2">
                     <button type="submit" className="px-3 py-2 rounded bg-[var(--fc-primary)] text-white disabled:opacity-50" disabled={loading}>
-                        {editingId ? 'Guardar' : 'Crear'}
+                        {editingId ? 'Actualizar' : 'Crear'}
                     </button>
                     <button type="button" className="px-3 py-2 rounded border" onClick={reset}>Limpiar</button>
                 </div>

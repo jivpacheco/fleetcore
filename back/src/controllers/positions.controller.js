@@ -492,8 +492,9 @@ export async function create(req, res, next) {
       ...payload,
       createdBy: req.user?.uid,
       updatedBy: req.user?.uid,
+     
     });
-
+     
     const item = await Position.findById(created._id).lean();
     return res.status(201).json({ item });
   } catch (err) {

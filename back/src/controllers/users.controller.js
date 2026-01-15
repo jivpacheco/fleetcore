@@ -117,6 +117,7 @@ export const UsersController = {
                     },
                 },
                 createdBy: req.user?.uid || null,
+                
             })
 
             // Si envías una contraseña inicial (temporal)

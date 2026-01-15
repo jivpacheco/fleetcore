@@ -530,7 +530,7 @@ export default function UsersAdmin() {
 
         <div className="md:col-span-4 flex gap-2">
           <button type="submit" className="px-4 py-2 rounded bg-[var(--fc-primary)] text-white disabled:opacity-50" disabled={loading}>
-            {editing ? 'Guardar' : 'Crear'}
+            {editing ? 'Actualizar' : 'Crear'}
           </button>
           <button type="button" className="px-4 py-2 rounded border" onClick={reset}>Limpiar</button>
         </div>

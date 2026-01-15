@@ -489,10 +489,15 @@ export async function create(req, res, next) {
     assertBranchWriteScope(req, body.branchId);
 
     const created = await Person.create({
+      
       ...body,
-      createdBy: req.user?.uid,
-      updatedBy: req.user?.uid,
+            createdBy: req.user?.uid,
+      updatedBy: req.user?.uid,      
     });
+    console.log('req.user.uid =', req.user.uid)
+    console.log('req.user?.uid =', req.user.uid)
+
+
 
     const doc = await Person.findById(created._id)
       .populate('branchId', 'code name')
