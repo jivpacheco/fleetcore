@@ -247,7 +247,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { RolesAPI } from "../../../api/roles.api";
 
-
 // Catálogo base de permisos (UI). Ajustable.
 const PERMISSION_MATRIX = [
   {
@@ -305,9 +304,8 @@ export default function Roles() {
   });
   const [editingId, setEditingId] = useState(null);
 
-
   //guardia Global -implementacion Dirty
-  // const [dirty, setDirty] = useState(false);
+  const [dirty, setDirty] = useState(false);
 
   // useEffect(() => {
   //   window.__FLEETCORE_UNSAVED__ = dirty;
@@ -326,8 +324,6 @@ export default function Roles() {
   //     window.__FLEETCORE_UNSAVED__ = false;
   //   };
   // }, [dirty]);
-
-
 
   // const load = async () => {
   //     setLoading(true)
@@ -462,7 +458,6 @@ export default function Roles() {
     }
   };
 
-
   const onEdit = (it) => {
     setEditingId(it._id);
     setForm({
@@ -503,12 +498,30 @@ export default function Roles() {
         reset();
         setDirty(false);
       }
+      // } catch (err) {
+      //   console.error(err);
+      //   // alert("No fue posible eliminar");
+      //   const status = err?.response?.status;
+      //   const msg =
+      //     err?.response?.data?.message ||
+      //     (status === 409
+      //       ? "No se puede eliminar: el rol está asignado a uno o más usuarios."
+      //       : "No fue posible eliminar");
+
+      //   alert(msg);
+      // }
     } catch (err) {
-      console.error(err);
-      alert("No fue posible eliminar");
+      const status = err?.response?.status;
+      if (status !== 409) console.error(err);
+
+      alert(
+        err?.response?.data?.message ||
+          (status === 409
+            ? "No se puede eliminar: el rol está asignado a uno o más usuarios."
+            : "No fue posible eliminar")
+      );
     }
   };
-
 
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase();

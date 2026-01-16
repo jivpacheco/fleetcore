@@ -229,20 +229,21 @@
 //   }
 // }
 
-import Role from '../models/Role.js';
+import Role from "../models/Role.js";
+import User from "../models/User.js";
 
-const U = (v) => (typeof v === 'string' ? v.toUpperCase() : v);
+const U = (v) => (typeof v === "string" ? v.toUpperCase() : v);
 
 function sanitize(body = {}) {
   const out = { ...body };
 
-  if (typeof out.code === 'string') out.code = U(out.code.trim());
-  if (typeof out.name === 'string') out.name = out.name.trim();
+  if (typeof out.code === "string") out.code = U(out.code.trim());
+  if (typeof out.name === "string") out.name = out.name.trim();
 
   // scope: normaliza a uppercase y valida
-  if (typeof out.scope === 'string') out.scope = U(out.scope.trim());
-  if (out.scope && !['GLOBAL', 'BRANCH'].includes(out.scope)) {
-    const err = new Error('scope inválido (GLOBAL | BRANCH)');
+  if (typeof out.scope === "string") out.scope = U(out.scope.trim());
+  if (out.scope && !["GLOBAL", "BRANCH"].includes(out.scope)) {
+    const err = new Error("scope inválido (GLOBAL | BRANCH)");
     err.status = 400;
     throw err;
   }
@@ -250,14 +251,14 @@ function sanitize(body = {}) {
   // permissions: array de strings trim, sin vacíos, unique
   if (Array.isArray(out.permissions)) {
     const norm = out.permissions
-      .map(p => (typeof p === 'string' ? p.trim() : ''))
+      .map((p) => (typeof p === "string" ? p.trim() : ""))
       .filter(Boolean);
     out.permissions = Array.from(new Set(norm));
   }
 
   // booleans
-  if (typeof out.active === 'string') out.active = out.active === 'true';
-  if (typeof out.isSystem === 'string') out.isSystem = out.isSystem === 'true';
+  if (typeof out.active === "string") out.active = out.active === "true";
+  if (typeof out.isSystem === "string") out.isSystem = out.isSystem === "true";
 
   return out;
 }
@@ -270,22 +271,22 @@ function maybeOrgFilter(req) {
 
 export async function list(req, res, next) {
   try {
-    const page = Number.parseInt(req.query.page ?? '1', 10) || 1;
-    const limit = Number.parseInt(req.query.limit ?? '50', 10) || 50;
-    const q = String(req.query.q || '').trim();
+    const page = Number.parseInt(req.query.page ?? "1", 10) || 1;
+    const limit = Number.parseInt(req.query.limit ?? "50", 10) || 50;
+    const q = String(req.query.q || "").trim();
 
     const filter = { ...maybeOrgFilter(req) };
 
     // active opcional
-    if (req.query.active !== undefined && req.query.active !== '') {
-      filter.active = String(req.query.active) === 'true';
+    if (req.query.active !== undefined && req.query.active !== "") {
+      filter.active = String(req.query.active) === "true";
     }
 
     // scope opcional
     if (req.query.scope) {
       const scope = U(String(req.query.scope).trim());
-      if (!['GLOBAL', 'BRANCH'].includes(scope)) {
-        const err = new Error('scope inválido (GLOBAL | BRANCH)');
+      if (!["GLOBAL", "BRANCH"].includes(scope)) {
+        const err = new Error("scope inválido (GLOBAL | BRANCH)");
         err.status = 400;
         throw err;
       }
@@ -293,13 +294,13 @@ export async function list(req, res, next) {
     }
 
     // isSystem opcional
-    if (req.query.isSystem !== undefined && req.query.isSystem !== '') {
-      filter.isSystem = String(req.query.isSystem) === 'true';
+    if (req.query.isSystem !== undefined && req.query.isSystem !== "") {
+      filter.isSystem = String(req.query.isSystem) === "true";
     }
 
     // búsqueda
     if (q) {
-      const rx = new RegExp(q, 'i');
+      const rx = new RegExp(q, "i");
       filter.$or = [{ name: rx }, { code: rx }];
     }
 
@@ -319,7 +320,7 @@ export async function list(req, res, next) {
 export async function get(req, res, next) {
   try {
     const doc = await Role.findById(req.params.id).lean();
-    if (!doc) return res.status(404).json({ message: 'No encontrado' });
+    if (!doc) return res.status(404).json({ message: "No encontrado" });
     return res.json({ item: doc });
   } catch (err) {
     next(err);
@@ -329,10 +330,13 @@ export async function get(req, res, next) {
 export async function create(req, res, next) {
   try {
     const payload = sanitize(req.body || {});
-    if (!payload.code) return res.status(400).json({ message: 'code es obligatorio' });
-    if (!payload.name) return res.status(400).json({ message: 'name es obligatorio' });
+    if (!payload.code)
+      return res.status(400).json({ message: "code es obligatorio" });
+    if (!payload.name)
+      return res.status(400).json({ message: "name es obligatorio" });
 
-    if (req?.user?.organizationId) payload.organizationId = req.user.organizationId;
+    if (req?.user?.organizationId)
+      payload.organizationId = req.user.organizationId;
 
     const created = await Role.create({
       ...payload,
@@ -349,10 +353,12 @@ export async function create(req, res, next) {
 export async function update(req, res, next) {
   try {
     const role = await Role.findById(req.params.id);
-    if (!role) return res.status(404).json({ message: 'No encontrado' });
+    if (!role) return res.status(404).json({ message: "No encontrado" });
 
     if (role.isSystem) {
-      return res.status(403).json({ message: 'No se puede modificar un rol del sistema' });
+      return res
+        .status(403)
+        .json({ message: "No se puede modificar un rol del sistema" });
     }
 
     const payload = sanitize(req.body || {});
@@ -372,13 +378,28 @@ export async function update(req, res, next) {
 export async function remove(req, res, next) {
   try {
     const role = await Role.findById(req.params.id);
-    if (!role) return res.status(404).json({ message: 'No encontrado' });
+    if (!role) return res.status(404).json({ message: "No encontrado" });
 
     if (role.isSystem) {
-      return res.status(403).json({ message: 'No se puede eliminar un rol del sistema' });
+      return res
+        .status(403)
+        .json({ message: "No se puede eliminar un rol del sistema" });
     }
 
-    if (typeof role.softDelete === 'function') {
+    //adicion para bloquear eliminar si el rol tiene trazabilidad
+    // ✅ NO permitir “eliminar/inactivar” si el rol está asignado a algún usuario
+    const usersUsingRole = await User.countDocuments({
+      deletedAt: null, // opcional, si User tiene soft delete
+      roles: role.code, // roles es array de strings (code)
+    });
+
+    if (usersUsingRole > 0) {
+      return res.status(409).json({
+        message: `No se puede eliminar el rol porque está asignado a ${usersUsingRole} usuario(s). Primero reasigne esos usuarios a otro rol.`,
+      });
+    }
+
+    if (typeof role.softDelete === "function") {
       await role.softDelete(req.user?.uid);
       return res.json({ ok: true });
     }
