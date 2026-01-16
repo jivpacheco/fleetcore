@@ -247,6 +247,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { RolesAPI } from "../../../api/roles.api";
 
+
 // Catálogo base de permisos (UI). Ajustable.
 const PERMISSION_MATRIX = [
   {
@@ -303,6 +304,30 @@ export default function Roles() {
     isSystem: false,
   });
   const [editingId, setEditingId] = useState(null);
+
+
+  //guardia Global -implementacion Dirty
+  // const [dirty, setDirty] = useState(false);
+
+  // useEffect(() => {
+  //   window.__FLEETCORE_UNSAVED__ = dirty;
+  //   window.__FLEETCORE_UNSAVED_MESSAGE__ = "Hay cambios sin guardar. ¿Deseas salir sin guardar?";
+
+  //   const onBeforeUnload = (e) => {
+  //     if (!dirty) return;
+  //     e.preventDefault();
+  //     e.returnValue = "";
+  //   };
+
+  //   window.addEventListener("beforeunload", onBeforeUnload);
+  //   return () => {
+  //     window.removeEventListener("beforeunload", onBeforeUnload);
+  //     // Limpieza al desmontar
+  //     window.__FLEETCORE_UNSAVED__ = false;
+  //   };
+  // }, [dirty]);
+
+
 
   // const load = async () => {
   //     setLoading(true)
@@ -375,29 +400,68 @@ export default function Roles() {
     });
   };
 
+  // const onSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const payload = {
+  //     code: form.code,
+  //     name: form.name,
+  //     scope: form.scope,
+  //     active: form.active,
+  //     permissions: parsePermissions(),
+  //     isSystem: form.isSystem,
+  //   };
+  //   if (!payload.code?.trim()) return alert("Código es obligatorio");
+  //   if (!payload.name?.trim()) return alert("Nombre es obligatorio");
+
+  //   try {
+  //     if (editingId) await RolesAPI.update(editingId, payload);
+  //     else await RolesAPI.create(payload);
+  //     await load();
+  //     reset();
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert("No fue posible guardar");
+  //   }
+  // };
+
   const onSubmit = async (e) => {
     e.preventDefault();
+    const permissions = parsePermissions();
+
     const payload = {
       code: form.code,
       name: form.name,
       scope: form.scope,
       active: form.active,
-      permissions: parsePermissions(),
+      permissions,
       isSystem: form.isSystem,
     };
+
     if (!payload.code?.trim()) return alert("Código es obligatorio");
     if (!payload.name?.trim()) return alert("Nombre es obligatorio");
 
     try {
-      if (editingId) await RolesAPI.update(editingId, payload);
-      else await RolesAPI.create(payload);
+      if (editingId) {
+        await RolesAPI.update(editingId, payload);
+        alert("Rol actualizado con éxito");
+      } else {
+        await RolesAPI.create(payload);
+        alert(
+          permissions.length
+            ? "Rol creado con éxito"
+            : "Rol creado con éxito pero sin permisos"
+        );
+      }
+
       await load();
       reset();
+      setDirty(false);
     } catch (err) {
       console.error(err);
       alert("No fue posible guardar");
     }
   };
+
 
   const onEdit = (it) => {
     setEditingId(it._id);
@@ -413,18 +477,38 @@ export default function Roles() {
     });
   };
 
+  // const onDelete = async (it) => {
+  //   if (it.isSystem) return alert("Rol de sistema: no se elimina");
+  //   const ok = window.confirm("¿Eliminar rol?");
+  //   if (!ok) return;
+  //   try {
+  //     await RolesAPI.remove(it._id);
+  //     await load();
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert("No fue posible eliminar");
+  //   }
+  // };
+
   const onDelete = async (it) => {
     if (it.isSystem) return alert("Rol de sistema: no se elimina");
     const ok = window.confirm("¿Eliminar rol?");
     if (!ok) return;
     try {
       await RolesAPI.remove(it._id);
+      alert("Rol eliminado con éxito");
       await load();
+      // Si estabas editando este mismo rol, limpia el form
+      if (editingId === it._id) {
+        reset();
+        setDirty(false);
+      }
     } catch (err) {
       console.error(err);
       alert("No fue posible eliminar");
     }
   };
+
 
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase();

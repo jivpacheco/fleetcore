@@ -11,6 +11,7 @@
 // En producción, protege estas rutas con middleware de auth/roles.
 
 import User from '../models/User.js'
+import Person from '../models/Person.js'
 
 function parseBool(v, fallback = undefined) {
     if (v === undefined) return fallback
@@ -33,7 +34,7 @@ export const UsersController = {
                 isActive,             // true/false
             } = req.query
 
-            const filter = {}
+            const filter = { deletedAt: null } // solo activos (no borrados)
             if (q) {
                 // busca por email o name (case-insensitive)
                 filter.$or = [
@@ -117,7 +118,7 @@ export const UsersController = {
                     },
                 },
                 createdBy: req.user?.uid || null,
-                
+
             })
 
             // Si envías una contraseña inicial (temporal)
@@ -191,16 +192,55 @@ export const UsersController = {
     },
 
     // DELETE /users/:id  → soft delete
+    // remove: async (req, res, next) => {
+    //     try {
+    //         const { id } = req.params
+    //         const user = await User.findById(id)
+    //         if (!user) return res.status(404).json({ message: 'Usuario no encontrado' })
+
+    //         await user.softDelete(req.user?.uid)
+    //         res.json({ ok: true })
+    //     } catch (err) { next(err) }
+    // },
+
     remove: async (req, res, next) => {
         try {
             const { id } = req.params
-            const user = await User.findById(id)
-            if (!user) return res.status(404).json({ message: 'Usuario no encontrado' })
 
-            await user.softDelete(req.user?.uid)
-            res.json({ ok: true })
-        } catch (err) { next(err) }
+            const user = await User.findById(id)
+            if (!user || user.deletedAt) {
+                return res.status(404).json({ message: 'Usuario no encontrado' })
+            }
+
+            const userUid = String(user._id) // ✅ coincide con req.user.uid
+
+            // ✅ Trazabilidad actual: People
+            const refs = await Person.countDocuments({
+                $or: [{ createdBy: userUid }, { updatedBy: userUid }],
+            })
+
+            if (refs > 0) {
+                await user.softDelete(req.user?.uid)
+                return res.json({
+                    ok: true,
+                    mode: 'inactivated',
+                    message:
+                        'Este usuario tiene registros en el sistema. Se inactivó para mantener trazabilidad.',
+                })
+            }
+
+            // ✅ Sin interacciones: eliminación real
+            await User.deleteOne({ _id: id })
+            return res.json({
+                ok: true,
+                mode: 'deleted',
+                message: 'Usuario eliminado con éxito.',
+            })
+        } catch (err) {
+            next(err)
+        }
     },
+
 
     // POST /users/:id/password
     // Resetea/actualiza password. Por defecto marca mustChangePassword=true (clave temporal).

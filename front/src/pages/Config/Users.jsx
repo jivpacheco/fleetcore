@@ -274,6 +274,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { UsersAPI } from '../../api/users.api'
 import { RolesAPI } from '../../api/roles.api'
 import { api } from '../../services/http'
+// import Select from 'react-select'
+import Select, { components } from 'react-select'
+
 
 export default function UsersAdmin() {
   const [q, setQ] = useState('')
@@ -293,6 +296,61 @@ export default function UsersAdmin() {
     tempPassword: '',
     mustChangePassword: true,
   })
+
+  // multicheck tipo dropdown + checklist
+  // const CheckboxOption = (props) => (
+  //   <components.Option {...props}>
+  //     <div className="flex items-center gap-2">
+  //       <input
+  //         type="checkbox"
+  //         checked={props.isSelected}
+  //         onChange={() => null}
+  //         className="h-4 w-4"
+  //       />
+  //       <span>{props.label}</span>
+  //     </div>
+  //   </components.Option>
+  // )
+
+  const CheckboxOption = (props) => (
+    <components.Option {...props}>
+      <div className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={props.isSelected}
+          readOnly
+          className="h-4 w-4 rounded border-gray-300 text-[var(--fc-primary)] focus:ring-[var(--fc-primary)]"
+        />
+        <span className={props.isSelected ? 'font-medium text-gray-900' : 'text-gray-700'}>
+          {props.label}
+        </span>
+      </div>
+    </components.Option>
+  )
+
+
+  const SummaryValueContainer = (props) => {
+    const values = props.getValue()
+    const count = values?.length || 0
+    const placeholder = props.selectProps.placeholder || 'Seleccionar...'
+
+    return (
+      <components.ValueContainer {...props}>
+        {count > 0 ? (
+          <span className="text-sm text-gray-800 font-medium">
+            {count} seleccionado{count === 1 ? '' : 's'}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-400">
+            {placeholder}
+          </span>
+        )}
+        {props.children[1]}
+      </components.ValueContainer>
+    )
+  }
+
+
 
   const loadBranches = async () => {
     try {
@@ -342,6 +400,33 @@ export default function UsersAdmin() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  //options + selected values (con useMemo)
+
+  const roleOptions = useMemo(() => {
+    return roles.map((r) => ({
+      value: r.code,
+      label: `${r.name} (${r.code})`,
+    }))
+  }, [roles])
+
+  const selectedRoleOptions = useMemo(() => {
+    const set = new Set(form.roles || [])
+    return roleOptions.filter((o) => set.has(o.value))
+  }, [roleOptions, form.roles])
+
+  const branchOptions = useMemo(() => {
+    return branches.map((b) => ({
+      value: b._id,
+      label: `${b.code} — ${b.name}`,
+    }))
+  }, [branches])
+
+  const selectedBranchOptions = useMemo(() => {
+    const set = new Set(form.branchIds || [])
+    return branchOptions.filter((o) => set.has(o.value))
+  }, [branchOptions, form.branchIds])
+
 
   const filtered = useMemo(() => {
     const qq = q.trim().toLowerCase()
@@ -414,17 +499,37 @@ export default function UsersAdmin() {
     }
   }
 
+  // const remove = async (it) => {
+  //   const ok = window.confirm('¿Eliminar usuario? ') 
+  //   // (soft delete)
+  //   if (!ok) return
+  //   try {
+  //     await UsersAPI.remove(it._id)
+  //     await load()
+  //   } catch (err) {
+  //     console.error(err)
+  //     alert('No fue posible eliminar')
+  //   }
+  // }
+
   const remove = async (it) => {
-    const ok = window.confirm('¿Eliminar usuario? (soft delete)')
+    const ok = window.confirm('¿Eliminar usuario?')
     if (!ok) return
     try {
-      await UsersAPI.remove(it._id)
+      const res = await UsersAPI.remove(it._id)
+      const msg =
+        res?.data?.message ||
+        (res?.data?.mode === 'inactivated'
+          ? 'Se inactivó para mantener trazabilidad.'
+          : 'Usuario eliminado con éxito.')
+      alert(msg)
       await load()
     } catch (err) {
       console.error(err)
-      alert('No fue posible eliminar')
+      alert(err?.response?.data?.message || 'No fue posible eliminar')
     }
   }
+
 
   const toggleBranch = (id) => {
     setForm((s) => {
@@ -470,7 +575,8 @@ export default function UsersAdmin() {
           <input className="border rounded px-3 py-2 w-full" value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} />
         </label>
 
-        <div className="md:col-span-3">
+        {/* Roles con checkboxes */}
+        {/* <div className="md:col-span-3">
           <div className="text-sm text-gray-600 mb-1">Roles *</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {roles.map((r) => (
@@ -487,7 +593,176 @@ export default function UsersAdmin() {
               <div className="text-sm text-gray-500">(No hay roles o no fue posible cargarlos)</div>
             )}
           </div>
-        </div>
+        </div> */}
+
+
+        {/* Roles multi-selección */}
+        {/* <div className="md:col-span-3">
+          <div className="text-sm text-gray-600 mb-1">Roles *</div>
+
+          <Select
+            isMulti
+            isLoading={loading && !roles.length}
+            options={roleOptions}
+            value={selectedRoleOptions}
+            onChange={(vals) => {
+              const next = Array.isArray(vals) ? vals.map((v) => v.value) : []
+              setForm((s) => ({ ...s, roles: next.length ? next : ['user'] }))
+            }}
+            placeholder="Seleccione Rol(es)..."
+            classNamePrefix="fc-select"
+            noOptionsMessage={() => 'No hay roles'}
+          />
+
+          {!roles.length && (
+            <div className="text-sm text-gray-500 mt-2">(No hay roles o no fue posible cargarlos)</div>
+          )}
+        </div> */}
+
+
+        {/* Roles multi-selección - tipo: dropdown*/}
+        {/* <Select
+          isMulti
+          closeMenuOnSelect={false}
+          hideSelectedOptions={false}
+          options={roleOptions}
+          value={selectedRoleOptions}
+          onChange={(vals) => {
+            const next = Array.isArray(vals) ? vals.map((v) => v.value) : []
+            setForm((s) => ({ ...s, roles: next.length ? next : ['user'] }))
+          }}
+          placeholder="Seleccione roles..."
+          classNamePrefix="fc-select"
+          noOptionsMessage={() => 'No hay roles'}
+          components={{
+            Option: CheckboxOption,
+            ValueContainer: SummaryValueContainer,
+          }}
+        /> */}
+
+        {/* <label className="text-sm md:col-span-3">
+        <div className="text-gray-600 mb-1">Roles *</div>
+        <Select
+          isMulti
+          closeMenuOnSelect={false}
+          hideSelectedOptions={false}
+          options={roleOptions}
+          value={selectedRoleOptions}
+          onChange={(vals) => {
+            const next = Array.isArray(vals) ? vals.map((v) => v.value) : []
+            setForm((s) => ({ ...s, roles: next.length ? next : ['user'] }))
+          }}
+          placeholder="Seleccione roles..."
+          className="text-sm"
+          classNamePrefix="fc-select"
+          noOptionsMessage={() => 'No hay roles'}
+          components={{
+            Option: CheckboxOption,
+            ValueContainer: SummaryValueContainer,
+          }}
+          styles={{
+            control: (base, state) => ({
+              ...base,
+              borderRadius: '0.375rem',           // rounded-md
+              borderColor: state.isFocused ? 'var(--fc-primary)' : '#d1d5db',
+              boxShadow: state.isFocused ? `0 0 0 1px var(--fc-primary)` : 'none',
+              minHeight: '38px',
+            }),
+            multiValue: (base) => ({
+              ...base,
+              display: 'none', // ocultamos chips (porque usamos resumen)
+            }),
+            menu: (base) => ({
+              ...base,
+              zIndex: 50,
+            }),
+          }}
+        /> */}
+
+        <label className="text-sm md:col-span-3">
+          <div className="text-gray-600 mb-1">Roles *</div>
+
+          <Select
+            isMulti
+            closeMenuOnSelect={false}
+            hideSelectedOptions={false}
+            options={roleOptions}
+            value={selectedRoleOptions}
+            onChange={(vals) => {
+              const next = Array.isArray(vals) ? vals.map((v) => v.value) : []
+              setForm((s) => ({ ...s, roles: next.length ? next : ['user'] }))
+            }}
+            placeholder="Seleccione roles..."
+            noOptionsMessage={() => 'No hay roles'}
+            components={{
+              Option: CheckboxOption,
+              ValueContainer: SummaryValueContainer,
+            }}
+            // styles={{
+            //   control: (base, state) => ({
+            //     ...base,
+            //     borderRadius: '0.375rem',      // igual que Tailwind rounded
+            //     borderColor: '#d1d5db',        // border-gray-300
+            //     minHeight: '42px',
+            //     boxShadow: state.isFocused
+            //       ? '0 0 0 1px var(--fc-primary)'
+            //       : 'none',
+            //     '&:hover': {
+            //       borderColor: 'var(--fc-primary)',
+            //     },
+            //   }),
+            //   menu: (base) => ({
+            //     ...base,
+            //     zIndex: 50,
+            //   }),
+            //   multiValue: (base) => ({
+            //     ...base,
+            //     display: 'none', // ocultamos chips (usamos resumen)
+            //   }),
+            // }}
+            styles={{
+              control: (base, state) => ({
+                ...base,
+                borderRadius: '0.375rem', // rounded
+                borderColor: '#757575',   // gray-300
+                height: 38,               // ✅ altura fija
+                minHeight: 38,            // ✅ evita crecimiento
+                alignItems: 'center',     // ✅ centra vertical
+                boxShadow: state.isFocused ? '0 0 0 1px var(--fc-primary)' : 'none',
+                '&:hover': { borderColor: 'var(--fc-primary)' },
+              }),
+              valueContainer: (base) => ({
+                ...base,
+                height: 38,               // ✅ misma altura
+                padding: '0 12px',        // ✅ similar a px-3
+                display: 'flex',
+                alignItems: 'center',     // ✅ centra placeholder/resumen
+              }),
+              input: (base) => ({
+                ...base,
+                margin: 0,
+                padding: 0,
+              }),
+              indicatorsContainer: (base) => ({
+                ...base,
+                height: 38,
+              }),
+              menu: (base) => ({
+                ...base,
+                zIndex: 50,
+              }),
+              multiValue: (base) => ({
+                ...base,
+                display: 'none', // ocultamos chips (usamos resumen)
+              }),
+            }}
+
+          />
+        </label>
+
+
+
+
 
         <label className="text-sm">
           <div className="text-gray-600 mb-1">Activo</div>
@@ -507,7 +782,8 @@ export default function UsersAdmin() {
           Requerir cambio de clave al ingresar
         </label>
 
-        <div className="md:col-span-4">
+        {/* Sucursales con checkboxes */}
+        {/* <div className="md:col-span-4">
           <div className="flex items-center justify-between gap-3 mb-2">
             <div className="text-sm text-gray-600">Sucursales (scope)</div>
             <button type="button" className="px-3 py-1.5 border rounded text-sm" onClick={toggleAllBranches}>
@@ -526,7 +802,122 @@ export default function UsersAdmin() {
               <div className="text-sm text-gray-500">(No hay sucursales o no fue posible cargarlas)</div>
             )}
           </div>
+        </div> */}
+
+
+        {/* Sucursales multi-selección */}
+        <div className="md:col-span-4">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="text-sm text-gray-600">Sucursales (scope)</div>
+            <button
+              type="button"
+              className="px-3 py-1.5 border rounded text-sm"
+              onClick={() => {
+                const all = branches.map((b) => b._id)
+                const allSelected = all.length && all.every((id) => form.branchIds.includes(id))
+                setForm((s) => ({ ...s, branchIds: allSelected ? [] : all }))
+              }}
+            >
+              Marcar / Desmarcar todas
+            </button>
+          </div>
+
+          {/* <Select
+            isMulti
+            options={branchOptions}
+            value={selectedBranchOptions}
+            onChange={(vals) => {
+              const next = Array.isArray(vals) ? vals.map((v) => v.value) : []
+              setForm((s) => ({ ...s, branchIds: next }))
+            }}
+            placeholder="Seleccione sucursales..."
+            classNamePrefix="fc-select"
+            noOptionsMessage={() => 'No hay sucursales'}
+          /> */}
+
+          {/* <Select
+            isMulti
+            closeMenuOnSelect={false}
+            hideSelectedOptions={false}
+            options={branchOptions}
+            value={selectedBranchOptions}
+            onChange={(vals) => {
+              const next = Array.isArray(vals) ? vals.map((v) => v.value) : []
+              setForm((s) => ({ ...s, branchIds: next }))
+            }}
+            placeholder="Seleccione sucursales..."
+            classNamePrefix="fc-select"
+            noOptionsMessage={() => 'No hay sucursales'}
+            components={{
+              Option: CheckboxOption,
+              ValueContainer: SummaryValueContainer,
+            }}
+
+          /> */}
+
+          <Select
+            isMulti
+            closeMenuOnSelect={false}
+            hideSelectedOptions={false}
+            options={branchOptions}
+            value={selectedBranchOptions}
+            onChange={(vals) => {
+              const next = Array.isArray(vals) ? vals.map((v) => v.value) : []
+              setForm((s) => ({ ...s, branchIds: next }))
+            }}
+            placeholder="Seleccione sucursales..."
+            classNamePrefix="fc-select"
+            noOptionsMessage={() => 'No hay sucursales'}
+            components={{
+              Option: CheckboxOption,
+              ValueContainer: SummaryValueContainer,
+            }}
+            styles={{
+              control: (base, state) => ({
+                ...base,
+                borderRadius: '0.375rem',
+                borderColor: '#757575',
+                height: 38,
+                minHeight: 38,
+                alignItems: 'center',
+                boxShadow: state.isFocused ? '0 0 0 1px var(--fc-primary)' : 'none',
+                '&:hover': { borderColor: 'var(--fc-primary)' },
+              }),
+              valueContainer: (base) => ({
+                ...base,
+                height: 38,
+                padding: '0 12px',
+                display: 'flex',
+                alignItems: 'center',
+              }),
+              input: (base) => ({
+                ...base,
+                margin: 0,
+                padding: 0,
+              }),
+              indicatorsContainer: (base) => ({
+                ...base,
+                height: 38,
+              }),
+              menu: (base) => ({
+                ...base,
+                zIndex: 50,
+              }),
+              multiValue: (base) => ({
+                ...base,
+                display: 'none',
+              }),
+            }}
+          />
+
+
+
+          {!branches.length && (
+            <div className="text-sm text-gray-500 mt-2">(No hay sucursales o no fue posible cargarlas)</div>
+          )}
         </div>
+
+        {/* fin  */}
 
         <div className="md:col-span-4 flex gap-2">
           <button type="submit" className="px-4 py-2 rounded bg-[var(--fc-primary)] text-white disabled:opacity-50" disabled={loading}>
