@@ -8,7 +8,6 @@
 
 // import { useEffect, useMemo, useState } from "react";
 // import { Link, useNavigate, useParams } from "react-router-dom";
-// import { computeRunDV, formatRUN, isValidRUN, parseRUN } from '../../utils/run';
 // import UnsavedChangesGuard from "../../hooks/UnsavedChangesGuard";
 // import { PeopleAPI } from "../../api/people.api";
 // import { PositionsAPI } from "../../api/positions.api";
@@ -30,6 +29,35 @@
 //   if (!v) return "";
 //   if (typeof v === "string") return v;
 //   return v._id || "";
+// }
+
+// // RUN (Chile) - validación Módulo 11
+// const normalizeRun = (v) =>
+//   String(v || '')
+//     .trim()
+//     .toUpperCase()
+//     .replace(/\./g, '')
+//     .replace(/\s+/g, '')
+
+// const isValidRun = (v) => {
+//   const run = normalizeRun(v)
+//   if (!run) return true
+
+//   const clean = run.replace(/-/g, '')
+//   if (clean.length < 2) return false
+//   const body = clean.slice(0, -1)
+//   const dv = clean.slice(-1)
+//   if (!/^\d+$/.test(body)) return false
+
+//   let sum = 0
+//   let mul = 2
+//   for (let i = body.length - 1; i >= 0; i--) {
+//     sum += Number(body[i]) * mul
+//     mul = mul === 7 ? 2 : mul + 1
+//   }
+//   const mod = 11 - (sum % 11)
+//   const expected = mod === 11 ? '0' : mod === 10 ? 'K' : String(mod)
+//   return dv === expected
 // }
 
 // export default function PeopleForm() {
@@ -60,26 +88,53 @@
 //     hireDate: "",
 //     active: true,
 
+//     // Dirección (opcional)
+//     addressLine1: "",
+//     addressCity: "",
+//     addressRegion: "",
+//     addressCountry: "CL",
+
 //     branchId: "",
 //     positionId: "",
 //   });
-
-//   const [{ number: runNumber, dv: runDv }, setRun] = useState(() => parseRUN(''))
-//   const [runDvTouched, setRunDvTouched] = useState(false)
-//   const [runError, setRunError] = useState('')
 
 //   const isDirty = useMemo(() => {
 //     if (!initial) return false;
 //     return JSON.stringify(form) !== JSON.stringify(initial);
 //   }, [form, initial]);
 
+//   const runOk = useMemo(() => isValidRun(form.dni), [form.dni])
+
+//   const normalizeBranchesPayload = (data) => {
+//     // Compatibilidad con las distintas formas usadas en el proyecto (Vehículos)
+//     return (
+//       data?.items ||
+//       data?.data?.items ||
+//       data?.data ||
+//       data?.list ||
+//       []
+//     );
+//   };
+
+//   const sortBranches = (list) => {
+//     const copy = Array.isArray(list) ? [...list] : [];
+//     copy.sort((a, b) => {
+//       const ac = (a?.code || "").toString();
+//       const bc = (b?.code || "").toString();
+//       if (ac && bc && ac !== bc) return ac.localeCompare(bc, undefined, { numeric: true });
+//       return (a?.name || "").toString().localeCompare((b?.name || "").toString(), undefined, { numeric: true });
+//     });
+//     return copy;
+//   };
+
 //   const loadRefs = async () => {
-//     // branches
+//     // branches (misma lógica robusta que Vehículos)
 //     try {
 //       const { data } = await api.get(`${API_PREFIX}/branches`, {
-//         params: { page: 1, limit: 200 },
+//         params: { page: 1, limit: 500 },
 //       });
-//       setBranches(data.items || []);
+//       const payload = normalizeBranchesPayload(data);
+//       setBranches(sortBranches(payload));
 //     } catch {
 //       setBranches([]);
 //     }
@@ -109,6 +164,11 @@
 //     hireDate: p.hireDate ? String(p.hireDate).slice(0, 10) : "",
 //     active: p.active !== false,
 
+//     addressLine1: p.address?.line1 || "",
+//     addressCity: p.address?.city || "",
+//     addressRegion: p.address?.region || "",
+//     addressCountry: p.address?.country || "CL",
+
 //     branchId: pickId(p.branchId),
 //     positionId: pickId(p.positionId),
 //   });
@@ -118,9 +178,6 @@
 //       setPersonDoc(null);
 //       const base = { ...form };
 //       setInitial(base);
-//       setRun(parseRUN(base.dni));
-//       setRunDvTouched(false);
-//       setRunError('');
 //       return;
 //     }
 
@@ -132,10 +189,7 @@
 
 //       const mapped = mapToForm(p);
 //       setForm(mapped);
-//       setRun(parseRUN(mapped.dni));
-//       setRunDvTouched(false);
-//       setRunError('');
-// setInitial(mapped);
+//       setInitial(mapped);
 //     } finally {
 //       setLoading(false);
 //     }
@@ -161,30 +215,50 @@
 //   const payload = useMemo(() => {
 //     const out = { ...form };
 
-//     // Normaliza RUN a formato NNNNNNNN-DV
-//     out.dni = formatRUN(runNumber, runDv)
-
-
 //     out.birthDate = toDateOrNull(out.birthDate);
 //     out.hireDate = toDateOrNull(out.hireDate);
+
+//     // address (opcional): solo enviamos si hay datos reales.
+//     const address = {
+//       line1: (out.addressLine1 || '').trim(),
+//       city: (out.addressCity || '').trim(),
+//       region: (out.addressRegion || '').trim(),
+//       country: ((out.addressCountry || 'CL').trim() || 'CL').toUpperCase(),
+//     };
+//     delete out.addressLine1;
+//     delete out.addressCity;
+//     delete out.addressRegion;
+//     delete out.addressCountry;
+
+//     const hasAddress = Boolean(address.line1 || address.city || address.region);
+//     if (hasAddress) out.address = address;
 
 //     if (!out.positionId) out.positionId = null;
 //     if (!out.email) delete out.email;
 
 //     return out;
-//   }, [form, runNumber, runDv]);
+//   }, [form]);
+
+//   const cancelChanges = async () => {
+//     if (!isDirty) {
+//       navigate('/people');
+//       return;
+//     }
+//     // Modo edición con cambios → "Cancelar" (restaurar)
+//     if (isNew) {
+//       setForm(initial || form);
+//       return;
+//     }
+//     await loadPerson();
+//   };
 
 //   const save = async () => {
+//     if (!isValidRun(form.dni)) {
+//       alert('RUN inválido. Verifica el dígito verificador (Módulo 11).')
+//       return
+//     }
 //     setSaving(true);
 //     try {
-//       // RUN (Chile) validation (módulo 11)
-//       const dni = formatRUN(runNumber, runDv)
-//       if (!dni) throw new Error('RUN es obligatorio')
-//       if (!isValidRUN(runNumber, runDv)) throw new Error('RUN inválido (dígito verificador no coincide)')
-//       setRunError('')
-//       // mantenemos compatibilidad: backend actual usa form.dni
-//       // (form se actualiza por setForm al vuelo, pero lo forzamos aquí por seguridad)
-      
 //       const { data } = isNew
 //         ? await PeopleAPI.create(payload)
 //         : await PeopleAPI.update(id, payload);
@@ -197,9 +271,7 @@
 //       await loadPerson();
 //     } catch (err) {
 //       console.error(err);
-//       const msg = err?.response?.data?.message || err?.message || 'No fue posible guardar';
-//       if (String(msg).toUpperCase().includes('RUN')) setRunError(msg);
-//       alert(msg);
+//       alert("No fue posible guardar");
 //     } finally {
 //       setSaving(false);
 //     }
@@ -218,31 +290,19 @@
 //           <h1 className="text-xl font-bold">{title}</h1>
 //           <p className="text-sm text-gray-600">RRHH — ficha por pestañas.</p>
 //         </div>
-//         <div className="flex gap-2">
-//           <Link className="px-3 py-2 rounded border" to="/people">
-//             Volver
-//           </Link>
-//           <button
-//             className="px-3 py-2 rounded bg-black text-white disabled:opacity-50"
-//             onClick={save}
-//             disabled={saving || loading}
-//           >
-//             Guardar
-//           </button>
-//         </div>
 //       </div>
 
-//       <div className="flex flex-wrap gap-2">
+//       <div className="border-b flex gap-2">
 //         {TABS.map((t) => (
 //           <button
 //             key={t.key}
 //             type="button"
-//             onClick={() => setTab(t.key)}
-//             className={`px-3 py-1.5 rounded ${
+//             className={`px-4 py-2 text-sm rounded-xl border transition ${
 //               tab === t.key
-//                 ? "bg-blue-600 text-white shadow-[0_0_0_3px_rgba(37,99,235,0.25)]"
-//                 : "bg-white border"
+//                 ? 'bg-blue-600 text-white border-blue-600'
+//                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
 //             }`}
+//             onClick={() => setTab(t.key)}
 //           >
 //             {t.label}
 //           </button>
@@ -255,30 +315,19 @@
 //         <>
 //           {tab === "basic" && (
 //             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 border rounded p-4">
-//               <div className="grid grid-cols-3 gap-2 md:col-span-1">
-//                 <input
-//                   className="border rounded px-3 py-2 col-span-2"
-//                   placeholder="RUN (número) *"
-//                   value={runNumber}
-//                   onChange={(e) => {
-//                     const num = String(e.target.value || "").replace(/\D/g, "");
-//                     const nextDv = runDvTouched ? runDv : computeRunDV(num);
-//                     setRun({ number: num, dv: nextDv });
-//                     setForm((s) => ({ ...s, dni: formatRUN(num, nextDv) }));
-//                   }}
-//                 />
-//                 <input
-//                   className="border rounded px-3 py-2"
-//                   placeholder="DV"
-//                   value={runDv}
-//                   onChange={(e) => {
-//                     const dv = String(e.target.value || "").trim().toUpperCase().replace(/[^0-9K]/g, "").slice(0, 1);
-//                     setRunDvTouched(true);
-//                     setRun((s) => ({ ...s, dv }));
-//                     setForm((s) => ({ ...s, dni: formatRUN(runNumber, dv) }));
-//                   }}
-//                 />
-//               </div>
+//               <input
+//                 className="border rounded px-3 py-2"
+//                 placeholder="RUN *"
+//                 value={form.dni}
+//                 onChange={(e) =>
+//                   setForm((s) => ({ ...s, dni: e.target.value }))
+//                 }
+//               />
+//               {!runOk && (
+//                 <div className="text-xs text-red-600 md:col-span-3">
+//                   RUN inválido (verificación Módulo 11).
+//                 </div>
+//               )}
 //               <input
 //                 className="border rounded px-3 py-2"
 //                 placeholder="Nombres *"
@@ -341,6 +390,45 @@
 //                   setForm((s) => ({ ...s, nationality: e.target.value }))
 //                 }
 //               />
+
+
+//               {/* Dirección (opcional) */}
+//               <input
+//                 className="border rounded px-3 py-2 md:col-span-3"
+//                 placeholder="Dirección (línea 1)"
+//                 value={form.addressLine1}
+//                 onChange={(e) =>
+//                   setForm((s) => ({ ...s, addressLine1: e.target.value }))
+//                 }
+//               />
+//               <input
+//                 className="border rounded px-3 py-2"
+//                 placeholder="Ciudad"
+//                 value={form.addressCity}
+//                 onChange={(e) =>
+//                   setForm((s) => ({ ...s, addressCity: e.target.value }))
+//                 }
+//               />
+//               <input
+//                 className="border rounded px-3 py-2"
+//                 placeholder="Región"
+//                 value={form.addressRegion}
+//                 onChange={(e) =>
+//                   setForm((s) => ({ ...s, addressRegion: e.target.value }))
+//                 }
+//               />
+//               <label className="text-sm">
+//                 <div className="text-gray-600 mb-1">País</div>
+//                 <select
+//                   className="border rounded px-3 py-2 w-full"
+//                   value={form.addressCountry}
+//                   onChange={(e) =>
+//                     setForm((s) => ({ ...s, addressCountry: e.target.value }))
+//                   }
+//                 >
+//                   <option value="CL">CL</option>
+//                 </select>
+//               </label>
 
 //               <label className="flex items-center gap-2 text-sm md:col-span-3">
 //                 <input
@@ -435,7 +523,6 @@
 
 //           {tab === "tests" && (
 //             <DrivingTestsTab
-//               onPersonReload={loadPerson}
 //               person={
 //                 personDoc || { _id: isNew ? null : id, branchId: form.branchId }
 //               }
@@ -450,21 +537,20 @@
 //           )}
 //         </>
 //       )}
+
+//       {/* Acciones inferiores (únicas) */}
 //       <div className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-slate-200 p-3 flex justify-end gap-2">
 //         <button
 //           type="button"
-//           className="px-3 py-2 border rounded"
-//           onClick={() => {
-//             if (!isDirty) return navigate('/people')
-//             const ok = window.confirm('Tienes cambios sin guardar. ¿Salir sin guardar?')
-//             if (ok) navigate('/people')
-//           }}
+//           className="rounded-xl border px-4 py-2"
+//           onClick={cancelChanges}
+//           disabled={saving || loading}
 //         >
-//           Volver
+//           {isDirty ? 'Cancelar' : 'Volver'}
 //         </button>
 //         <button
 //           type="button"
-//           className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700"
+//           className="rounded-xl bg-blue-600 text-white px-4 py-2 disabled:opacity-50"
 //           onClick={save}
 //           disabled={saving || loading}
 //         >
@@ -474,7 +560,6 @@
 //     </div>
 //   );
 // }
-
 
 // // front/src/pages/People/Form.jsx
 // // -----------------------------------------------------------------------------
@@ -608,9 +693,7 @@ export default function PeopleForm() {
   const loadRefs = async () => {
     // branches (misma lógica robusta que Vehículos)
     try {
-      const { data } = await api.get(`${API_PREFIX}/branches`, {
-        params: { page: 1, limit: 500 },
-      });
+      const { data } = await BranchesAPI.list({ page: 1, limit: 500, q: '' })
       const payload = normalizeBranchesPayload(data);
       setBranches(sortBranches(payload));
     } catch {
@@ -621,10 +704,12 @@ export default function PeopleForm() {
     try {
       const { data } = await PositionsAPI.list({
         page: 1,
-        limit: 200,
+        limit: 500,
+        q: '',
         active: "true",
       });
-      setPositions(data.items || []);
+      const items = data?.items || data?.data?.items || data?.data || []
+      setPositions(Array.isArray(items) ? items : []);
     } catch {
       setPositions([]);
     }
@@ -731,10 +816,26 @@ export default function PeopleForm() {
   };
 
   const save = async () => {
-    if (!isValidRun(form.dni)) {
-      alert('RUN inválido. Verifica el dígito verificador (Módulo 11).')
+    // Validación front (evita el mensaje genérico "No fue posible guardar")
+    const missing = []
+    if (!String(form.dni || '').trim()) missing.push('RUN')
+    if (!runOk) missing.push('RUN')
+    if (!String(form.firstName || '').trim()) missing.push('Nombres')
+    if (!String(form.lastName || '').trim()) missing.push('Apellidos')
+    if (!String(form.branchId || '').trim()) missing.push('Sucursal')
+
+    if (missing.length) {
+      // Requerimiento: mensaje diciente cuando hay errores de formulario
+      alert('Existen errores en el formulario. Revisa los campos obligatorios.')
       return
     }
+
+    // Si el RUN es válido pero venía sin guion, lo normalizamos al guardar.
+    const formattedRun = formatRunWithDash(form.dni)
+    if (formattedRun && formattedRun !== form.dni) {
+      setForm((s) => ({ ...s, dni: formattedRun }))
+    }
+
     setSaving(true);
     try {
       const { data } = isNew
@@ -749,7 +850,13 @@ export default function PeopleForm() {
       await loadPerson();
     } catch (err) {
       console.error(err);
-      alert("No fue posible guardar");
+      const msg = err?.response?.data?.message || err?.message
+      // Si es error de validación, mostramos mensaje diciente.
+      if (err?.response?.status === 400) {
+        alert(msg || 'Existen errores en el formulario. Revisa los campos.')
+      } else {
+        alert(msg || 'No fue posible guardar')
+      }
     } finally {
       setSaving(false);
     }
@@ -775,11 +882,16 @@ export default function PeopleForm() {
           <button
             key={t.key}
             type="button"
-            className={`px-4 py-2 text-sm rounded-xl border transition ${
+            className={`px-4 py-2 text-sm rounded-md border transition ${
               tab === t.key
-                ? 'bg-blue-600 text-white border-blue-600'
+                ? 'text-white'
                 : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
             }`}
+            style={
+              tab === t.key
+                ? { background: 'var(--fc-primary)', borderColor: 'var(--fc-primary)' }
+                : undefined
+            }
             onClick={() => setTab(t.key)}
           >
             {t.label}
@@ -794,12 +906,19 @@ export default function PeopleForm() {
           {tab === "basic" && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 border rounded p-4">
               <input
-                className="border rounded px-3 py-2"
+                className={`border rounded px-3 py-2 ${!runOk ? 'border-red-500' : 'border-gray-400'}`}
                 placeholder="RUN *"
                 value={form.dni}
                 onChange={(e) =>
                   setForm((s) => ({ ...s, dni: e.target.value }))
                 }
+                onBlur={() => {
+                  const formatted = formatRunWithDash(form.dni)
+                  // Requerimiento: si es válido pero viene sin guion, lo completamos al salir del campo
+                  if (formatted && formatted !== form.dni) {
+                    setForm((s) => ({ ...s, dni: formatted }))
+                  }
+                }}
               />
               {!runOk && (
                 <div className="text-xs text-red-600 md:col-span-3">
@@ -1020,7 +1139,7 @@ export default function PeopleForm() {
       <div className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-slate-200 p-3 flex justify-end gap-2">
         <button
           type="button"
-          className="rounded-xl border px-4 py-2"
+          className="rounded-md border border-gray-400 px-4 py-2 text-sm"
           onClick={cancelChanges}
           disabled={saving || loading}
         >
@@ -1028,7 +1147,8 @@ export default function PeopleForm() {
         </button>
         <button
           type="button"
-          className="rounded-xl bg-blue-600 text-white px-4 py-2 disabled:opacity-50"
+          className="rounded-md text-white px-4 py-2 text-sm disabled:opacity-50"
+          style={{ background: 'var(--fc-primary)' }}
           onClick={save}
           disabled={saving || loading}
         >

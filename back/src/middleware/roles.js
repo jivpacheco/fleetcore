@@ -12,13 +12,28 @@
 // Autorización por roles
 // - requireRole('admin') → exige al menos 1 rol del listado
 
-export function requireRole(...allowedRoles) {
-  const set = new Set(allowedRoles)
-  return (req, res, next) => {
-    const roles = req.user?.roles || []
-    const ok = roles.some(r => set.has(r))
-    if (!ok) return res.status(403).json({ message: 'No autorizado' })
-    next()
+// export function requireRole(...allowedRoles) {
+//   const set = new Set(allowedRoles)
+//   return (req, res, next) => {
+//     const roles = req.user?.roles || []
+//     const ok = roles.some(r => set.has(r))
+//     if (!ok) return res.status(403).json({ message: 'No autorizado' })
+//     next()
+//   }
+// }
+
+export const requireRole = (...roles) => (req, res, next) => {
+  const userRoles = (req.user?.roles || []).map(r => String(r).toUpperCase())
+  const required = roles.map(r => String(r).toUpperCase())
+
+  // SUPERADMIN tiene acceso total
+  if (userRoles.includes('SUPERADMIN')) return next()
+
+  const ok = required.some(r => userRoles.includes(r))
+  if (!ok) {
+    return res.status(403).json({ message: 'No autorizado' })
   }
+
+  next()
 }
 

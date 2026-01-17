@@ -175,7 +175,11 @@ export default function FilesTab({ person, onPersonReload }) {
                     <div className="space-y-2">
                         <input ref={photoInputRef} type="file" accept="image/*" className="hidden"
                             onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadPhoto(f); e.target.value = ''; }} />
-                        <button type="button" className="px-3 py-2 rounded bg-black text-white" disabled={uploading}
+                        <button
+                            type="button"
+                            className="px-3 py-2 rounded-md text-white"
+                            style={{ background: 'var(--fc-primary)' }}
+                            disabled={uploading}
                             onClick={() => photoInputRef.current?.click()}>
                             Subir / Reemplazar
                         </button>
@@ -189,7 +193,10 @@ export default function FilesTab({ person, onPersonReload }) {
                     <div>
                         <input ref={docInputRef} type="file" className="hidden"
                             onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDoc(f); e.target.value = ''; }} />
-                        <button type="button" className="px-3 py-2 rounded border" disabled={uploading}
+                        <button
+                            type="button"
+                            className="px-3 py-2 rounded-md border border-gray-400"
+                            disabled={uploading}
                             onClick={() => docInputRef.current?.click()}>
                             Subir documento
                         </button>
