@@ -492,7 +492,7 @@
 //     assertBranchWriteScope(req, body.branchId);
 
 //     const created = await Person.create({
-      
+
 //       ...body,
 //             createdBy: req.user?.uid,
 //       updatedBy: req.user?.uid,      
@@ -679,9 +679,24 @@
 
 // back/src/controllers/people.controller.js
 import Person from '../models/Person.js';
+import User from '../models/User.js'; //modelo User importado
 import { normalizeRUN } from '../utils/run.js';
 
+
 const U = (v) => (typeof v === 'string' ? v.toUpperCase() : v);
+
+//adicional para manejo de error de duplicados
+function handleDupRun(err) {
+  if (!err || err.code !== 11000) return null;
+  const key = err.keyPattern ? Object.keys(err.keyPattern)[0] : null;
+  if (key === 'dni') {
+    const e = new Error('Ya existe una persona registrada con este RUN');
+    e.status = 409;
+    return e;
+  }
+  return null;
+}
+
 
 function sanitizeBody(body = {}) {
   const out = { ...body };
@@ -754,8 +769,14 @@ function sanitizeBody(body = {}) {
 // y que req.user trae roles + branchId/branchIds.
 // Si no existe, lo ajustamos al middleware real que tengas.
 function assertBranchWriteScope(req, branchId) {
-  const roles = req.user?.roles || [];
-  const isGlobal = roles.includes('global') || roles.includes('admin');
+  // const roles = req.user?.roles || [];
+  // const isGlobal = roles.includes('global') || roles.includes('admin');
+
+  const roles = (req.user?.roles || []).map(r => String(r || '').toLowerCase())
+  const isGlobal = roles.includes('global') || roles.includes('admin') || roles.includes('superadmin')
+
+
+
   if (isGlobal) return true;
 
   const allowed = [];
@@ -845,10 +866,10 @@ export async function create(req, res, next) {
     assertBranchWriteScope(req, body.branchId);
 
     const created = await Person.create({
-      
+
       ...body,
-            createdBy: req.user?.uid,
-      updatedBy: req.user?.uid,      
+      createdBy: req.user?.uid,
+      updatedBy: req.user?.uid,
     });
     console.log('req.user.uid =', req.user.uid)
     console.log('req.user?.uid =', req.user.uid)
@@ -862,7 +883,11 @@ export async function create(req, res, next) {
 
     return res.status(201).json({ item: doc });
   } catch (err) {
-    next(err);
+    // next(err);
+    //reemplazo por manejo de error de duplicados
+    const dup = handleDupRun(err);
+    if (dup) return next(dup);
+    return next(err);
   }
 }
 
@@ -872,11 +897,61 @@ export async function update(req, res, next) {
     await ensureInReadScope(req, id);
 
     const body = sanitizeBody(req.body || {});
-    if (body.branchId) assertBranchWriteScope(req, body.branchId);
 
+    //adcion agregar historial de autorizacion de conductor
+    // Si se actualiza autorización de conductor, registrar historial
+    let authHistoryPush = null;
+
+    if (body.driverAuthorization) {
+      const current = await Person.findById(id).select('driverAuthorization').lean();
+      const prev = current?.driverAuthorization || { isAuthorized: false, authorizedAt: null, note: '' };
+
+      const nextAuth = {
+        isAuthorized: Boolean(body.driverAuthorization.isAuthorized),
+        authorizedAt: body.driverAuthorization.authorizedAt || null,
+        note: body.driverAuthorization.note || '',
+      };
+
+      const changed =
+        prev.isAuthorized !== nextAuth.isAuthorized ||
+        String(prev.authorizedAt || '') !== String(nextAuth.authorizedAt || '') ||
+        (prev.note || '') !== (nextAuth.note || '');
+
+      if (changed) {
+        const u = req.user?.uid
+          ? await User.findById(req.user.uid).select('name email').lean()
+          : null;
+
+        authHistoryPush = {
+          at: new Date(),
+          authorizedBy: req.user?.uid || null,
+          authorizedByName: u?.name || u?.email || '',
+          from: {
+            isAuthorized: Boolean(prev.isAuthorized),
+            authorizedAt: prev.authorizedAt || null,
+            note: prev.note || '',
+          },
+          to: nextAuth,
+        };
+      }
+    }
+    //fin 
+
+    if (body.branchId) assertBranchWriteScope(req, body.branchId);
+    //adicion
+    const updateDoc = { ...body, updatedBy: req.user?.uid };
+    if (authHistoryPush) {
+      updateDoc.$push = { driverAuthorizationHistory: authHistoryPush };
+    }
+
+    // const updated = await Person.findByIdAndUpdate(
+    //   id,
+    //   { ...body, updatedBy: req.user?.uid },
+    //   { new: true }
+    // )
     const updated = await Person.findByIdAndUpdate(
       id,
-      { ...body, updatedBy: req.user?.uid },
+      updateDoc,
       { new: true }
     )
       .populate('branchId', 'code name')
@@ -885,7 +960,11 @@ export async function update(req, res, next) {
 
     return res.json({ item: updated });
   } catch (err) {
-    next(err);
+    // next(err);
+    //reemplazo por manejo de error de duplicados
+    const dup = handleDupRun(err);
+    if (dup) return next(dup);
+    return next(err);
   }
 }
 
@@ -913,7 +992,7 @@ export async function remove(req, res, next) {
   }
 }
 
-const LICENSE_TYPES_CL = ['C','B','A4','A5','A2','A2*','A1','A1*','A3','D','E','F'];
+const LICENSE_TYPES_CL = ['C', 'B', 'A4', 'A5', 'A2', 'A2*', 'A1', 'A1*', 'A3', 'D', 'E', 'F'];
 
 function sanitizeLicense(l = {}) {
   const out = { ...l };
@@ -996,6 +1075,15 @@ export async function updateLicense(req, res, next) {
     if (!lic) return res.status(404).json({ message: 'Licencia no encontrada' });
 
     const payload = sanitizeLicense(req.body || {});
+
+    //Agrego validación de fechas obligatorias
+    if (!payload.issuedAt || !payload.nextControlAt) {
+      const err = new Error('Debe ingresar fechas válidas (Emisión y Próximo control)');
+      err.status = 400;
+      throw err;
+    }
+
+
     Object.assign(lic, payload);
 
     person.updatedBy = req.user?.uid;

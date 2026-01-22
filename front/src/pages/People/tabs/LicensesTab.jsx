@@ -299,6 +299,7 @@
 //   )
 // }
 
+//V 220126
 import { useMemo, useState } from 'react'
 import { PeopleAPI } from '../../../api/people.api'
 
@@ -600,3 +601,310 @@ export default function LicensesTab({ person, onChange }) {
     </div>
   )
 }
+
+
+
+//version fallida 220126+
+// // front/src/pages/People/tabs/LicensesTab.jsx
+// // -----------------------------------------------------------------------------
+// // RRHH - Licencias de conducir (Chile)
+// // - Listado en modo vista
+// // - Editar por fila (botón "Editar")
+// // - Validación: no permite guardar sin fechas (Emisión y Próximo control)
+// // -----------------------------------------------------------------------------
+
+// import { useEffect, useMemo, useState } from 'react'
+// import { PeopleAPI } from '../../../api/people.api'
+
+// const LICENSE_TYPES_CL = ['C', 'B', 'A4', 'A5', 'A2', 'A2*', 'A1', 'A1*', 'A3', 'D', 'E', 'F']
+
+// function isoDate(d) {
+//   if (!d) return ''
+//   try {
+//     const x = new Date(d)
+//     if (Number.isNaN(x.getTime())) return ''
+//     return x.toISOString().slice(0, 10)
+//   } catch {
+//     return ''
+//   }
+// }
+
+// export default function LicensesTab({ person, onChange }) {
+//   const personId = person?._id
+//   const licenses = Array.isArray(person?.licenses) ? person.licenses : []
+
+//   const [busy, setBusy] = useState(false)
+//   const [editingId, setEditingId] = useState(null)
+//   const [row, setRow] = useState({
+//     type: '',
+//     folioNumber: '',
+//     issuer: '',
+//     firstIssuedAt: '',
+//     issuedAt: '',
+//     nextControlAt: '',
+//   })
+
+//   const sorted = useMemo(() => {
+//     const arr = [...licenses]
+//     arr.sort((a, b) => String(a.type || '').localeCompare(String(b.type || '')))
+//     return arr
+//   }, [licenses])
+
+//   useEffect(() => {
+//     // si cambia la persona, resetea edición
+//     setEditingId(null)
+//   }, [personId])
+
+//   const validate = (payload) => {
+//     if (!payload.type) return 'Seleccione el tipo de licencia'
+//     if (!payload.issuedAt || !payload.nextControlAt) return 'Debe ingresar fechas válidas (Emisión y Próximo control)'
+//     return null
+//   }
+
+//   const startAdd = () => {
+//     setEditingId('__new__')
+//     setRow({
+//       type: '',
+//       folioNumber: '',
+//       issuer: '',
+//       firstIssuedAt: '',
+//       issuedAt: '',
+//       nextControlAt: '',
+//     })
+//   }
+
+//   const startEdit = (it) => {
+//     setEditingId(it._id)
+//     setRow({
+//       type: it.type || '',
+//       folioNumber: it.folioNumber || '',
+//       issuer: it.issuer || '',
+//       firstIssuedAt: isoDate(it.firstIssuedAt),
+//       issuedAt: isoDate(it.issuedAt),
+//       nextControlAt: isoDate(it.nextControlAt),
+//     })
+//   }
+
+//   const cancelEdit = () => {
+//     setEditingId(null)
+//   }
+
+//   const save = async () => {
+//     if (!personId) return
+//     const payload = {
+//       type: row.type,
+//       folioNumber: row.folioNumber,
+//       issuer: row.issuer,
+//       firstIssuedAt: row.firstIssuedAt || null,
+//       issuedAt: row.issuedAt || null,
+//       nextControlAt: row.nextControlAt || null,
+//     }
+
+//     const msg = validate(payload)
+//     if (msg) return alert(msg)
+
+//     setBusy(true)
+//     try {
+//       if (editingId === '__new__') {
+//         const { item } = await PeopleAPI.addLicense(personId, payload)
+//         onChange?.((s) => ({ ...s, licenses: [...(s.licenses || []), item] }))
+//         alert('Licencia creada con éxito')
+//       } else {
+//         const { item } = await PeopleAPI.updateLicense(personId, editingId, payload)
+//         onChange?.((s) => ({
+//           ...s,
+//           licenses: (s.licenses || []).map((x) => (x._id === editingId ? item : x)),
+//         }))
+//         alert('Licencia actualizada con éxito')
+//       }
+//       setEditingId(null)
+//     } catch (err) {
+//       console.error(err)
+//       alert(err?.response?.data?.message || 'No fue posible guardar la licencia')
+//     } finally {
+//       setBusy(false)
+//     }
+//   }
+
+//   const remove = async (it) => {
+//     if (!personId) return
+//     const ok = window.confirm('¿Eliminar licencia?')
+//     if (!ok) return
+//     setBusy(true)
+//     try {
+//       await PeopleAPI.removeLicense(personId, it._id)
+//       onChange?.((s) => ({ ...s, licenses: (s.licenses || []).filter((x) => x._id !== it._id) }))
+//       alert('Licencia eliminada con éxito')
+//     } catch (err) {
+//       console.error(err)
+//       alert(err?.response?.data?.message || 'No fue posible eliminar la licencia')
+//     } finally {
+//       setBusy(false)
+//     }
+//   }
+
+//   const isEditing = Boolean(editingId)
+
+//   return (
+//     <div className="space-y-3">
+//       <div className="flex items-center justify-between">
+//         <div className="text-sm text-gray-600">Licencias registradas</div>
+//         <button
+//           type="button"
+//           className="px-3 py-2 rounded border text-sm"
+//           disabled={busy || !personId || isEditing}
+//           onClick={startAdd}
+//         >
+//           Nueva licencia
+//         </button>
+//       </div>
+
+//       {/* Editor (agregar / editar) */}
+//       {isEditing && (
+//         <div className="border rounded p-3 bg-gray-50">
+//           <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+//             <label className="text-sm md:col-span-1">
+//               <div className="text-gray-600 mb-1">Tipo *</div>
+//               <select
+//                 className="border border-gray-400 rounded px-3 py-2 w-full h-[38px]"
+//                 value={row.type}
+//                 onChange={(e) => setRow((s) => ({ ...s, type: e.target.value }))}
+//                 disabled={busy}
+//               >
+//                 <option value="">Seleccione...</option>
+//                 {LICENSE_TYPES_CL.map((t) => (
+//                   <option key={t} value={t}>
+//                     {t}
+//                   </option>
+//                 ))}
+//               </select>
+//             </label>
+
+//             <label className="text-sm md:col-span-2">
+//               <div className="text-gray-600 mb-1">Folio</div>
+//               <input
+//                 className="border border-gray-400 rounded px-3 py-2 w-full h-[38px]"
+//                 value={row.folioNumber}
+//                 onChange={(e) => setRow((s) => ({ ...s, folioNumber: e.target.value }))}
+//                 disabled={busy}
+//               />
+//             </label>
+
+//             <label className="text-sm md:col-span-3">
+//               <div className="text-gray-600 mb-1">Entidad emisora</div>
+//               <input
+//                 className="border border-gray-400 rounded px-3 py-2 w-full h-[38px]"
+//                 value={row.issuer}
+//                 onChange={(e) => setRow((s) => ({ ...s, issuer: e.target.value }))}
+//                 disabled={busy}
+//               />
+//             </label>
+
+//             <label className="text-sm md:col-span-2">
+//               <div className="text-gray-600 mb-1">Primera emisión</div>
+//               <input
+//                 type="date"
+//                 className="border border-gray-400 rounded px-3 py-2 w-full h-[38px]"
+//                 value={row.firstIssuedAt}
+//                 onChange={(e) => setRow((s) => ({ ...s, firstIssuedAt: e.target.value }))}
+//                 disabled={busy}
+//               />
+//             </label>
+
+//             <label className="text-sm md:col-span-2">
+//               <div className="text-gray-600 mb-1">Emisión *</div>
+//               <input
+//                 type="date"
+//                 className="border border-gray-400 rounded px-3 py-2 w-full h-[38px]"
+//                 value={row.issuedAt}
+//                 onChange={(e) => setRow((s) => ({ ...s, issuedAt: e.target.value }))}
+//                 disabled={busy}
+//               />
+//             </label>
+
+//             <label className="text-sm md:col-span-2">
+//               <div className="text-gray-600 mb-1">Próximo control *</div>
+//               <input
+//                 type="date"
+//                 className="border border-gray-400 rounded px-3 py-2 w-full h-[38px]"
+//                 value={row.nextControlAt}
+//                 onChange={(e) => setRow((s) => ({ ...s, nextControlAt: e.target.value }))}
+//                 disabled={busy}
+//               />
+//             </label>
+//           </div>
+
+//           <div className="flex items-center justify-end gap-2 mt-3">
+//             <button type="button" className="px-3 py-2 rounded border text-sm" onClick={cancelEdit} disabled={busy}>
+//               Cancelar
+//             </button>
+//             <button
+//               type="button"
+//               className="px-3 py-2 rounded text-sm text-white"
+//               style={{ background: 'var(--fc-primary)' }}
+//               onClick={save}
+//               disabled={busy}
+//             >
+//               Guardar
+//             </button>
+//           </div>
+//         </div>
+//       )}
+
+//       {/* Tabla en modo vista */}
+//       <div className="overflow-x-auto border rounded">
+//         <table className="min-w-full text-sm">
+//           <thead className="bg-gray-50 text-gray-600">
+//             <tr>
+//               <th className="text-left px-3 py-2">Tipo</th>
+//               <th className="text-left px-3 py-2">Folio</th>
+//               <th className="text-left px-3 py-2">Emisión</th>
+//               <th className="text-left px-3 py-2">Próximo control</th>
+//               <th className="text-left px-3 py-2">Emisor</th>
+//               <th className="text-right px-3 py-2">Acciones</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {sorted.length === 0 ? (
+//               <tr>
+//                 <td className="px-3 py-4 text-gray-500" colSpan={6}>
+//                   Aún no hay licencias registradas.
+//                 </td>
+//               </tr>
+//             ) : (
+//               sorted.map((it) => (
+//                 <tr key={it._id} className="border-t">
+//                   <td className="px-3 py-2">{it.type || '-'}</td>
+//                   <td className="px-3 py-2">{it.folioNumber || '-'}</td>
+//                   <td className="px-3 py-2">{isoDate(it.issuedAt) || '-'}</td>
+//                   <td className="px-3 py-2">{isoDate(it.nextControlAt) || '-'}</td>
+//                   <td className="px-3 py-2">{it.issuer || '-'}</td>
+//                   <td className="px-3 py-2 text-right">
+//                     <div className="inline-flex gap-2">
+//                       <button
+//                         type="button"
+//                         className="px-3 py-1.5 rounded border text-sm"
+//                         onClick={() => startEdit(it)}
+//                         disabled={busy || isEditing}
+//                       >
+//                         Editar
+//                       </button>
+//                       <button
+//                         type="button"
+//                         className="px-3 py-1.5 rounded border text-sm"
+//                         onClick={() => remove(it)}
+//                         disabled={busy || isEditing}
+//                       >
+//                         Eliminar
+//                       </button>
+//                     </div>
+//                   </td>
+//                 </tr>
+//               ))
+//             )}
+//           </tbody>
+//         </table>
+//       </div>
+//     </div>
+//   )
+// }
