@@ -2,10 +2,19 @@
 // import { DrivingTestsAPI } from '../../../api/drivingTests.api'
 // import { PeopleAPI } from '../../../api/people.api'
 // import { api, API_PREFIX } from '../../../services/http'
-// import ExaminerSelect from '../../../components/DrivingTests/ExaminerSelect'
 // import MapRecorder from '../../../components/DrivingTests/MapRecorder'
+// import { useAppStore } from '../../../store/useAppStore'
+
+// const hasRole = (user, role) => {
+//   const needle = String(role || '').toUpperCase()
+//   const roles = Array.isArray(user?.roles) ? user.roles : []
+//   return roles.some((r) => String(r).toUpperCase() === needle)
+// }
 
 // export default function DrivingTestsTab({ person, onPersonReload }) {
+//   const user = useAppStore((s) => s.user)
+//   const canOperate = hasRole(user, 'ADMIN') || hasRole(user, 'EXAMINADOR')
+
 //   const [items, setItems] = useState([])
 //   const [people, setPeople] = useState([])
 //   const [vehicles, setVehicles] = useState([])
@@ -26,6 +35,20 @@
 //   // Visor recorrido
 //   const [viewerOpen, setViewerOpen] = useState(false)
 //   const [viewerImg, setViewerImg] = useState('')
+
+//   const examinerPerson = useMemo(() => {
+//     if (!user?._id) return null
+//     return people.find((p) => {
+//       const uid = p?.userId?._id || p?.userId
+//       return uid && String(uid) === String(user._id)
+//     }) || null
+//   }, [people, user?._id])
+
+//   useEffect(() => {
+//     if (examinerPerson?._id) {
+//       setExaminerId(examinerPerson._id)
+//     }
+//   }, [examinerPerson?._id])
 
 //   useEffect(() => {
 //     setBranchId(person?.branchId?._id || person?.branchId || '')
@@ -84,6 +107,12 @@
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
 //   }, [])
 
+//   // Examinador: por requerimiento, es el usuario logueado con rol EXAMINADOR.
+//   // Mapeamos al registro Person asociado (person.userId == user._id).
+//   useEffect(() => {
+//     if (examinerPerson?._id) setExaminerId(examinerPerson._id)
+//   }, [examinerPerson?._id])
+
 //   useEffect(() => {
 //     load()
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,8 +121,13 @@
 //   const onFinish = async (payload) => {
 //     if (!person?._id) return
 
+//     if (!canOperate) {
+//       alert('No tienes permisos para registrar/autorizar pruebas. Requiere rol ADMIN o EXAMINADOR.')
+//       return
+//     }
+
 //     if (!branchId) return alert('Sucursal es obligatoria')
-//     if (!examinerId) return alert('Examinador es obligatorio')
+//     if (!examinerId) return alert('No se encontró el perfil Person del examinador (usuario logueado). Asocia el usuario a un registro de Persona.')
 //     if (!vehicleId) return alert('Vehículo es obligatorio')
 
 //     try {
@@ -129,6 +163,13 @@
 
 //   const saveAuthorization = async () => {
 //     if (!person?._id) return
+//     if (!canOperate) {
+//       alert('No autorizado. Requiere rol ADMIN o EXAMINADOR.')
+//       return
+//     }
+
+//     const ok = window.confirm('¿Está seguro de guardar la aprobación/autorización?')
+//     if (!ok) return
 //     setAuthSaving(true)
 //     try {
 //       await PeopleAPI.update(person._id, {
@@ -156,6 +197,11 @@
 
 //   return (
 //     <div className="space-y-4">
+//       {!canOperate && (
+//         <div className="border border-amber-200 bg-amber-50 text-amber-800 rounded p-3 text-sm">
+//           Este apartado está deshabilitado. Requiere rol <b>ADMIN</b> o <b>EXAMINADOR</b>.
+//         </div>
+//       )}
 //       {/* Autorización */}
 //       <div className="border rounded p-4">
 //         <div className="text-sm font-medium mb-2">Autorización de conducción</div>
@@ -170,6 +216,7 @@
 //                   name="driverAuth"
 //                   checked={isAuthorized === true}
 //                   onChange={() => setIsAuthorized(true)}
+//                   disabled={!canOperate}
 //                 />
 //                 Conductor autorizado
 //               </label>
@@ -179,6 +226,7 @@
 //                   name="driverAuth"
 //                   checked={isAuthorized === false}
 //                   onChange={() => setIsAuthorized(false)}
+//                   disabled={!canOperate}
 //                 />
 //                 Conductor no autorizado
 //               </label>
@@ -192,6 +240,7 @@
 //               className="border rounded px-3 py-2 w-full"
 //               value={authorizedAt}
 //               onChange={(e) => setAuthorizedAt(e.target.value)}
+//               disabled={!canOperate}
 //             />
 //           </label>
 
@@ -203,6 +252,7 @@
 //               value={authNote}
 //               onChange={(e) => setAuthNote(e.target.value)}
 //               placeholder="Ej: sanción, condicionantes, observaciones de RRHH…"
+//               disabled={!canOperate}
 //             />
 //           </label>
 //         </div>
@@ -210,9 +260,10 @@
 //         <div className="mt-3">
 //           <button
 //             type="button"
-//             className="px-3 py-2 bg-blue-600 text-white rounded disabled:opacity-50 hover:bg-blue-700"
+//             className="px-3 py-2 text-white rounded-md disabled:opacity-50"
+//             style={{ background: 'var(--fc-primary)' }}
 //             onClick={saveAuthorization}
-//             disabled={authSaving}
+//             disabled={authSaving || !canOperate}
 //           >
 //             Guardar autorización
 //           </button>
@@ -230,6 +281,7 @@
 //               className="w-full border rounded px-3 py-2"
 //               value={branchId}
 //               onChange={(e) => setBranchId(e.target.value)}
+//               disabled={!canOperate}
 //             >
 //               <option value="">— Selecciona sucursal —</option>
 //               {branches.map((b) => (
@@ -241,8 +293,15 @@
 //           </label>
 
 //           <div>
-//             <div className="text-sm text-gray-600 mb-1">Examinador</div>
-//             <ExaminerSelect people={people} value={examinerId} onChange={setExaminerId} />
+//             <div className="text-sm text-gray-600 mb-1">Examinador (usuario actual)</div>
+//             <div className="border rounded px-3 py-2 text-sm bg-white">
+//               {user?.name || user?.email || '—'}
+//             </div>
+//             {!examinerPerson && canOperate && (
+//               <div className="text-xs text-amber-700 mt-1">
+//                 No se encontró una persona asociada a este usuario (Person.userId). Crea/asocia el registro de persona del examinador.
+//               </div>
+//             )}
 //           </div>
 
 //           <div>
@@ -251,6 +310,7 @@
 //               className="w-full border rounded px-3 py-2"
 //               value={vehicleId}
 //               onChange={(e) => setVehicleId(e.target.value)}
+//               disabled={!canOperate}
 //             >
 //               <option value="">— Selecciona vehículo —</option>
 //               {vehicles.map((v) => (
@@ -268,12 +328,17 @@
 //               rows={3}
 //               value={notes}
 //               onChange={(e) => setNotes(e.target.value)}
+//               disabled={!canOperate}
 //             />
 //           </label>
 //         </div>
 
 //         <div className="mt-3">
-//           <MapRecorder onFinish={onFinish} />
+//           {canOperate ? (
+//             <MapRecorder onFinish={onFinish} />
+//           ) : (
+//             <div className="text-sm text-gray-500">MapRecorder deshabilitado por permisos.</div>
+//           )}
 //         </div>
 //       </div>
 
@@ -343,8 +408,6 @@
 //   )
 // }
 
-
-//V220126
 import { useEffect, useMemo, useState } from 'react'
 import { DrivingTestsAPI } from '../../../api/drivingTests.api'
 import { PeopleAPI } from '../../../api/people.api'
@@ -358,9 +421,10 @@ const hasRole = (user, role) => {
   return roles.some((r) => String(r).toUpperCase() === needle)
 }
 
-export default function DrivingTestsTab({ person, onPersonReload }) {
+export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange }) {
   const user = useAppStore((s) => s.user)
-  const canOperate = hasRole(user, 'ADMIN') || hasRole(user, 'EXAMINADOR')
+  // Requerimiento: para realizar prueba de conducción debe tener rol EXAMINER.
+  const canOperate = hasRole(user, 'ADMIN') || hasRole(user, 'EXAMINER')
 
   const [items, setItems] = useState([])
   const [people, setPeople] = useState([])
@@ -378,6 +442,26 @@ export default function DrivingTestsTab({ person, onPersonReload }) {
   const [isAuthorized, setIsAuthorized] = useState(Boolean(auth?.isAuthorized))
   const [authorizedAt, setAuthorizedAt] = useState(auth?.authorizedAt ? String(auth.authorizedAt).slice(0, 10) : '')
   const [authNote, setAuthNote] = useState(auth?.note || '')
+
+  const initialAuth = useMemo(() => {
+    return {
+      isAuthorized: Boolean(auth?.isAuthorized),
+      authorizedAt: auth?.authorizedAt ? String(auth.authorizedAt).slice(0, 10) : '',
+      note: auth?.note || '',
+    }
+  }, [auth])
+
+  const authDirty = useMemo(() => {
+    return (
+      isAuthorized !== initialAuth.isAuthorized ||
+      authorizedAt !== initialAuth.authorizedAt ||
+      authNote !== initialAuth.note
+    )
+  }, [isAuthorized, authorizedAt, authNote, initialAuth])
+
+  useEffect(() => {
+    onDirtyChange?.(authDirty)
+  }, [authDirty, onDirtyChange])
 
   // Visor recorrido
   const [viewerOpen, setViewerOpen] = useState(false)
@@ -469,12 +553,12 @@ export default function DrivingTestsTab({ person, onPersonReload }) {
     if (!person?._id) return
 
     if (!canOperate) {
-      alert('No tienes permisos para registrar/autorizar pruebas. Requiere rol ADMIN o EXAMINADOR.')
+      alert('No tienes permisos para registrar/autorizar pruebas. Requiere rol ADMIN o EXAMINER.')
       return
     }
 
     if (!branchId) return alert('Sucursal es obligatoria')
-    if (!examinerId) return alert('No se encontró el perfil Person del examinador (usuario logueado). Asocia el usuario a un registro de Persona.')
+    if (!examinerId) return alert('No autorizado como examinador')
     if (!vehicleId) return alert('Vehículo es obligatorio')
 
     try {
@@ -511,11 +595,24 @@ export default function DrivingTestsTab({ person, onPersonReload }) {
   const saveAuthorization = async () => {
     if (!person?._id) return
     if (!canOperate) {
-      alert('No autorizado. Requiere rol ADMIN o EXAMINADOR.')
+      alert('No autorizado como examinador')
       return
     }
 
-    const ok = window.confirm('¿Está seguro de guardar la aprobación/autorización?')
+    // Requerimiento: el botón se habilita con cambios, pero al guardar debe verificar
+    // que estado y fecha hayan cambiado; si no, informar incompletitud.
+    const statusChanged = isAuthorized !== initialAuth.isAuthorized
+    const dateChanged = Boolean(authorizedAt) && authorizedAt !== initialAuth.authorizedAt
+    if (!statusChanged || !dateChanged) {
+      alert('La información está incompleta: debe cambiar Estado y Fecha para actualizar.')
+      return
+    }
+    if (!authorizedAt) {
+      alert('La información está incompleta: la fecha es obligatoria.')
+      return
+    }
+
+    const ok = window.confirm('¿Está seguro de finalizar/guardar la autorización de conducción?')
     if (!ok) return
     setAuthSaving(true)
     try {
@@ -546,7 +643,7 @@ export default function DrivingTestsTab({ person, onPersonReload }) {
     <div className="space-y-4">
       {!canOperate && (
         <div className="border border-amber-200 bg-amber-50 text-amber-800 rounded p-3 text-sm">
-          Este apartado está deshabilitado. Requiere rol <b>ADMIN</b> o <b>EXAMINADOR</b>.
+          Este apartado está deshabilitado. Requiere rol <b>ADMIN</b> o <b>EXAMINER</b>.
         </div>
       )}
       {/* Autorización */}
@@ -610,7 +707,7 @@ export default function DrivingTestsTab({ person, onPersonReload }) {
             className="px-3 py-2 text-white rounded-md disabled:opacity-50"
             style={{ background: 'var(--fc-primary)' }}
             onClick={saveAuthorization}
-            disabled={authSaving || !canOperate}
+            disabled={authSaving || !canOperate || !authDirty}
           >
             Guardar autorización
           </button>
@@ -644,9 +741,9 @@ export default function DrivingTestsTab({ person, onPersonReload }) {
             <div className="border rounded px-3 py-2 text-sm bg-white">
               {user?.name || user?.email || '—'}
             </div>
-            {!examinerPerson && canOperate && (
+            {!examinerPerson && (
               <div className="text-xs text-amber-700 mt-1">
-                No se encontró una persona asociada a este usuario (Person.userId). Crea/asocia el registro de persona del examinador.
+                No autorizado como examinador.
               </div>
             )}
           </div>
@@ -729,6 +826,40 @@ export default function DrivingTestsTab({ person, onPersonReload }) {
         </table>
       </div>
 
+      {/* Historial autorización */}
+      <div className="border rounded overflow-hidden">
+        <div className="p-3 border-b bg-gray-50 text-sm font-medium">Historial de cambios de autorización</div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left p-2">Fecha</th>
+                <th className="text-left p-2">Autorizador</th>
+                <th className="text-left p-2">Estado inicial</th>
+                <th className="text-left p-2">Estado final</th>
+                <th className="text-left p-2">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {((person?.driverAuthorizationHistory || []).slice().reverse()).map((h) => (
+                <tr key={h._id || `${h.at}-${h.authorizedBy || ''}`} className="border-t">
+                  <td className="p-2">{h.at ? new Date(h.at).toLocaleString() : '—'}</td>
+                  <td className="p-2">{h.authorizedByName || '—'}</td>
+                  <td className="p-2">{h.from?.isAuthorized === true ? 'Autorizado' : 'No autorizado'}</td>
+                  <td className="p-2">{h.to?.isAuthorized === true ? 'Autorizado' : 'No autorizado'}</td>
+                  <td className="p-2">UPDATE</td>
+                </tr>
+              ))}
+              {!(person?.driverAuthorizationHistory || []).length && (
+                <tr>
+                  <td className="p-3 text-gray-500" colSpan={5}>Sin cambios registrados</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Modal visor */}
       {viewerOpen && (
         <div
@@ -754,417 +885,3 @@ export default function DrivingTestsTab({ person, onPersonReload }) {
     </div>
   )
 }
-
-
-// version fallida  220126+
-
-// // front/src/pages/People/tabs/DrivingTestsTab.jsx
-// // -----------------------------------------------------------------------------
-// // RRHH - Pruebas de Conducción + Autorización de Conductor
-// // Requisitos clave:
-// // - Autorización: botón Guardar habilitado sólo con cambios y validación de info completa
-// // - Historial: mostrar driverAuthorizationHistory con fecha, autorizador, estado inicial/final
-// // - Prueba de ruta: sólo rol EXAMINER (front: "Examinador"); si no, vista únicamente
-// // - MapRecorder: cronómetro + pre-chequeos + seguro anti-interrupción (lo gestiona el componente)
-// // -----------------------------------------------------------------------------
-
-// import { useEffect, useMemo, useState } from 'react'
-// import MapRecorder from '../../../components/DrivingTests/MapRecorder'
-// import { useAppStore } from '../../../store/useAppStore'
-// import { PeopleAPI } from '../../../api/people.api'
-// import { DrivingTestsAPI } from '../../../api/drivingTests.api'
-
-// const UPPER = (arr) => (Array.isArray(arr) ? arr.map((r) => String(r || '').toUpperCase()) : [])
-
-// function hasAnyRole(roles, ...needles) {
-//   const r = new Set(UPPER(roles))
-//   return needles.some((n) => r.has(String(n || '').toUpperCase()))
-// }
-
-// function isoDate(d) {
-//   if (!d) return ''
-//   try {
-//     const x = new Date(d)
-//     if (Number.isNaN(x.getTime())) return ''
-//     return x.toISOString().slice(0, 10)
-//   } catch {
-//     return ''
-//   }
-// }
-
-// export default function DrivingTestsTab({ person }) {
-//   const user = useAppStore((s) => s.user)
-//   const roles = user?.roles || []
-
-//   const personId = person?._id
-//   const branchId = person?.branchId?._id || person?.branchId || ''
-
-//   // Roles
-//   const isAdmin = hasAnyRole(roles, 'ADMIN', 'SUPERADMIN', 'GLOBAL')
-//   const isExaminer = hasAnyRole(roles, 'EXAMINER')
-//   const canEditAuthorization = isAdmin || isExaminer
-//   const canRunDrivingTest = isExaminer // requisito
-
-//   // Autorización de conductor (draft local)
-//   const currentAuth = person?.driverAuthorization || { isAuthorized: false, authorizedAt: null, note: '' }
-//   const [authDraft, setAuthDraft] = useState({
-//     isAuthorized: Boolean(currentAuth.isAuthorized),
-//     authorizedAt: isoDate(currentAuth.authorizedAt),
-//     note: currentAuth.note || '',
-//   })
-
-//   // Carga de pruebas (backend)
-//   const [tests, setTests] = useState([])
-//   const [loading, setLoading] = useState(false)
-
-//   // Estado de prueba activa
-//   const [activeTestId, setActiveTestId] = useState(null)
-
-//   // Historial (con fallback a person)
-//   const authHistory = useMemo(() => {
-//     const h = Array.isArray(person?.driverAuthorizationHistory) ? person.driverAuthorizationHistory : []
-//     return [...h].sort((a, b) => new Date(b.at || 0).getTime() - new Date(a.at || 0).getTime())
-//   }, [person?.driverAuthorizationHistory])
-
-//   const authDirty = useMemo(() => {
-//     const curDate = isoDate(currentAuth.authorizedAt)
-//     return (
-//       Boolean(authDraft.isAuthorized) !== Boolean(currentAuth.isAuthorized) ||
-//       (authDraft.authorizedAt || '') !== (curDate || '') ||
-//       (authDraft.note || '') !== (currentAuth.note || '')
-//     )
-//   }, [authDraft, currentAuth])
-
-//   // Flag global de cambios sin aplicar (para bloqueo navegación)
-//   useEffect(() => {
-//     if (!canEditAuthorization) return
-//     if (authDirty) window.__FLEETCORE_UNSAVED__ = true
-//     else if (!activeTestId) window.__FLEETCORE_UNSAVED__ = false
-//   }, [authDirty, canEditAuthorization, activeTestId])
-
-//   useEffect(() => {
-//     // Si cambia person, resetea draft
-//     setAuthDraft({
-//       isAuthorized: Boolean(currentAuth.isAuthorized),
-//       authorizedAt: isoDate(currentAuth.authorizedAt),
-//       note: currentAuth.note || '',
-//     })
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, [personId])
-
-//   const loadTests = async () => {
-//     if (!personId) return
-//     setLoading(true)
-//     try {
-//       const { items } = await DrivingTestsAPI.list({ page: 1, limit: 200, personId })
-//       setTests(items || [])
-//     } catch (err) {
-//       console.error(err)
-//       // sin alert aquí para no ser invasivo
-//     } finally {
-//       setLoading(false)
-//     }
-//   }
-
-//   useEffect(() => {
-//     loadTests()
-//     // eslint-disable-next-line react-hooks/exhaustive-deps
-//   }, [personId])
-
-//   const saveAuthorization = async () => {
-//     if (!personId) return
-//     if (!canEditAuthorization) return
-
-//     if (!authDirty) {
-//       alert('La información está incompleta o no presenta cambios para guardar.')
-//       return
-//     }
-
-//     // Validación mínima: si autoriza, debe existir fecha
-//     if (authDraft.isAuthorized && !authDraft.authorizedAt) {
-//       alert('Debe indicar la fecha de autorización.')
-//       return
-//     }
-
-//     const sure = window.confirm('¿Está seguro de guardar la autorización de conductor?')
-//     if (!sure) return
-
-//     setLoading(true)
-//     try {
-//       const payload = {
-//         driverAuthorization: {
-//           isAuthorized: Boolean(authDraft.isAuthorized),
-//           authorizedAt: authDraft.authorizedAt || null,
-//           note: authDraft.note || '',
-//         },
-//       }
-//       const { item } = await PeopleAPI.update(personId, payload)
-
-//       alert('Actualización con éxito')
-
-//       // Refresh local draft & clean dirty flag
-//       setAuthDraft({
-//         isAuthorized: Boolean(item?.driverAuthorization?.isAuthorized),
-//         authorizedAt: isoDate(item?.driverAuthorization?.authorizedAt),
-//         note: item?.driverAuthorization?.note || '',
-//       })
-//       window.__FLEETCORE_UNSAVED__ = false
-//     } catch (err) {
-//       console.error(err)
-//       alert(err?.response?.data?.message || 'No fue posible guardar la autorización')
-//     } finally {
-//       setLoading(false)
-//     }
-//   }
-
-//   const startTest = async () => {
-//     if (!personId) return
-//     if (!canRunDrivingTest) {
-//       alert('No autorizado como examinador.')
-//       return
-//     }
-
-//     const sure = window.confirm('¿Iniciar una nueva prueba de ruta?')
-//     if (!sure) return
-
-//     setLoading(true)
-//     try {
-//       const { item } = await DrivingTestsAPI.start({ personId, branchId })
-//       setActiveTestId(item?._id || null)
-//       await loadTests()
-//     } catch (err) {
-//       console.error(err)
-//       if (err?.response?.status === 403) {
-//         alert('No autorizado como examinador.')
-//       } else {
-//         alert(err?.response?.data?.message || 'No fue posible iniciar la prueba')
-//       }
-//     } finally {
-//       setLoading(false)
-//     }
-//   }
-
-//   const finishTest = async (payload) => {
-//     if (!activeTestId) return
-//     if (!canRunDrivingTest) return
-
-//     setLoading(true)
-//     try {
-//       await DrivingTestsAPI.finish(activeTestId, payload)
-//       alert('Prueba de ruta finalizada con éxito')
-//       setActiveTestId(null)
-//       window.__FLEETCORE_UNSAVED__ = false
-//       await loadTests()
-//     } catch (err) {
-//       console.error(err)
-//       if (err?.response?.status === 403) {
-//         alert('No autorizado como examinador.')
-//       } else {
-//         alert(err?.response?.data?.message || 'No fue posible finalizar la prueba')
-//       }
-//     } finally {
-//       setLoading(false)
-//     }
-//   }
-
-//   const removeTest = async (id) => {
-//     const ok = window.confirm('¿Eliminar registro de prueba?')
-//     if (!ok) return
-//     setLoading(true)
-//     try {
-//       await DrivingTestsAPI.remove(id)
-//       alert('Registro eliminado con éxito')
-//       await loadTests()
-//     } catch (err) {
-//       console.error(err)
-//       alert(err?.response?.data?.message || 'No fue posible eliminar')
-//     } finally {
-//       setLoading(false)
-//     }
-//   }
-
-//   return (
-//     <div className="space-y-4">
-//       {/* Autorización */}
-//       <div className="border rounded p-4 space-y-3">
-//         <div className="flex items-center justify-between">
-//           <div>
-//             <div className="text-sm text-gray-600">Autorización de conductor</div>
-//             <div className="text-xs text-gray-500">
-//               {canEditAuthorization ? 'Puede editar y guardar cambios.' : 'Modo vista.'}
-//             </div>
-//           </div>
-
-//           <button
-//             type="button"
-//             className="px-3 py-2 rounded text-sm text-white disabled:opacity-50"
-//             style={{ background: 'var(--fc-primary)' }}
-//             onClick={saveAuthorization}
-//             disabled={loading || !canEditAuthorization || !authDirty}
-//           >
-//             Guardar autorización
-//           </button>
-//         </div>
-
-//         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-//           <label className="text-sm">
-//             <div className="text-gray-600 mb-1">Estado</div>
-//             <select
-//               className="border border-gray-400 rounded px-3 py-2 w-full h-[38px]"
-//               value={authDraft.isAuthorized ? 'true' : 'false'}
-//               onChange={(e) => setAuthDraft((s) => ({ ...s, isAuthorized: e.target.value === 'true' }))}
-//               disabled={!canEditAuthorization || loading}
-//             >
-//               <option value="false">No autorizado</option>
-//               <option value="true">Autorizado</option>
-//             </select>
-//           </label>
-
-//           <label className="text-sm">
-//             <div className="text-gray-600 mb-1">Fecha</div>
-//             <input
-//               type="date"
-//               className="border border-gray-400 rounded px-3 py-2 w-full h-[38px]"
-//               value={authDraft.authorizedAt}
-//               onChange={(e) => setAuthDraft((s) => ({ ...s, authorizedAt: e.target.value }))}
-//               disabled={!canEditAuthorization || loading}
-//             />
-//           </label>
-
-//           <label className="text-sm md:col-span-2">
-//             <div className="text-gray-600 mb-1">Observación</div>
-//             <input
-//               className="border border-gray-400 rounded px-3 py-2 w-full h-[38px]"
-//               value={authDraft.note}
-//               onChange={(e) => setAuthDraft((s) => ({ ...s, note: e.target.value }))}
-//               disabled={!canEditAuthorization || loading}
-//             />
-//           </label>
-//         </div>
-//       </div>
-
-//       {/* Prueba de ruta */}
-//       <div className="border rounded p-4 space-y-3">
-//         <div className="flex items-center justify-between">
-//           <div>
-//             <div className="text-sm text-gray-600">Prueba de ruta</div>
-//             <div className="text-xs text-gray-500">
-//               {canRunDrivingTest ? 'Perfil: Examinador.' : 'Modo vista (requiere rol EXAMINER).'}
-//             </div>
-//           </div>
-
-//           <button
-//             type="button"
-//             className="px-3 py-2 rounded text-sm text-white disabled:opacity-50"
-//             style={{ background: 'var(--fc-primary)' }}
-//             onClick={startTest}
-//             disabled={loading || !personId || Boolean(activeTestId) || !canRunDrivingTest}
-//             title={!canRunDrivingTest ? 'No autorizado como Examinador' : ''}
-//           >
-//             Iniciar prueba
-//           </button>
-//         </div>
-
-//         {/* Recorder: controla reiniciar/finalizar internamente */}
-//         {activeTestId ? (
-//           <MapRecorder
-//             onFinish={finishTest}
-//             disabled={!canRunDrivingTest}
-//             disabledReason="No autorizado como Examinador."
-//           />
-//         ) : (
-//           <div className="text-sm text-gray-500">
-//             {loading ? 'Cargando...' : 'No hay una prueba en curso.'}
-//           </div>
-//         )}
-//       </div>
-
-//       {/* Listado de pruebas registradas */}
-//       <div className="border rounded p-4 space-y-2">
-//         <div className="text-sm text-gray-600">Pruebas registradas</div>
-//         <div className="overflow-x-auto border rounded">
-//           <table className="min-w-full text-sm">
-//             <thead className="bg-gray-50 text-gray-600">
-//               <tr>
-//                 <th className="text-left px-3 py-2">Fecha</th>
-//                 <th className="text-left px-3 py-2">Estado</th>
-//                 <th className="text-left px-3 py-2">Duración</th>
-//                 <th className="text-right px-3 py-2">Acciones</th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {tests.length === 0 ? (
-//                 <tr>
-//                   <td className="px-3 py-4 text-gray-500" colSpan={4}>
-//                     (Sin registros)
-//                   </td>
-//                 </tr>
-//               ) : (
-//                 tests.map((t) => (
-//                   <tr key={t._id} className="border-t">
-//                     <td className="px-3 py-2">{isoDate(t.startedAt) || isoDate(t.createdAt) || '-'}</td>
-//                     <td className="px-3 py-2">{t.status || '-'}</td>
-//                     <td className="px-3 py-2">{typeof t.durationSec === 'number' ? `${t.durationSec}s` : '-'}</td>
-//                     <td className="px-3 py-2 text-right">
-//                       <button
-//                         type="button"
-//                         className="px-3 py-1.5 rounded border text-sm"
-//                         onClick={() => removeTest(t._id)}
-//                         disabled={loading}
-//                       >
-//                         Eliminar
-//                       </button>
-//                     </td>
-//                   </tr>
-//                 ))
-//               )}
-//             </tbody>
-//           </table>
-//         </div>
-//       </div>
-
-//       {/* Historial autorización */}
-//       <div className="border rounded p-4 space-y-2">
-//         <div className="text-sm text-gray-600">Historial de autorización</div>
-//         <div className="overflow-x-auto border rounded">
-//           <table className="min-w-full text-sm">
-//             <thead className="bg-gray-50 text-gray-600">
-//               <tr>
-//                 <th className="text-left px-3 py-2">Fecha</th>
-//                 <th className="text-left px-3 py-2">Autorizador</th>
-//                 <th className="text-left px-3 py-2">Estado inicial</th>
-//                 <th className="text-left px-3 py-2">Estado final</th>
-//                 <th className="text-left px-3 py-2">Acciones</th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {authHistory.length === 0 ? (
-//                 <tr>
-//                   <td className="px-3 py-4 text-gray-500" colSpan={5}>
-//                     (Sin historial)
-//                   </td>
-//                 </tr>
-//               ) : (
-//                 authHistory.map((h) => (
-//                   <tr key={h._id || String(h.at)} className="border-t">
-//                     <td className="px-3 py-2">{isoDate(h.at) || '-'}</td>
-//                     <td className="px-3 py-2">{h.authorizedByName || '-'}</td>
-//                     <td className="px-3 py-2">
-//                       {h.from?.isAuthorized ? 'Autorizado' : 'No autorizado'}{' '}
-//                       {h.from?.authorizedAt ? `(${isoDate(h.from.authorizedAt)})` : ''}
-//                     </td>
-//                     <td className="px-3 py-2">
-//                       {h.to?.isAuthorized ? 'Autorizado' : 'No autorizado'}{' '}
-//                       {h.to?.authorizedAt ? `(${isoDate(h.to.authorizedAt)})` : ''}
-//                     </td>
-//                     <td className="px-3 py-2">{h.to?.note || h.from?.note ? 'Observación' : '-'}</td>
-//                   </tr>
-//                 ))
-//               )}
-//             </tbody>
-//           </table>
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
