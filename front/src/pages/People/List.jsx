@@ -667,7 +667,15 @@ export default function PeopleList() {
         active,
       });
 
-      const newItems = data.items || [];
+      // const newItems = data.items || [];
+      const newItems = Array.isArray(data.items)
+        ? data.items
+        : Array.isArray(data.data)
+          ? data.data
+          : [];
+
+
+
       const newTotal = data.total || 0;
 
       setItems(newItems);
@@ -687,34 +695,27 @@ export default function PeopleList() {
     }
   }, [page, limit, q, branchId, positionId, active, setSp]);
 
+  //cargar referencias
   useEffect(() => {
     loadRefs();
   }, [loadRefs]);
 
-  //adicion
-
-  // Sync con URL (por ejemplo cuando vienes de crear persona y navegas con ?q=RUN)
+  // SYNC URL params -> state
   useEffect(() => {
     const qUrl = sp.get("q") || "";
     const pageUrl = Number(sp.get("page") || 1);
 
     if (qUrl !== q) setQ(qUrl);
     if (pageUrl !== page) setPage(pageUrl);
-    // Nota: el load() se ejecuta por el effect que escucha page/load.
-    // Como load depende de q, al cambiar q y/o page se refresca.
   }, [sp]);
 
-  useEffect(() => {
-    // si q viene en la URL, auto-cargar sin exigir click en Buscar
-    const qUrl = sp.get("q") || "";
-    if (qUrl) load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sp]);
-
-  // IMPORTANTE: en modo "por botón", recargamos solo cuando cambia page.
+  //caRrgar datos
   useEffect(() => {
     load();
   }, [page, load]);
+
+
+
 
   const onSearch = (e) => {
     e.preventDefault();
@@ -898,6 +899,27 @@ export default function PeopleList() {
                 <td className="p-2 flex gap-2">
                   <Link
                     className="px-2 py-1 border rounded"
+                    to={`/people/${it._id}?mode=view`}
+                  >
+                    Ver
+                  </Link>
+
+                  <Link
+                    className="px-2 py-1 border rounded"
+                    to={`/people/${it._id}`}
+                  >
+                    Editar
+                  </Link>
+
+                  <button
+                    className="px-2 py-1 border rounded"
+                    type="button"
+                    onClick={() => onDelete(it._id)}
+                  >
+                    Eliminar
+                  </button>
+                  {/* <Link
+                    className="px-2 py-1 border rounded"
                     to={`/people/${it._id}`}
                   >
                     Ver / Editar
@@ -908,7 +930,7 @@ export default function PeopleList() {
                     onClick={() => onDelete(it._id)}
                   >
                     Eliminar
-                  </button>
+                  </button> */}
                 </td>
               </tr>
             ))}

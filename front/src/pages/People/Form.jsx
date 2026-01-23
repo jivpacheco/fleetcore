@@ -2051,6 +2051,32 @@ import { BranchesAPI } from "../../api/branches.api";
 // Datos Chile (regiones/comunas)
 import regionesComunas from "../../data/chile/comunas-regiones.json";
 
+const REGIONES_CATALOGO = Array.isArray(regionesComunas?.regiones)
+  ? regionesComunas.regiones
+  : [];
+
+const normalizeRegion = (value) => {
+  const s = String(value || "").trim();
+  if (!s) return "";
+  const hit = REGIONES_CATALOGO.find(
+    (r) => String(r?.region || "").toUpperCase() === s.toUpperCase()
+  );
+  return hit?.region || s; // si no encuentra, deja lo que viene
+};
+
+const normalizeComuna = (regionValue, comunaValue) => {
+  const regionCanon = normalizeRegion(regionValue);
+  const s = String(comunaValue || "").trim();
+  if (!regionCanon || !s) return s;
+
+  const regionObj = REGIONES_CATALOGO.find((r) => r?.region === regionCanon);
+  const comunas = Array.isArray(regionObj?.comunas) ? regionObj.comunas : [];
+
+  const hit = comunas.find((c) => String(c).toUpperCase() === s.toUpperCase());
+  return hit || s;
+};
+
+
 import LicensesTab from "./tabs/LicensesTab";
 import FilesTab from "./tabs/FilesTab";
 import DrivingTestsTab from "./tabs/DrivingTestsTab";
@@ -2211,7 +2237,15 @@ export default function PeopleForm() {
   };
 
   // Regiones/Comunas (Chile) desde JSON
-  const REGIONES = useMemo(() => regionesComunas?.regiones || [], []);
+  // const REGIONES = useMemo(() => regionesComunas?.regiones || [], []);
+
+  const REGIONES = useMemo(
+    () => (Array.isArray(regionesComunas?.regiones) ? regionesComunas.regiones : []),
+    [regionesComunas]
+  );
+
+
+
   const comunasForSelectedRegion = useMemo(() => {
     const r = REGIONES.find((x) => x?.region === form.addressRegion);
     return Array.isArray(r?.comunas) ? r.comunas : [];
@@ -2277,8 +2311,11 @@ export default function PeopleForm() {
 
     addressLine1: p.address?.line1 || "",
     addressCity: p.address?.city || "",
-    addressComuna: p.address?.comuna || "",
-    addressRegion: p.address?.region || "",
+    // addressComuna: p.address?.comuna || "",
+    // addressRegion: p.address?.region || "",
+    addressRegion: normalizeRegion(p.address?.region || ""),
+    addressComuna: normalizeComuna(p.address?.region || "", p.address?.comuna || ""),
+
     addressCountry: p.address?.country || "CL",
 
     branchId: pickId(p.branchId),
@@ -2354,6 +2391,13 @@ export default function PeopleForm() {
 
     return out;
   }, [form]);
+
+  useEffect(() => {
+    console.log("regionesComunas:", regionesComunas);
+    console.log("REGIONES length:", REGIONES.length);
+    console.log("Ejemplo región:", REGIONES[0]);
+  }, [REGIONES]);
+
 
   // const cancelChanges = async () => {
   //   if (!hasUnsavedChanges) {
@@ -2437,9 +2481,14 @@ export default function PeopleForm() {
 
       if (isNew) {
         alert("Persona creada con éxito");
-        navigate(
-          `/people?q=${encodeURIComponent(savedItem?.dni || dniFormatted)}&page=1`,
-        );
+        // navigate(
+        //   `/people?q=${encodeURIComponent(savedItem?.dni || dniFormatted)}&page=1`,
+        // );
+        // navigate(`/people?q=${encodeURIComponent(savedItem?.dni || dniFormatted)}&page=1`);
+        navigate("/people?page=1");
+
+
+
         return;
       }
 
@@ -2611,17 +2660,16 @@ export default function PeopleForm() {
               key={t.key}
               type="button"
               disabled={disabled}
-              className={`px-4 py-2 text-sm rounded-md border transition ${
-                tab === t.key
-                  ? "text-white"
-                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
-              }`}
+              className={`px-4 py-2 text-sm rounded-md border transition ${tab === t.key
+                ? "text-white"
+                : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                }`}
               style={
                 tab === t.key
                   ? {
-                      background: "var(--fc-primary)",
-                      borderColor: "var(--fc-primary)",
-                    }
+                    background: "var(--fc-primary)",
+                    borderColor: "var(--fc-primary)",
+                  }
                   : disabled
                     ? { opacity: 0.55, cursor: "not-allowed" }
                     : undefined
@@ -2746,8 +2794,51 @@ export default function PeopleForm() {
                   placeholder="Calle y número"
                 />
               </label>
+              {/* //aqui */}
+              <label className="text-sm">
+                <div className="text-gray-600 mb-1">Región (residencia)</div>
+                <select
+                  className="border rounded px-3 h-[38px] w-full"
+                  value={form.addressRegion || ""}
+                  onChange={(e) => {
+                    const nextRegion = e.target.value;
+                    setForm((s) => ({
+                      ...s,
+                      addressRegion: nextRegion,
+                      addressComuna: "",
+                    }));
+                  }}
+                >
+                  <option value="">— Selecciona región —</option>
+                  {REGIONES.map((r) => (
+                    <option key={r.region} value={r.region}>
+                      {r.region}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
               <label className="text-sm">
+                <div className="text-gray-600 mb-1">Comuna (residencia)</div>
+                <select
+                  className="border rounded px-3 h-[38px] w-full"
+                  value={form.addressComuna || ""}
+                  onChange={(e) => setForm((s) => ({ ...s, addressComuna: e.target.value }))}
+                  disabled={!form.addressRegion}
+                >
+                  <option value="">— Selecciona comuna —</option>
+                  {comunasForSelectedRegion.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                {/* <div className="text-xs text-gray-500 mt-1">
+                  Valor actual región: {String(form.addressRegion || "—")}
+                </div> */}
+              </label>
+
+              {/* <label className="text-sm">
                 <div className="text-gray-600 mb-1">Región (residencia)</div>
                 <select
                   className="border rounded px-3 h-[38px] w-full"
@@ -2787,8 +2878,8 @@ export default function PeopleForm() {
                     </option>
                   ))}
                 </select>
-              </label>
-
+              </label> */}
+              {/* //aca */}
               <label className="text-sm">
                 <div className="text-gray-600 mb-1">Ciudad (residencia)</div>
                 <input
@@ -2925,16 +3016,30 @@ export default function PeopleForm() {
       )}
 
       {/* Acciones inferiores (únicas) */}
+
+
       <div className="sticky bottom-0 bg-white/90 backdrop-blur border-t border-slate-200 p-3 flex justify-end gap-2">
         <button
+          type="button"
+          className="rounded-md border border-gray-400 px-4 py-2 text-sm"
+          onClick={cancelChanges}
+          // Cancelar/Volver NO debe depender de dniDup (ni de checkingDni)
+          disabled={saving || loading}
+        >
+          {hasUnsavedChanges ? "Cancelar" : "Volver"}
+        </button>
+
+        {/* <button
           type="button"
           className="rounded-md border border-gray-400 px-4 py-2 text-sm"
           onClick={cancelChanges}
           disabled={saving || loading || checkingDni || dniDup}
         >
           {hasUnsavedChanges ? "Cancelar" : "Volver"}
-        </button>
-        <button
+        </button> */}
+
+
+        {/* <button
           type="button"
           className="rounded-md text-white px-4 py-2 text-sm disabled:opacity-50"
           style={{ background: "var(--fc-primary)" }}
@@ -2943,7 +3048,19 @@ export default function PeopleForm() {
           disabled={saving || checkingDni || dniDup}
         >
           Guardar
+        </button> */}
+
+        <button
+          type="button"
+          className="rounded-md text-white px-4 py-2 text-sm disabled:opacity-50"
+          style={{ background: "var(--fc-primary)" }}
+          onClick={save}
+          // Guardar sí debe bloquearse por validación de RUN
+          disabled={saving || loading || checkingDni || dniDup}
+        >
+          Guardar
         </button>
+
       </div>
     </div>
   );
