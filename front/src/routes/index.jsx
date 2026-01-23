@@ -380,6 +380,7 @@ import AppLayout from "../components/layout/AppLayout";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import BranchesList from "../pages/Branches/List";
+import BranchesForm from "../pages/Branches/Form";
 import VehiclesList from "../pages/Vehicles/List";
 import VehiclesForm from "../pages/Vehicles/Form";
 import PeopleList from "../pages/People/List";
@@ -417,7 +418,7 @@ function AuthGate({ children }) {
     api
       .get("/api/v1/auth/me")
       .then(({ data }) => setUser(data.user))
-      .catch(() => {}) // si 401, deja user en null
+      .catch(() => { }) // si 401, deja user en null
       .finally(() => {
         setAuthBootstrapped(true);
         setRunning(false);
@@ -461,6 +462,8 @@ export default function AppRoutes() {
         >
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="branches" element={<BranchesList />} />
+          <Route path="branches/new" element={<BranchesForm />} />
+          <Route path="branches/:id" element={<BranchesForm />} />
 
           {/* Vehículos */}
           <Route path="vehicles" element={<VehiclesList />} />
