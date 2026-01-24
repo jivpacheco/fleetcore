@@ -391,6 +391,19 @@ import PositionsCatalog from "../pages/Config/Catalogs/Positions"
 import RolesCatalog from "../pages/Config/Catalogs/Roles"
 import UsersAdmin from "../pages/Config/Users"
 import ChangePassword from "../pages/Account/ChangePassword"
+import RepairsList from '../pages/Repairs/List'
+import RepairsForm from '../pages/Repairs/Form'
+import FailureReportsList from '../pages/FailureReports/List'
+import FailureReportsForm from '../pages/FailureReports/Form'
+
+
+
+
+
+
+
+
+
 // import UsersAdmin from "../pages/Config/Users"
 // import ChangePassword from "../pages/Account/ChangePassword"
 
@@ -473,6 +486,16 @@ export default function AppRoutes() {
           <Route path="config/catalogs/positions" element={<PositionsCatalog />} />
           <Route path="config/catalogs/roles" element={<RolesCatalog />} />
           <Route path="config/users" element={<UsersAdmin />} />
+
+          {/* Fallas  */}
+          <Route path="config/catalogs/repairs" element={<RepairsList />} />
+          <Route path="config/catalogs/repairs/new" element={<RepairsForm />} />
+          <Route path="config/catalogs/repairs/:id" element={<RepairsForm />} />
+
+          <Route path="config/catalogs/failure-reports" element={<FailureReportsList />} />
+          <Route path="config/catalogs/failure-reports/new" element={<FailureReportsForm />} />
+          <Route path="config/catalogs/failure-reports/:id" element={<FailureReportsForm />} />
+
 
           {/* Cuenta */}
           <Route path="account/change-password" element={<ChangePassword />} />

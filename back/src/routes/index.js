@@ -38,6 +38,9 @@ import branchMediaRoutes from './branchMedia.routes.js';
 import rolesRoutes from './roles.routes.js';
 import permissionsRoutes from './permissions.routes.js';
 import positionsRoutes from './positions.routes.js';
+import repairsRoutes from './repairs.routes.js';
+import repairsMediaRoutes from './repairsMedia.routes.js';
+import failureReportsRoutes from './failureReports.routes.js';
 
 const api = express.Router();
 api.use(requireAuth);
@@ -51,6 +54,11 @@ api.use('/catalogs', catalogsRoutes);
 api.use('/roles', rolesRoutes);
 api.use('/permissions', permissionsRoutes);
 api.use('/positions', positionsRoutes);
+
+// Catálogos (FleetCore v1.0)
+api.use('/repairs', repairsRoutes);
+api.use('/repairs/:repairId/media', repairsMediaRoutes);
+api.use('/failure-reports', failureReportsRoutes);
 
 // ✅ RRHH custom: NO uses makeRoutes(Person)
 api.use('/people', peopleRoutes);

@@ -185,10 +185,10 @@ export default function AppLayout() {
         {/* Navegación */}
         <nav className="flex-1 py-2 overflow-y-auto">
           <Item to="/dashboard" icon="📊" collapsed={collapsed}>Dashboard</Item>
-          <Item to="/branches"  icon="🏢" collapsed={collapsed}>Sucursales</Item>
-          <Item to="/vehicles"  icon="🚒" collapsed={collapsed}>Vehículos</Item>
-          <Item to="/people"    icon="👥" collapsed={collapsed}>RRHH</Item>
-          <Item to="/tickets"   icon="🎫" collapsed={collapsed}>Tickets</Item>
+          <Item to="/branches" icon="🏢" collapsed={collapsed}>Sucursales</Item>
+          <Item to="/vehicles" icon="🚒" collapsed={collapsed}>Vehículos</Item>
+          <Item to="/people" icon="👥" collapsed={collapsed}>RRHH</Item>
+          <Item to="/tickets" icon="🎫" collapsed={collapsed}>Tickets</Item>
 
           {/* Configuración */}
           {!collapsed && <div className="mt-3 px-4 text-xs uppercase tracking-wide text-slate-500">Configuración</div>}
@@ -200,6 +200,12 @@ export default function AppLayout() {
           </Item>
           <Item to="/config/catalogs/roles" icon="🛡️" collapsed={collapsed}>
             Catálogos → Roles
+          </Item>
+          <Item to="/config/catalogs/failure-reports" icon="🧾" collapsed={collapsed}>
+            Catálogos → Reporte de fallas
+          </Item>
+          <Item to="/config/catalogs/repairs" icon="🛠️" collapsed={collapsed}>
+            Catálogos → Reparaciones
           </Item>
           <Item to="/config/users" icon="👤" collapsed={collapsed}>
             Usuarios
