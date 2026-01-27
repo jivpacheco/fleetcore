@@ -13,7 +13,8 @@ import { MediaFileSchema } from './MediaFile.js'
 
 const RepairSchema = new mongoose.Schema(
     {
-        code: { type: String, required: true, trim: true, uppercase: true, index: true },
+        code: { type: String, required: true, trim: true, uppercase: true},
+        // code: { type: String, required: true, trim: true, uppercase: true, index: true },
         name: { type: String, required: true, trim: true, index: true },
         description: { type: String, trim: true, default: '' },
 
