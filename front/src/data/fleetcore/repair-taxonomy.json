@@ -1,0 +1,292 @@
+{
+  "systems": [
+    {
+      "key": "FRENOS",
+      "label": "Frenos",
+      "subsystems": [
+        {
+          "key": "HIDRAULICO",
+          "label": "Hidráulico"
+        },
+        {
+          "key": "NEUMATICO",
+          "label": "Neumático"
+        },
+        {
+          "key": "ABS",
+          "label": "ABS"
+        },
+        {
+          "key": "MECANICO",
+          "label": "Mecánico"
+        }
+      ],
+      "components": [
+        {
+          "key": "PASTILLAS",
+          "label": "Pastillas"
+        },
+        {
+          "key": "DISCO",
+          "label": "Disco"
+        },
+        {
+          "key": "CALIPER",
+          "label": "Cáliper"
+        },
+        {
+          "key": "CILINDRO_MAESTRO",
+          "label": "Cilindro maestro"
+        },
+        {
+          "key": "MANGUERA",
+          "label": "Manguera/Línea"
+        },
+        {
+          "key": "CIRCUITO",
+          "label": "Circuito"
+        }
+      ]
+    },
+    {
+      "key": "MOTOR",
+      "label": "Motor",
+      "subsystems": [
+        {
+          "key": "LUBRICACION",
+          "label": "Lubricación"
+        },
+        {
+          "key": "REFRIGERACION",
+          "label": "Refrigeración"
+        },
+        {
+          "key": "ADMISION",
+          "label": "Admisión"
+        },
+        {
+          "key": "INYECCION",
+          "label": "Inyección"
+        },
+        {
+          "key": "ESCAPE",
+          "label": "Escape"
+        }
+      ],
+      "components": [
+        {
+          "key": "BOMBA_AGUA",
+          "label": "Bomba de agua"
+        },
+        {
+          "key": "RADIADOR",
+          "label": "Radiador"
+        },
+        {
+          "key": "MANGUERAS",
+          "label": "Mangueras"
+        },
+        {
+          "key": "FILTRO",
+          "label": "Filtro"
+        },
+        {
+          "key": "TURBO",
+          "label": "Turbo"
+        },
+        {
+          "key": "SENSOR",
+          "label": "Sensor"
+        }
+      ]
+    },
+    {
+      "key": "ELECTRICO_CARGA_ARRANQUE",
+      "label": "Eléctrico (Carga/Arranque)",
+      "subsystems": [
+        {
+          "key": "ELECTRICO",
+          "label": "Eléctrico"
+        }
+      ],
+      "components": [
+        {
+          "key": "BATERIA",
+          "label": "Batería"
+        },
+        {
+          "key": "ALTERNADOR",
+          "label": "Alternador"
+        },
+        {
+          "key": "MOTOR_PARTIDA",
+          "label": "Motor de partida"
+        },
+        {
+          "key": "CABLEADO",
+          "label": "Cableado"
+        }
+      ]
+    },
+    {
+      "key": "ILUMINACION_SENALIZACION",
+      "label": "Iluminación / Señalización",
+      "subsystems": [
+        {
+          "key": "FAROS",
+          "label": "Faros"
+        },
+        {
+          "key": "POSICION",
+          "label": "Posición"
+        },
+        {
+          "key": "BALIZAS",
+          "label": "Balizas/Estrobos"
+        },
+        {
+          "key": "CABLEADO",
+          "label": "Cableado"
+        },
+        {
+          "key": "CONTROL",
+          "label": "Control"
+        }
+      ],
+      "components": [
+        {
+          "key": "LAMPARA",
+          "label": "Lámpara/Foco"
+        },
+        {
+          "key": "BALIZA",
+          "label": "Baliza"
+        },
+        {
+          "key": "ESTROBO",
+          "label": "Estrobo"
+        },
+        {
+          "key": "CABLEADO",
+          "label": "Cableado"
+        },
+        {
+          "key": "SWITCH",
+          "label": "Switch/Control"
+        }
+      ]
+    },
+    {
+      "key": "BOMBA_AGUA_Y_ACCESORIOS",
+      "label": "Bomba de agua y accesorios",
+      "subsystems": [
+        {
+          "key": "ALTA",
+          "label": "Alta"
+        },
+        {
+          "key": "BAJA",
+          "label": "Baja"
+        },
+        {
+          "key": "CEBADO",
+          "label": "Cebado"
+        },
+        {
+          "key": "VALVULERIA",
+          "label": "Valvulería"
+        },
+        {
+          "key": "SELLOS",
+          "label": "Sellos"
+        }
+      ],
+      "components": [
+        {
+          "key": "BOMBA",
+          "label": "Bomba"
+        },
+        {
+          "key": "SELLO",
+          "label": "Sello"
+        },
+        {
+          "key": "VALVULA",
+          "label": "Válvula"
+        },
+        {
+          "key": "CEBADOR",
+          "label": "Cebador"
+        },
+        {
+          "key": "MANOMETRO",
+          "label": "Manómetro"
+        }
+      ]
+    }
+  ],
+  "failureModes": [
+    {
+      "key": "DESGASTE",
+      "label": "Desgaste"
+    },
+    {
+      "key": "FUGA",
+      "label": "Fuga"
+    },
+    {
+      "key": "ROTURA",
+      "label": "Rotura"
+    },
+    {
+      "key": "OBSTRUCCION",
+      "label": "Obstrucción"
+    },
+    {
+      "key": "DESAJUSTE",
+      "label": "Desajuste"
+    },
+    {
+      "key": "CORTO",
+      "label": "Corto circuito"
+    },
+    {
+      "key": "FALLO_ELECTRICO",
+      "label": "Fallo eléctrico"
+    },
+    {
+      "key": "FALLO_SENSOR",
+      "label": "Fallo sensor"
+    },
+    {
+      "key": "SOBRECALENTAMIENTO",
+      "label": "Sobrecalentamiento"
+    },
+    {
+      "key": "CONTAMINACION",
+      "label": "Contaminación"
+    }
+  ],
+  "repairTags": {
+    "work": [
+      "MECANICA",
+      "ELECTRICIDAD",
+      "ELECTRONICA",
+      "HIDRAULICA",
+      "NEUMATICA"
+    ],
+    "level": [
+      "MENOR",
+      "MAYOR",
+      "CRITICA",
+      "SEGURIDAD"
+    ],
+    "family": [
+      "FRENADO",
+      "TRACCION",
+      "ENERGIA",
+      "SENALIZACION",
+      "BOMBERIL"
+    ]
+  }
+}

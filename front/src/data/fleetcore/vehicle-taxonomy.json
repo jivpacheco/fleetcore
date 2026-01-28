@@ -1,0 +1,176 @@
+{
+  "systems": [
+    {
+      "key": "MOTOR",
+      "label": "Motor"
+    },
+    {
+      "key": "TRANSMISION",
+      "label": "Transmisión"
+    },
+    {
+      "key": "DIRECCION",
+      "label": "Dirección"
+    },
+    {
+      "key": "SUSPENSION_TREN",
+      "label": "Suspensión / Tren"
+    },
+    {
+      "key": "FRENOS",
+      "label": "Frenos"
+    },
+    {
+      "key": "ELECTRICO_CARGA_ARRANQUE",
+      "label": "Eléctrico (Carga/Arranque)"
+    },
+    {
+      "key": "ILUMINACION_SENALIZACION",
+      "label": "Iluminación / Señalización"
+    },
+    {
+      "key": "SIRENAS_AUDIO_COMUNICACIONES",
+      "label": "Sirenas / Audio / Comunicaciones"
+    },
+    {
+      "key": "INSTRUMENTOS_TABLERO",
+      "label": "Instrumentos / Tablero"
+    },
+    {
+      "key": "NEUMATICOS_RUEDAS",
+      "label": "Neumáticos / Ruedas"
+    },
+    {
+      "key": "CARROCERIA_ACCESORIOS",
+      "label": "Carrocería / Accesorios"
+    },
+    {
+      "key": "CLIMATIZACION_CABINA",
+      "label": "Climatización cabina"
+    },
+    {
+      "key": "COMBUSTIBLE_ADMISION_ESCAPE",
+      "label": "Combustible / Admisión / Escape"
+    },
+    {
+      "key": "SISTEMA_AIRE_NEUMATICO",
+      "label": "Sistema de aire / neumático"
+    },
+    {
+      "key": "HIDRAULICO",
+      "label": "Hidráulico"
+    },
+    {
+      "key": "BOMBA_AGUA_Y_ACCESORIOS",
+      "label": "Bomba de agua y accesorios"
+    },
+    {
+      "key": "TOMA_FUERZA_PTO",
+      "label": "Toma de fuerza (PTO)"
+    },
+    {
+      "key": "SISTEMA_ESPUMA",
+      "label": "Sistema de espuma"
+    },
+    {
+      "key": "MANTENCION_PREVENTIVA",
+      "label": "Mantención preventiva"
+    },
+    {
+      "key": "OTROS_NO_IDENTIFICA",
+      "label": "Otros / No identifica"
+    }
+  ],
+  "zones": [
+    {
+      "key": "DELANTERO",
+      "label": "Delantero"
+    },
+    {
+      "key": "TRASERO",
+      "label": "Trasero"
+    },
+    {
+      "key": "IZQUIERDO",
+      "label": "Izquierdo"
+    },
+    {
+      "key": "DERECHO",
+      "label": "Derecho"
+    },
+    {
+      "key": "SUPERIOR",
+      "label": "Superior"
+    },
+    {
+      "key": "INFERIOR",
+      "label": "Inferior"
+    },
+    {
+      "key": "CABINA",
+      "label": "Cabina"
+    },
+    {
+      "key": "COMPARTIMIENTO_MOTOR",
+      "label": "Compartimiento motor"
+    },
+    {
+      "key": "CHASIS_BAJO",
+      "label": "Chasis / Bajo"
+    },
+    {
+      "key": "LADO_BOMBA",
+      "label": "Lado bomba"
+    },
+    {
+      "key": "PANEL_CONTROL",
+      "label": "Panel control"
+    },
+    {
+      "key": "TORRE_LUCES",
+      "label": "Torre luces"
+    },
+    {
+      "key": "ZONA_PTO",
+      "label": "Zona PTO"
+    },
+    {
+      "key": "NO_APLICA",
+      "label": "No aplica"
+    }
+  ],
+  "reportTags": {
+    "phenomenon": [
+      "NO_ENCIENDE",
+      "INTERMITENTE",
+      "RUIDO",
+      "VIBRACION",
+      "FUGA",
+      "HUMO",
+      "PERDIDA_POTENCIA",
+      "CALENTAMIENTO",
+      "NO_RESPONDE",
+      "FALLA_INDICADOR",
+      "DESGASTE",
+      "GOLPE",
+      "TRABA",
+      "LENTO"
+    ],
+    "condition": [
+      "EN_FRENADA",
+      "EN_MARCHA",
+      "EN_RALENTI",
+      "EN_CURVA",
+      "EN_FRIO",
+      "EN_CALIENTE",
+      "CON_CARGA",
+      "SIN_CARGA"
+    ],
+    "impact": [
+      "SEGURIDAD",
+      "OPERACION",
+      "CONFORT",
+      "ESTETICO"
+    ]
+  }
+}
