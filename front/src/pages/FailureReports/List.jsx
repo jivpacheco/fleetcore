@@ -29,17 +29,26 @@ export default function FailureReportsList() {
     return m;
   }, []);
 
-  
+  const rowIsActive = (it) => {
+    // prioridad: si existe isActive úsalo; si no, usa active
+    if (typeof it?.isActive === "boolean") return it.isActive;
+    if (typeof it?.active === "boolean") return it.active;
+    return true; // fallback
+  };
+
   const sortedItems = useMemo(() => {
     const arr = Array.isArray(items) ? [...items] : [];
     arr.sort((a, b) => {
-      const ac = String(a?.code || "").trim().toUpperCase();
-      const bc = String(b?.code || "").trim().toUpperCase();
+      const ac = String(a?.code || "")
+        .trim()
+        .toUpperCase();
+      const bc = String(b?.code || "")
+        .trim()
+        .toUpperCase();
       return ac.localeCompare(bc, "es", { numeric: true });
     });
     return arr;
   }, [items]);
-
 
   const load = async () => {
     setLoading(true);
@@ -49,7 +58,9 @@ export default function FailureReportsList() {
       setTotal(Number(data?.total || 0));
     } catch (err) {
       console.error(err);
-      alert(err?.response?.data?.message || "No fue posible cargar el catálogo");
+      alert(
+        err?.response?.data?.message || "No fue posible cargar el catálogo",
+      );
       setItems([]);
       setTotal(0);
     } finally {
@@ -64,7 +75,7 @@ export default function FailureReportsList() {
   const pages = Math.max(1, Math.ceil((total || 0) / (limit || 1)));
 
   return (
-    <div>
+    <div className="p-6 space-y-6">
       {/* Franja superior */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
         <div>
@@ -87,7 +98,7 @@ export default function FailureReportsList() {
                   prev.set("page", "1");
                   return prev;
                 },
-                { replace: true }
+                { replace: true },
               )
             }
           />
@@ -102,7 +113,7 @@ export default function FailureReportsList() {
                   prev.set("page", "1");
                   return prev;
                 },
-                { replace: true }
+                { replace: true },
               )
             }
           >
@@ -112,7 +123,8 @@ export default function FailureReportsList() {
           </select>
 
           <Link
-            className="btn btn-primary px-5 py-2 rounded text-white whitespace-nowrap"
+            // className="btn btn-primary px-5 py-2 rounded text-white whitespace-nowrap"
+            className="px-5 py-2 rounded bg-[var(--fc-primary)] text-white whitespace-nowrap"
             to="/config/catalogs/failure-reports/new"
           >
             Nuevo reporte
@@ -163,7 +175,8 @@ export default function FailureReportsList() {
                       {systemsMap.get(it.systemKey) || it.systemKey || "—"}
                     </td>
                     <td className="px-4 py-2">
-                      {it.isActive !== false ? "Sí" : "No"}
+                      {/* {it.isActive !== false ? "Sí" : "No"} */}
+                      {rowIsActive(it) ? "Sí" : "No"}
                     </td>
 
                     {/* Acciones como en la imagen (botones con borde) */}
@@ -217,7 +230,7 @@ export default function FailureReportsList() {
                     prev.set("page", String(p));
                     return prev;
                   },
-                  { replace: true }
+                  { replace: true },
                 )
               }
             />
@@ -231,7 +244,7 @@ export default function FailureReportsList() {
                     prev.set("page", "1");
                     return prev;
                   },
-                  { replace: true }
+                  { replace: true },
                 )
               }
             />

@@ -34,7 +34,9 @@ function fromLines(text) {
     .filter(Boolean);
 }
 function normCode(v) {
-  return String(v || "").trim().toUpperCase();
+  return String(v || "")
+    .trim()
+    .toUpperCase();
 }
 
 export default function FailureReportsForm() {
@@ -83,7 +85,8 @@ export default function FailureReportsForm() {
     const current = normCode(form.code);
     const original = normCode(initial.code);
 
-    const shouldCheck = Boolean(current) && (!id || (id && current !== original));
+    const shouldCheck =
+      Boolean(current) && (!id || (id && current !== original));
     if (!shouldCheck) {
       setCodeCheck({ checking: false, duplicate: false });
       return;
@@ -118,7 +121,9 @@ export default function FailureReportsForm() {
 
   const onBack = () => {
     if (!viewMode && isDirty) {
-      const ok = window.confirm("Hay cambios sin guardar. ¿Deseas descartarlos?");
+      const ok = window.confirm(
+        "Hay cambios sin guardar. ¿Deseas descartarlos?",
+      );
       if (!ok) return;
     }
     nav("/config/catalogs/failure-reports");
@@ -150,14 +155,22 @@ export default function FailureReportsForm() {
           ? item.suggestedQuestions
           : [],
         tags: Array.isArray(item?.tags) ? item.tags : [],
-        isActive: item?.isActive === false ? false : true,
+        // isActive: item?.isActive === false ? false : true,
+        isActive:
+          item?.isActive === false
+            ? false
+            : item?.active === false
+              ? false
+              : true,
       };
 
       setForm(next);
       setInitial(next);
     } catch (err) {
       console.error(err);
-      alert(err?.response?.data?.message || "No fue posible cargar el registro");
+      alert(
+        err?.response?.data?.message || "No fue posible cargar el registro",
+      );
     } finally {
       setLoading(false);
     }
@@ -192,7 +205,7 @@ export default function FailureReportsForm() {
       // ✅ Enviar boolean real (si está desmarcado debe ir false sí o sí)
       // isActive: Boolean(form.isActive),
       isActive: form.isActive === true,
-
+      active: form.isActive === true, // ✅ compatibilidad si backend usa "active"
     };
 
     setSaving(true);
@@ -214,20 +227,32 @@ export default function FailureReportsForm() {
     }
   };
 
-  const codeHasError = !viewMode && !loading && Boolean(normCode(form.code)) && codeCheck.duplicate;
+  const codeHasError =
+    !viewMode &&
+    !loading &&
+    Boolean(normCode(form.code)) &&
+    codeCheck.duplicate;
 
   return (
     <div>
       <div className="mb-4">
         <h1 className="text-xl font-bold">
-          {id ? (viewMode ? "Ver Reporte de Falla" : "Editar Reporte de Falla") : "Nuevo Reporte de Falla"}
+          {id
+            ? viewMode
+              ? "Ver Reporte de Falla"
+              : "Editar Reporte de Falla"
+            : "Nuevo Reporte de Falla"}
         </h1>
         <p className="text-sm text-gray-600">
-          Estructura pensada para usuarios sin expertiz mecánica (no diagnóstico).
+          Estructura pensada para usuarios sin expertiz mecánica (no
+          diagnóstico).
         </p>
       </div>
 
-      <form onSubmit={submit} className="bg-white border rounded-2xl shadow-sm overflow-hidden">
+      <form
+        onSubmit={submit}
+        className="bg-white border rounded-2xl shadow-sm overflow-hidden"
+      >
         {/* Header interno (sin línea de “código disponible”) */}
         <div className="flex items-center justify-between gap-3 px-4 py-3 border-b">
           <div className="text-sm text-gray-500">
@@ -250,7 +275,9 @@ export default function FailureReportsForm() {
               placeholder="Ej: FR-FREN-001"
             />
             {codeHasError && (
-              <div className="text-xs text-red-600 mt-1">Este código ya existe</div>
+              <div className="text-xs text-red-600 mt-1">
+                Este código ya existe
+              </div>
             )}
           </label>
 
@@ -271,7 +298,9 @@ export default function FailureReportsForm() {
               className="border rounded px-3 py-2 w-full min-h-24"
               value={form.description}
               disabled={viewMode || loading}
-              onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, description: e.target.value }))
+              }
               placeholder="Describe el síntoma observable (sin diagnóstico)."
             />
           </label>
@@ -282,7 +311,9 @@ export default function FailureReportsForm() {
               className="border rounded px-3 py-2 w-full"
               value={form.systemKey}
               disabled={viewMode || loading}
-              onChange={(e) => setForm((s) => ({ ...s, systemKey: e.target.value }))}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, systemKey: e.target.value }))
+              }
             >
               <option value="">Seleccione…</option>
               {systemOptions.map((x) => (
@@ -302,7 +333,9 @@ export default function FailureReportsForm() {
               className="border rounded px-3 py-2 w-full"
               value={form.zoneKey}
               disabled={viewMode || loading}
-              onChange={(e) => setForm((s) => ({ ...s, zoneKey: e.target.value }))}
+              onChange={(e) =>
+                setForm((s) => ({ ...s, zoneKey: e.target.value }))
+              }
             >
               <option value="">(Sin zona)</option>
               {zoneOptions.map((x) => (
@@ -317,7 +350,9 @@ export default function FailureReportsForm() {
           </label>
 
           <label className="text-sm md:col-span-1">
-            <div className="text-gray-600 mb-1">Preguntas sugeridas (1 por línea)</div>
+            <div className="text-gray-600 mb-1">
+              Preguntas sugeridas (1 por línea)
+            </div>
             <textarea
               className="border rounded px-3 py-2 w-full min-h-32"
               value={toLines(form.suggestedQuestions)}
@@ -328,7 +363,9 @@ export default function FailureReportsForm() {
                   suggestedQuestions: fromLines(e.target.value),
                 }))
               }
-              placeholder={"Ej:\n- ¿Ocurre al frenar?\n- ¿Se carga hacia un lado?\n- ¿Hay ruido metálico?"}
+              placeholder={
+                "Ej:\n- ¿Ocurre al frenar?\n- ¿Se carga hacia un lado?\n- ¿Hay ruido metálico?"
+              }
             />
             <div className="text-xs text-gray-500 mt-1">
               Mejora la calidad del reporte sin pedir diagnóstico.
@@ -354,9 +391,6 @@ export default function FailureReportsForm() {
 
           {/* ✅ Sugeridos DESPUÉS del box Tags (a todo lo ancho) */}
           <div className="md:col-span-2">
-            <div className="text-xs text-gray-500">
-              Mejora la calidad del reporte sin pedir diagnóstico
-            </div>
             <div className="mt-2">
               <span className="inline-flex items-center px-2 py-0.5 rounded-full border bg-gray-50 text-xs text-gray-700">
                 Sugeridos
@@ -385,7 +419,12 @@ export default function FailureReportsForm() {
                             ? s.tags.map((x) => String(x).toUpperCase())
                             : [];
                           const has = cur.includes(next);
-                          return { ...s, tags: has ? cur.filter((x) => x !== next) : [...cur, next] };
+                          return {
+                            ...s,
+                            tags: has
+                              ? cur.filter((x) => x !== next)
+                              : [...cur, next],
+                          };
                         })
                       }
                       disabled={viewMode || loading}
@@ -429,7 +468,6 @@ export default function FailureReportsForm() {
               </span>
             )}
           </label>
-
         </div>
 
         {/* Footer acciones a la derecha */}
@@ -456,7 +494,8 @@ export default function FailureReportsForm() {
           {!viewMode && (
             <button
               type="submit"
-              className="btn btn-primary rounded px-4 py-2 text-white"
+              // className="btn btn-primary rounded px-4 py-2 text-white"
+              className="px-5 py-2 rounded bg-[var(--fc-primary)] text-white whitespace-nowrap"
               disabled={
                 saving ||
                 loading ||
@@ -474,7 +513,13 @@ export default function FailureReportsForm() {
                     : ""
               }
             >
-              {saving ? (id ? "Guardando…" : "Creando…") : id ? "Actualizar" : "Crear"}
+              {saving
+                ? id
+                  ? "Guardando…"
+                  : "Creando…"
+                : id
+                  ? "Actualizar"
+                  : "Crear"}
             </button>
           )}
         </div>
