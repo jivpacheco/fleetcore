@@ -899,6 +899,358 @@
 //     )
 // }
 
+// //v2 290126
+// // front/src/pages/Repairs/Form.jsx
+// // -----------------------------------------------------------------------------
+// // Catálogo → Reparaciones (Taller / Técnico)
+// // - Estándar técnico para OT: define severidad/impacto/tiempo estándar KPI
+// // - Modo Ver: ?mode=view
+// // - Guardia de cambios sin guardar: hooks/UnsavedChangesGuard
+// // - system/subsystem/component/failureMode controlados por JSON (repairTaxonomy.json)
+// // -----------------------------------------------------------------------------
+
+// import { useEffect, useMemo, useState } from 'react'
+// import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+// import UnsavedChangesGuard from '../../hooks/UnsavedChangesGuard'
+// import { RepairsAPI } from '../../api/repairs.api'
+// import vehicleTaxonomy from '../../data/fleetcore/vehicle-taxonomy.json'
+// import repairTaxonomy from '../../data/fleetcore/repair-taxonomy.json'
+
+// const emptyForm = {
+//   code: '',
+//   name: '',
+//   description: '',
+//   systemKey: '',
+//   subsystemKey: '',
+//   componentKey: '',
+//   failureModeKey: '',
+//   type: 'CORRECTIVE',
+//   severityDefault: 'MEDIUM',
+//   operationalImpact: 'LIMITED',
+//   standardLaborMinutes: 0,
+//   tags: [],
+//   isActive: true,
+// }
+
+// function toLines(arr){
+//   return Array.isArray(arr) ? arr.filter(Boolean).join('\n') : ''
+// }
+// function fromLines(text){
+//   return String(text || '')
+//     .split('\n')
+//     .map(s => s.trim())
+//     .filter(Boolean)
+// }
+
+// const TYPE_OPTIONS = [
+//   { v: 'CORRECTIVE', l: 'Correctiva' },
+//   { v: 'PREVENTIVE', l: 'Preventiva' },
+//   { v: 'INSPECTION', l: 'Inspección' },
+//   { v: 'UPGRADE', l: 'Mejora/Upgrade' },
+// ]
+// const SEVERITY_OPTIONS = [
+//   { v: 'LOW', l: 'Baja' },
+//   { v: 'MEDIUM', l: 'Media' },
+//   { v: 'HIGH', l: 'Alta' },
+//   { v: 'CRITICAL', l: 'Crítica' },
+// ]
+// const IMPACT_OPTIONS = [
+//   { v: 'NO_STOP', l: 'Opera normal (No stop)' },
+//   { v: 'LIMITED', l: 'Opera con restricción (Limited)' },
+//   { v: 'OUT_OF_SERVICE', l: 'Fuera de servicio (Out of service)' },
+// ]
+
+// export default function RepairsForm(){
+//   const nav = useNavigate()
+//   const { id } = useParams()
+//   const [sp] = useSearchParams()
+//   const viewMode = sp.get('mode') === 'view'
+
+//   const [loading, setLoading] = useState(false)
+//   const [saving, setSaving] = useState(false)
+//   const [form, setForm] = useState(emptyForm)
+//   const [initial, setInitial] = useState(emptyForm)
+
+//   // labels para systemKey (coherente con otros módulos)
+//   const systemLabels = useMemo(() => {
+//     const m = new Map()
+//     ;(vehicleTaxonomy?.systems || []).forEach(s => m.set(s.key, s.label))
+//     return m
+//   }, [])
+
+//   const repairSystems = useMemo(() => (repairTaxonomy?.systems || []), [])
+
+//   const selectedSystemNode = useMemo(() => {
+//     return repairSystems.find(s => s.key === form.systemKey) || null
+//   }, [repairSystems, form.systemKey])
+
+//   const subsystemOptions = useMemo(() => selectedSystemNode?.subsystems || [], [selectedSystemNode])
+//   const componentOptions = useMemo(() => selectedSystemNode?.components || [], [selectedSystemNode])
+//   const failureModes = useMemo(() => repairTaxonomy?.failureModes || [], [])
+
+//   const isDirty = useMemo(() => JSON.stringify(initial) !== JSON.stringify(form), [initial, form])
+
+//   UnsavedChangesGuard({
+//     when: isDirty && !viewMode,
+//     message: 'Hay cambios sin guardar. ¿Deseas salir sin guardar?',
+//   })
+
+//   const onBack = () => {
+//     if (!viewMode && isDirty) {
+//       const ok = window.confirm('Hay cambios sin guardar. ¿Deseas descartarlos?')
+//       if (!ok) return
+//     }
+//     nav(-1)
+//   }
+
+//   // si cambia systemKey, resetea dependientes si quedan inválidos
+//   useEffect(() => {
+//     if (!form.systemKey) {
+//       if (form.subsystemKey || form.componentKey) {
+//         setForm(s => ({ ...s, subsystemKey:'', componentKey:'' }))
+//       }
+//       return
+//     }
+//     const validSub = (subsystemOptions || []).some(x => x.key === form.subsystemKey)
+//     const validComp = (componentOptions || []).some(x => x.key === form.componentKey)
+//     if (!validSub && form.subsystemKey) setForm(s => ({ ...s, subsystemKey: '' }))
+//     if (!validComp && form.componentKey) setForm(s => ({ ...s, componentKey: '' }))
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [form.systemKey, subsystemOptions, componentOptions])
+
+//   const load = async () => {
+//     if (!id) {
+//       setForm(emptyForm)
+//       setInitial(emptyForm)
+//       return
+//     }
+//     setLoading(true)
+//     try{
+//       const { data } = await RepairsAPI.get(id)
+//       const item = data?.item || data?.data || data
+//       const next = {
+//         code: item?.code || '',
+//         name: item?.name || '',
+//         description: item?.description || '',
+//         systemKey: item?.systemKey || '',
+//         subsystemKey: item?.subsystemKey || '',
+//         componentKey: item?.componentKey || '',
+//         failureModeKey: item?.failureModeKey || '',
+//         type: item?.type || 'CORRECTIVE',
+//         severityDefault: item?.severityDefault || 'MEDIUM',
+//         operationalImpact: item?.operationalImpact || 'LIMITED',
+//         standardLaborMinutes: Number(item?.standardLaborMinutes || 0),
+//         tags: Array.isArray(item?.tags) ? item.tags : [],
+//         isActive: item?.isActive !== false,
+//       }
+//       setForm(next)
+//       setInitial(next)
+//     }catch(err){
+//       console.error(err)
+//       alert(err?.response?.data?.message || 'No fue posible cargar el registro')
+//     }finally{
+//       setLoading(false)
+//     }
+//   }
+
+//   useEffect(() => { load() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+//   const submit = async (e) => {
+//     e.preventDefault()
+//     if (viewMode) return
+//     if (!form.code.trim()) return alert('Código es obligatorio')
+//     if (!form.name.trim()) return alert('Nombre es obligatorio')
+//     if (!form.systemKey) return alert('Sistema es obligatorio')
+
+//     const payload = {
+//       code: form.code.trim().toUpperCase(),
+//       name: form.name.trim(),
+//       description: form.description,
+//       systemKey: form.systemKey,
+//       subsystemKey: form.subsystemKey || '',
+//       componentKey: form.componentKey || '',
+//       failureModeKey: form.failureModeKey || '',
+//       type: form.type,
+//       severityDefault: form.severityDefault,
+//       operationalImpact: form.operationalImpact,
+//       standardLaborMinutes: Number(form.standardLaborMinutes || 0),
+//       tags: Array.isArray(form.tags) ? form.tags : [],
+//       isActive: form.isActive !== false,
+//     }
+
+//     setSaving(true)
+//     try{
+//       if (id) {
+//         await RepairsAPI.update(id, payload)
+//         alert('Reparación actualizada')
+//       } else {
+//         const { data } = await RepairsAPI.create(payload)
+//         const createdId = data?.item?._id || data?._id
+//         alert('Reparación creada')
+//         if (createdId) nav(`/config/catalogs/repairs/${createdId}`)
+//       }
+//       setInitial(payload)
+//     }catch(err){
+//       console.error(err)
+//       alert(err?.response?.data?.message || 'No fue posible guardar')
+//     }finally{
+//       setSaving(false)
+//     }
+//   }
+
+//   const tagHints = useMemo(() => {
+//     const t = repairTaxonomy?.repairTags || {}
+//     const all = [ ...(t.work||[]), ...(t.level||[]), ...(t.family||[]) ]
+//     return Array.from(new Set(all))
+//   }, [])
+
+//   return (
+//     <div className="p-6 space-y-6">
+//       <div>
+//         <h1 className="text-xl font-bold">{id ? 'Editar Reparación' : 'Nueva Reparación'}</h1>
+//         <p className="text-sm text-gray-600">Defina el estándar técnico (incluye tiempo estándar para KPI).</p>
+//       </div>
+
+//       <form onSubmit={submit} className="bg-white border rounded-2xl shadow-sm">
+//         {/* Header interno (cierra esquinas superiores) */}
+//         <div className="flex items-center justify-between gap-3 px-4 py-3 border-b">
+//           <div className="text-sm text-gray-500">{loading ? 'Cargando…' : viewMode ? 'Modo ver' : isDirty ? 'Cambios sin guardar' : 'Sin cambios'}</div>
+//           <div className="flex items-center gap-2">
+//             <button type="button" className="btn border rounded px-4 py-2" onClick={onBack}>
+//               {(!viewMode && isDirty) ? 'Cancelar' : 'Volver'}
+//             </button>
+//             {!viewMode && (
+//               <button type="submit" className="btn btn-primary rounded px-4 py-2 text-white" disabled={saving || loading}>
+//                 {saving ? 'Guardando…' : 'Guardar'}
+//               </button>
+//             )}
+//           </div>
+//         </div>
+
+//         <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+//           <label className="text-sm md:col-span-2">
+//             <div className="text-gray-600 mb-1">Código *</div>
+//             <input className="border rounded px-3 py-2 w-full" value={form.code} disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, code: e.target.value }))} placeholder="Ej: REP-FREN-001" />
+//           </label>
+
+//           <label className="text-sm md:col-span-2">
+//             <div className="text-gray-600 mb-1">Nombre *</div>
+//             <input className="border rounded px-3 py-2 w-full" value={form.name} disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, name: e.target.value }))} placeholder="Ej: Cambio pastillas delanteras" />
+//           </label>
+
+//           <label className="text-sm md:col-span-4">
+//             <div className="text-gray-600 mb-1">Descripción</div>
+//             <textarea className="border rounded px-3 py-2 w-full min-h-24" value={form.description} disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, description: e.target.value }))} />
+//           </label>
+
+//           <label className="text-sm">
+//             <div className="text-gray-600 mb-1">Sistema *</div>
+//             <select className="border rounded px-3 py-2 w-full" value={form.systemKey} disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, systemKey: e.target.value }))}>
+//               <option value="">Seleccione…</option>
+//               {(vehicleTaxonomy?.systems || []).map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+//             </select>
+//             <div className="text-xs text-gray-500 mt-1">Recomendado usar el canon del sistema para BI.</div>
+//           </label>
+
+//           <label className="text-sm">
+//             <div className="text-gray-600 mb-1">Sub-sistema</div>
+//             <select className="border rounded px-3 py-2 w-full" value={form.subsystemKey} disabled={viewMode||loading || !form.systemKey}
+//               onChange={(e)=>setForm(s=>({ ...s, subsystemKey: e.target.value }))}>
+//               <option value="">{form.systemKey ? '(Sin sub-sistema)' : 'Seleccione sistema primero'}</option>
+//               {subsystemOptions.map(x => <option key={x.key} value={x.key}>{x.label}</option>)}
+//             </select>
+//             <div className="text-xs text-gray-500 mt-1">Depende del sistema seleccionado (evita combinaciones inválidas).</div>
+//           </label>
+
+//           <label className="text-sm">
+//             <div className="text-gray-600 mb-1">Componente</div>
+//             <select className="border rounded px-3 py-2 w-full" value={form.componentKey} disabled={viewMode||loading || !form.systemKey}
+//               onChange={(e)=>setForm(s=>({ ...s, componentKey: e.target.value }))}>
+//               <option value="">{form.systemKey ? '(Sin componente)' : 'Seleccione sistema primero'}</option>
+//               {componentOptions.map(x => <option key={x.key} value={x.key}>{x.label}</option>)}
+//             </select>
+//           </label>
+
+//           <label className="text-sm">
+//             <div className="text-gray-600 mb-1">Modo de falla</div>
+//             <select className="border rounded px-3 py-2 w-full" value={form.failureModeKey} disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, failureModeKey: e.target.value }))}>
+//               <option value="">(Sin modo)</option>
+//               {failureModes.map(x => <option key={x.key} value={x.key}>{x.label}</option>)}
+//             </select>
+//             <div className="text-xs text-gray-500 mt-1">Clave para análisis de confiabilidad (RCM/FMEA).</div>
+//           </label>
+
+//           <label className="text-sm">
+//             <div className="text-gray-600 mb-1">Tipo</div>
+//             <select className="border rounded px-3 py-2 w-full" value={form.type} disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, type: e.target.value }))}>
+//               {TYPE_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.v}</option>)}
+//             </select>
+//             <div className="text-xs text-gray-500 mt-1">Correctiva/Preventiva define KPI y planificación.</div>
+//           </label>
+
+//           <label className="text-sm">
+//             <div className="text-gray-600 mb-1">Severidad (default)</div>
+//             <select className="border rounded px-3 py-2 w-full" value={form.severityDefault} disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, severityDefault: e.target.value }))}>
+//               {SEVERITY_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.v}</option>)}
+//             </select>
+//           </label>
+
+//           <label className="text-sm">
+//             <div className="text-gray-600 mb-1">Impacto operacional</div>
+//             <select className="border rounded px-3 py-2 w-full" value={form.operationalImpact} disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, operationalImpact: e.target.value }))}>
+//               {IMPACT_OPTIONS.map(o => <option key={o.v} value={o.v}>{o.v}</option>)}
+//             </select>
+//             <div className="text-xs text-gray-500 mt-1">Para SLA y criticidad (operable / limitado / fuera de servicio).</div>
+//           </label>
+
+//           <label className="text-sm">
+//             <div className="text-gray-600 mb-1">Tiempo estándar (min)</div>
+//             <input type="number" min="0" className="border rounded px-3 py-2 w-full" value={form.standardLaborMinutes}
+//               disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, standardLaborMinutes: Number(e.target.value || 0) }))}/>
+//             <div className="text-xs text-gray-500 mt-1">Base para KPI (real vs estándar) y planificación.</div>
+//           </label>
+
+//           <label className="text-sm md:col-span-2">
+//             <div className="text-gray-600 mb-1">Tags (1 por línea)</div>
+//             <textarea className="border rounded px-3 py-2 w-full min-h-24" value={toLines(form.tags)} disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, tags: fromLines(e.target.value).map(t=>t.toUpperCase()) }))}/>
+//             <div className="text-xs text-gray-500 mt-1">
+//               Sugeridos: {tagHints.slice(0, 10).join(', ')}{tagHints.length > 10 ? '…' : ''}
+//             </div>
+//           </label>
+
+//           <label className="text-sm flex items-center gap-2 md:col-span-2 mt-6">
+//             <input type="checkbox" checked={form.isActive} disabled={viewMode||loading}
+//               onChange={(e)=>setForm(s=>({ ...s, isActive: e.target.checked }))}/>
+//             <span>Activo</span>
+//           </label>
+
+//           {/* Media: se gestiona vía repairsMedia.controller (backend). UI se implementa cuando el módulo de documentos esté consolidado */}
+//           <div className="md:col-span-4 border rounded-xl p-3 bg-gray-50">
+//             <div className="text-sm font-medium">Activos (media)</div>
+//             <div className="text-xs text-gray-600 mt-1">
+//               Disponible al guardar el registro. Se administra vía <span className="font-mono">repairsMedia.controller</span>.
+//             </div>
+//             <div className="mt-2 text-sm text-gray-700">
+//               <div><span className="font-medium">Foto:</span> —</div>
+//               <div className="mt-1"><span className="font-medium">Documentos:</span> —</div>
+//             </div>
+//           </div>
+
+//         </div>
+//       </form>
+//     </div>
+//   )
+// }
 // front/src/pages/Repairs/Form.jsx
 // -----------------------------------------------------------------------------
 // Catálogo → Reparaciones (Taller / Técnico)
@@ -999,7 +1351,7 @@ export default function RepairsForm(){
       const ok = window.confirm('Hay cambios sin guardar. ¿Deseas descartarlos?')
       if (!ok) return
     }
-    nav(-1)
+    nav('/config/catalogs/repairs')
   }
 
   // si cambia systemKey, resetea dependientes si quedan inválidos
@@ -1057,6 +1409,7 @@ export default function RepairsForm(){
   const submit = async (e) => {
     e.preventDefault()
     if (viewMode) return
+    if (id && !isDirty) return alert('No hay cambios por guardar')
     if (!form.code.trim()) return alert('Código es obligatorio')
     if (!form.name.trim()) return alert('Nombre es obligatorio')
     if (!form.systemKey) return alert('Sistema es obligatorio')
@@ -1083,15 +1436,21 @@ export default function RepairsForm(){
         await RepairsAPI.update(id, payload)
         alert('Reparación actualizada')
       } else {
-        const { data } = await RepairsAPI.create(payload)
-        const createdId = data?.item?._id || data?._id
+        await RepairsAPI.create(payload)
         alert('Reparación creada')
-        if (createdId) nav(`/config/catalogs/repairs/${createdId}`)
       }
       setInitial(payload)
+      // Lineamiento FleetCore: al guardar, volver al listado
+      nav('/config/catalogs/repairs')
     }catch(err){
       console.error(err)
-      alert(err?.response?.data?.message || 'No fue posible guardar')
+      const msg = err?.response?.data?.message
+      // Mensaje más claro para código duplicado (Mongo dup key)
+      if (String(msg || '').toLowerCase().includes('duplicate') || err?.response?.status === 409 || err?.response?.status === 400) {
+        alert(msg || 'El código ya existe. Usa un código distinto.')
+      } else {
+        alert(msg || 'No fue posible guardar')
+      }
     }finally{
       setSaving(false)
     }
@@ -1130,6 +1489,7 @@ export default function RepairsForm(){
           <label className="text-sm md:col-span-2">
             <div className="text-gray-600 mb-1">Código *</div>
             <input className="border rounded px-3 py-2 w-full" value={form.code} disabled={viewMode||loading}
+              maxLength={25}
               onChange={(e)=>setForm(s=>({ ...s, code: e.target.value }))} placeholder="Ej: REP-FREN-001" />
           </label>
 

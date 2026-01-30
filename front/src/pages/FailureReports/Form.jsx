@@ -1,545 +1,3 @@
-// // front/src/pages/FailureReports/Form.jsx
-// // -----------------------------------------------------------------------------
-// // Catálogo Reporte de Fallas (Cliente/Sucursal)
-// // - Modo Ver: ?mode=view
-// // - Guardia cambios sin guardar: hooks/UnsavedChangesGuard
-// // -----------------------------------------------------------------------------
-
-// import { useEffect, useMemo, useState } from 'react'
-// import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-// import UnsavedChangesGuard from '../../hooks/UnsavedChangesGuard'
-// import { FailureReportsAPI } from '../../api/failureReports.api'
-
-// const emptyForm = {
-//     code: '',
-//     name: '',
-//     description: '',
-//     systemKey: '',
-//     zoneKey: '',
-//     suggestedQuestionsText: '',
-//     tagsText: '',
-//     active: true,
-// }
-
-// function toText(lines) {
-//     return Array.isArray(lines) ? lines.join('\n') : ''
-// }
-
-// function parseLines(text) {
-//     return String(text || '')
-//         .split(/\r?\n/)
-//         .map((s) => s.trim())
-//         .filter(Boolean)
-// }
-
-// function parseTags(text) {
-//     return Array.from(new Set(parseLines(text)))
-// }
-
-// export default function FailureReportsForm() {
-//     const { id } = useParams()
-//     const isNew = id === 'new' || !id
-//     const navigate = useNavigate()
-//     const [sp] = useSearchParams()
-//     const viewMode = sp.get('mode') === 'view'
-
-//     const [loading, setLoading] = useState(false)
-//     const [saving, setSaving] = useState(false)
-//     const [error, setError] = useState('')
-
-//     const [form, setForm] = useState(emptyForm)
-//     const [initial, setInitial] = useState(null)
-
-//     const dirty = useMemo(() => {
-//         if (!initial) return false
-//         return JSON.stringify(form) !== JSON.stringify(initial)
-//     }, [form, initial])
-
-//     useEffect(() => {
-//         if (isNew) {
-//             setForm(emptyForm)
-//             setInitial(emptyForm)
-//             return
-//         }
-
-//         setLoading(true)
-//         setError('')
-//         FailureReportsAPI.get(id)
-//             .then(({ data }) => {
-//                 const item = data?.item
-//                 const mapped = {
-//                     code: item?.code || '',
-//                     name: item?.name || '',
-//                     description: item?.description || '',
-//                     systemKey: item?.systemKey || '',
-//                     zoneKey: item?.zoneKey || '',
-//                     suggestedQuestionsText: toText(item?.suggestedQuestions),
-//                     tagsText: toText(item?.tags),
-//                     active: Boolean(item?.active),
-//                 }
-//                 setForm(mapped)
-//                 setInitial(mapped)
-//             })
-//             .catch(() => setError('No se pudo cargar'))
-//             .finally(() => setLoading(false))
-//     }, [id, isNew])
-
-//     const onChange = (k, v) => setForm((s) => ({ ...s, [k]: v }))
-
-//     const onSave = async (e) => {
-//         e.preventDefault()
-//         if (viewMode) return
-
-//         setSaving(true)
-//         setError('')
-//         const payload = {
-//             code: form.code,
-//             name: form.name,
-//             description: form.description,
-//             systemKey: form.systemKey,
-//             zoneKey: form.zoneKey,
-//             suggestedQuestions: parseLines(form.suggestedQuestionsText),
-//             tags: parseTags(form.tagsText),
-//             active: Boolean(form.active),
-//         }
-
-//         try {
-//             if (isNew) {
-//                 const { data } = await FailureReportsAPI.create(payload)
-//                 navigate(`/config/catalogs/failure-reports/${data?.item?._id}`)
-//             } else {
-//                 await FailureReportsAPI.update(id, payload)
-//                 setInitial(form)
-//             }
-//         } catch (err) {
-//             setError(err?.response?.data?.message || 'No se pudo guardar')
-//         } finally {
-//             setSaving(false)
-//         }
-//     }
-
-//     return (
-//         <div className="max-w-5xl">
-//             <UnsavedChangesGuard when={dirty && !viewMode} />
-
-//             <div className="flex items-start justify-between gap-3 mb-4">
-//                 <div>
-//                     <h1 className="text-xl font-bold">
-//                         {isNew ? 'Nuevo Reporte de Falla' : viewMode ? 'Ver Reporte de Falla' : 'Editar Reporte de Falla'}
-//                     </h1>
-//                     <p className="text-gray-500 text-sm">
-//                         Estructura pensada para usuarios sin expertiz mecánica (no diagnóstico).
-//                     </p>
-//                 </div>
-
-//                 <div className="flex items-center gap-2">
-//                     <Link className="px-3 py-2 rounded border bg-white" to="/config/catalogs/failure-reports">
-//                         Volver
-//                     </Link>
-
-//                     {!isNew && viewMode && (
-//                         <button
-//                             className="px-3 py-2 rounded bg-[var(--fc-primary)] text-white"
-//                             onClick={() => navigate(`/config/catalogs/failure-reports/${id}`)}
-//                         >
-//                             Editar
-//                         </button>
-//                     )}
-
-//                     {!viewMode && (
-//                         <button
-//                             className="px-3 py-2 rounded bg-[var(--fc-primary)] text-white disabled:opacity-50"
-//                             onClick={onSave}
-//                             disabled={saving || loading}
-//                         >
-//                             {saving ? 'Guardando…' : 'Guardar'}
-//                         </button>
-//                     )}
-//                 </div>
-//             </div>
-
-//             {error && (
-//                 <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-700 text-sm">
-//                     {error}
-//                 </div>
-//             )}
-
-//             {loading ? (
-//                 <div className="p-6 text-gray-500">Cargando…</div>
-//             ) : (
-//                 <form onSubmit={onSave} className="space-y-4">
-//                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-//                         <div className="md:col-span-1">
-//                             <label className="text-sm text-gray-600">Código</label>
-//                             <input
-//                                 className="w-full border rounded px-3 py-2"
-//                                 value={form.code}
-//                                 onChange={(e) => onChange('code', e.target.value)}
-//                                 disabled={viewMode}
-//                             />
-//                         </div>
-//                         <div className="md:col-span-2">
-//                             <label className="text-sm text-gray-600">Nombre</label>
-//                             <input
-//                                 className="w-full border rounded px-3 py-2"
-//                                 value={form.name}
-//                                 onChange={(e) => onChange('name', e.target.value)}
-//                                 disabled={viewMode}
-//                             />
-//                         </div>
-//                     </div>
-
-//                     <div>
-//                         <label className="text-sm text-gray-600">Descripción</label>
-//                         <textarea
-//                             className="w-full border rounded px-3 py-2"
-//                             rows={3}
-//                             value={form.description}
-//                             onChange={(e) => onChange('description', e.target.value)}
-//                             disabled={viewMode}
-//                         />
-//                     </div>
-
-//                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                         <div>
-//                             <label className="text-sm text-gray-600">Sistema principal (systemKey)</label>
-//                             <input
-//                                 className="w-full border rounded px-3 py-2"
-//                                 value={form.systemKey}
-//                                 onChange={(e) => onChange('systemKey', e.target.value)}
-//                                 disabled={viewMode}
-//                                 placeholder="Ej: FRENOS"
-//                             />
-//                             <div className="text-xs text-gray-500 mt-1">
-//                                 Ejemplos: Motor, Frenos, Suspensión, Eléctrico, Luces, Dirección.
-//                             </div>
-//                         </div>
-//                         <div>
-//                             <label className="text-sm text-gray-600">Zona (opcional)</label>
-//                             <input
-//                                 className="w-full border rounded px-3 py-2"
-//                                 value={form.zoneKey}
-//                                 onChange={(e) => onChange('zoneKey', e.target.value)}
-//                                 disabled={viewMode}
-//                                 placeholder="Ej: DELANTEROS"
-//                             />
-//                         </div>
-//                     </div>
-
-//                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                         <div>
-//                             <label className="text-sm text-gray-600">Preguntas sugeridas (1 por línea)</label>
-//                             <textarea
-//                                 className="w-full border rounded px-3 py-2"
-//                                 rows={6}
-//                                 value={form.suggestedQuestionsText}
-//                                 onChange={(e) => onChange('suggestedQuestionsText', e.target.value)}
-//                                 disabled={viewMode}
-//                                 placeholder={
-//                                     'Ej:\n- ¿Ocurre al frenar?\n- ¿Se carga hacia un lado?\n- ¿Hay ruido metálico?'
-//                                 }
-//                             />
-//                         </div>
-//                         <div>
-//                             <label className="text-sm text-gray-600">Tags (1 por línea)</label>
-//                             <textarea
-//                                 className="w-full border rounded px-3 py-2"
-//                                 rows={6}
-//                                 value={form.tagsText}
-//                                 onChange={(e) => onChange('tagsText', e.target.value)}
-//                                 disabled={viewMode}
-//                             />
-
-//                             <div className="flex items-center gap-2 pt-3">
-//                                 <input
-//                                     type="checkbox"
-//                                     checked={form.active}
-//                                     onChange={(e) => onChange('active', e.target.checked)}
-//                                     disabled={viewMode}
-//                                 />
-//                                 <span className="text-sm">Activo</span>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </form>
-//             )}
-//         </div>
-//     )
-// }
-
-// //v2 280126
-
-// // front/src/pages/FailureReports/Form.jsx
-// // -----------------------------------------------------------------------------
-// // Catálogo Reporte de Fallas (Cliente/Sucursal)
-// // - Modo Ver: ?mode=view
-// // - Guardia cambios sin guardar: hooks/UnsavedChangesGuard
-// // -----------------------------------------------------------------------------
-
-// import { useEffect, useMemo, useState } from 'react'
-// import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-// import UnsavedChangesGuard from '../../hooks/UnsavedChangesGuard'
-// import { FailureReportsAPI } from '../../api/failureReports.api'
-
-// const emptyForm = {
-//     code: '',
-//     name: '',
-//     description: '',
-//     systemKey: '',
-//     zoneKey: '',
-//     suggestedQuestionsText: '',
-//     tagsText: '',
-//     active: true,
-// }
-
-// function toText(lines) {
-//     return Array.isArray(lines) ? lines.join('\n') : ''
-// }
-
-// function parseLines(text) {
-//     return String(text || '')
-//         .split(/\r?\n/)
-//         .map((s) => s.trim())
-//         .filter(Boolean)
-// }
-
-// function parseTags(text) {
-//     return Array.from(new Set(parseLines(text)))
-// }
-
-// export default function FailureReportsForm() {
-//     const { id } = useParams()
-//     const isNew = id === 'new' || !id
-//     const navigate = useNavigate()
-//     const [sp] = useSearchParams()
-//     const viewMode = sp.get('mode') === 'view'
-
-//     const [loading, setLoading] = useState(false)
-//     const [saving, setSaving] = useState(false)
-//     const [error, setError] = useState('')
-
-//     const [form, setForm] = useState(emptyForm)
-//     const [initial, setInitial] = useState(null)
-
-//     const dirty = useMemo(() => {
-//         if (!initial) return false
-//         return JSON.stringify(form) !== JSON.stringify(initial)
-//     }, [form, initial])
-
-//     useEffect(() => {
-//         if (isNew) {
-//             setForm(emptyForm)
-//             setInitial(emptyForm)
-//             return
-//         }
-
-//         setLoading(true)
-//         setError('')
-//         FailureReportsAPI.get(id)
-//             .then(({ data }) => {
-//                 const item = data?.item
-//                 const mapped = {
-//                     code: item?.code || '',
-//                     name: item?.name || '',
-//                     description: item?.description || '',
-//                     systemKey: item?.systemKey || '',
-//                     zoneKey: item?.zoneKey || '',
-//                     suggestedQuestionsText: toText(item?.suggestedQuestions),
-//                     tagsText: toText(item?.tags),
-//                     active: Boolean(item?.active),
-//                 }
-//                 setForm(mapped)
-//                 setInitial(mapped)
-//             })
-//             .catch(() => setError('No se pudo cargar'))
-//             .finally(() => setLoading(false))
-//     }, [id, isNew])
-
-//     const onChange = (k, v) => setForm((s) => ({ ...s, [k]: v }))
-
-//     const onSave = async (e) => {
-//         e.preventDefault()
-//         if (viewMode) return
-
-//         setSaving(true)
-//         setError('')
-//         const payload = {
-//             code: form.code,
-//             name: form.name,
-//             description: form.description,
-//             systemKey: form.systemKey,
-//             zoneKey: form.zoneKey,
-//             suggestedQuestions: parseLines(form.suggestedQuestionsText),
-//             tags: parseTags(form.tagsText),
-//             active: Boolean(form.active),
-//         }
-
-//         try {
-//             if (isNew) {
-//                 const { data } = await FailureReportsAPI.create(payload)
-//                 navigate(`/config/catalogs/failure-reports/${data?.item?._id}`)
-//             } else {
-//                 await FailureReportsAPI.update(id, payload)
-//                 setInitial(form)
-//             }
-//         } catch (err) {
-//             setError(err?.response?.data?.message || 'No se pudo guardar')
-//         } finally {
-//             setSaving(false)
-//         }
-//     }
-
-//     return (
-//         <div className="p-6 space-y-6">
-//             <UnsavedChangesGuard when={dirty && !viewMode} />
-
-//             <div className="flex items-start justify-between gap-3 mb-4">
-//                 <div>
-//                     <h1 className="text-xl font-bold">
-//                         {isNew ? 'Nuevo Reporte de Falla' : viewMode ? 'Ver Reporte de Falla' : 'Editar Reporte de Falla'}
-//                     </h1>
-//                     <p className="text-gray-500 text-sm">
-//                         Estructura pensada para usuarios sin expertiz mecánica (no diagnóstico).
-//                     </p>
-//                 </div>
-
-//                 <div className="flex items-center gap-2">
-//                     <Link className="px-3 py-2 rounded border bg-white" to="/config/catalogs/failure-reports">
-//                         Volver
-//                     </Link>
-
-//                     {!isNew && viewMode && (
-//                         <button
-//                             className="px-3 py-2 rounded bg-[var(--fc-primary)] text-white"
-//                             onClick={() => navigate(`/config/catalogs/failure-reports/${id}`)}
-//                         >
-//                             Editar
-//                         </button>
-//                     )}
-
-//                     {!viewMode && (
-//                         <button
-//                             className="px-3 py-2 rounded bg-[var(--fc-primary)] text-white disabled:opacity-50"
-//                             onClick={onSave}
-//                             disabled={saving || loading}
-//                         >
-//                             {saving ? 'Guardando…' : 'Guardar'}
-//                         </button>
-//                     )}
-//                 </div>
-//             </div>
-
-//             {error && (
-//                 <div className="mb-4 p-3 rounded border border-red-200 bg-red-50 text-red-700 text-sm">
-//                     {error}
-//                 </div>
-//             )}
-
-//             {loading ? (
-//                 <div className="p-6 text-gray-500">Cargando…</div>
-//             ) : (
-//                 <div className="border rounded-xl p-4 bg-white">
-//                     <form onSubmit={onSave} className="space-y-4">
-//                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-//                             <div className="md:col-span-1">
-//                                 <label className="text-sm text-gray-600">Código</label>
-//                                 <input
-//                                     className="w-full border rounded px-3 py-2"
-//                                     value={form.code}
-//                                     onChange={(e) => onChange('code', e.target.value)}
-//                                     disabled={viewMode}
-//                                 />
-//                             </div>
-//                             <div className="md:col-span-2">
-//                                 <label className="text-sm text-gray-600">Nombre</label>
-//                                 <input
-//                                     className="w-full border rounded px-3 py-2"
-//                                     value={form.name}
-//                                     onChange={(e) => onChange('name', e.target.value)}
-//                                     disabled={viewMode}
-//                                 />
-//                             </div>
-//                         </div>
-
-//                         <div>
-//                             <label className="text-sm text-gray-600">Descripción</label>
-//                             <textarea
-//                                 className="w-full border rounded px-3 py-2"
-//                                 rows={3}
-//                                 value={form.description}
-//                                 onChange={(e) => onChange('description', e.target.value)}
-//                                 disabled={viewMode}
-//                             />
-//                         </div>
-
-//                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                             <div>
-//                                 <label className="text-sm text-gray-600">Sistema principal (systemKey)</label>
-//                                 <input
-//                                     className="w-full border rounded px-3 py-2"
-//                                     value={form.systemKey}
-//                                     onChange={(e) => onChange('systemKey', e.target.value)}
-//                                     disabled={viewMode}
-//                                     placeholder="Ej: FRENOS"
-//                                 />
-//                                 <div className="text-xs text-gray-500 mt-1">
-//                                     Ejemplos: Motor, Frenos, Suspensión, Eléctrico, Luces, Dirección.
-//                                 </div>
-//                             </div>
-//                             <div>
-//                                 <label className="text-sm text-gray-600">Zona (opcional)</label>
-//                                 <input
-//                                     className="w-full border rounded px-3 py-2"
-//                                     value={form.zoneKey}
-//                                     onChange={(e) => onChange('zoneKey', e.target.value)}
-//                                     disabled={viewMode}
-//                                     placeholder="Ej: DELANTEROS"
-//                                 />
-//                             </div>
-//                         </div>
-
-//                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                             <div>
-//                                 <label className="text-sm text-gray-600">Preguntas sugeridas (1 por línea)</label>
-//                                 <textarea
-//                                     className="w-full border rounded px-3 py-2"
-//                                     rows={6}
-//                                     value={form.suggestedQuestionsText}
-//                                     onChange={(e) => onChange('suggestedQuestionsText', e.target.value)}
-//                                     disabled={viewMode}
-//                                     placeholder={
-//                                         'Ej:\n- ¿Ocurre al frenar?\n- ¿Se carga hacia un lado?\n- ¿Hay ruido metálico?'
-//                                     }
-//                                 />
-//                             </div>
-//                             <div>
-//                                 <label className="text-sm text-gray-600">Tags (1 por línea)</label>
-//                                 <textarea
-//                                     className="w-full border rounded px-3 py-2"
-//                                     rows={6}
-//                                     value={form.tagsText}
-//                                     onChange={(e) => onChange('tagsText', e.target.value)}
-//                                     disabled={viewMode}
-//                                 />
-
-//                                 <div className="flex items-center gap-2 pt-3">
-//                                     <input
-//                                         type="checkbox"
-//                                         checked={form.active}
-//                                         onChange={(e) => onChange('active', e.target.checked)}
-//                                         disabled={viewMode}
-//                                     />
-//                                     <span className="text-sm">Activo</span>
-//                                 </div>
-//                             </div>
-//                         </div>
-//                     </form>
-//                 </div>
-//             )}
-//         </div>
-//     )
-// }
-
 // front/src/pages/FailureReports/Form.jsx
 // -----------------------------------------------------------------------------
 // Catálogo → Reporte de Fallas (Sucursal / Operación)
@@ -575,6 +33,9 @@ function fromLines(text) {
     .map((s) => s.trim())
     .filter(Boolean);
 }
+function normCode(v) {
+  return String(v || "").trim().toUpperCase();
+}
 
 export default function FailureReportsForm() {
   const nav = useNavigate();
@@ -587,13 +48,27 @@ export default function FailureReportsForm() {
   const [form, setForm] = useState(emptyForm);
   const [initial, setInitial] = useState(emptyForm);
 
+  // Duplicado (crear + editar si cambia el código)
+  const [codeCheck, setCodeCheck] = useState({
+    checking: false,
+    duplicate: false,
+  });
+
   const systemOptions = useMemo(() => vehicleTaxonomy?.systems || [], []);
   const zoneOptions = useMemo(() => vehicleTaxonomy?.zones || [], []);
 
+  const helpTags = useMemo(() => {
+    const t = vehicleTaxonomy?.reportTags || {};
+    const all = [
+      ...(t.phenomenon || []),
+      ...(t.condition || []),
+      ...(t.impact || []),
+    ];
+    return Array.from(new Set(all));
+  }, []);
+
   const isDirty = useMemo(() => {
-    const a = JSON.stringify(initial);
-    const b = JSON.stringify(form);
-    return a !== b;
+    return JSON.stringify(initial) !== JSON.stringify(form);
   }, [initial, form]);
 
   UnsavedChangesGuard({
@@ -601,14 +76,57 @@ export default function FailureReportsForm() {
     message: "Hay cambios sin guardar. ¿Deseas salir sin guardar?",
   });
 
+  // Check duplicado:
+  // - Crear: siempre que haya code
+  // - Editar: solo si code difiere del initial.code
+  useEffect(() => {
+    const current = normCode(form.code);
+    const original = normCode(initial.code);
+
+    const shouldCheck = Boolean(current) && (!id || (id && current !== original));
+    if (!shouldCheck) {
+      setCodeCheck({ checking: false, duplicate: false });
+      return;
+    }
+
+    setCodeCheck((s) => ({ ...s, checking: true }));
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await FailureReportsAPI.list({
+          page: 1,
+          limit: 10,
+          q: current,
+          active: "",
+        });
+        const items = data?.items || [];
+
+        const dup = items.some((it) => {
+          const itCode = normCode(it?.code);
+          const sameCode = itCode === current;
+          const sameId = id && String(it?._id) === String(id);
+          return sameCode && !sameId;
+        });
+
+        setCodeCheck({ checking: false, duplicate: dup });
+      } catch {
+        setCodeCheck({ checking: false, duplicate: false });
+      }
+    }, 450);
+
+    return () => clearTimeout(t);
+  }, [id, form.code, initial.code]);
+
   const onBack = () => {
     if (!viewMode && isDirty) {
-      const ok = window.confirm(
-        "Hay cambios sin guardar. ¿Deseas descartarlos?",
-      );
+      const ok = window.confirm("Hay cambios sin guardar. ¿Deseas descartarlos?");
       if (!ok) return;
     }
-    nav(-1);
+    nav("/config/catalogs/failure-reports");
+  };
+
+  const onEdit = () => {
+    if (!id) return;
+    nav(`/config/catalogs/failure-reports/${id}`);
   };
 
   const load = async () => {
@@ -621,6 +139,7 @@ export default function FailureReportsForm() {
     try {
       const { data } = await FailureReportsAPI.get(id);
       const item = data?.item || data?.data || data;
+
       const next = {
         code: item?.code || "",
         name: item?.name || "",
@@ -631,15 +150,14 @@ export default function FailureReportsForm() {
           ? item.suggestedQuestions
           : [],
         tags: Array.isArray(item?.tags) ? item.tags : [],
-        isActive: item?.isActive !== false,
+        isActive: item?.isActive === false ? false : true,
       };
+
       setForm(next);
       setInitial(next);
     } catch (err) {
       console.error(err);
-      alert(
-        err?.response?.data?.message || "No fue posible cargar el registro",
-      );
+      alert(err?.response?.data?.message || "No fue posible cargar el registro");
     } finally {
       setLoading(false);
     }
@@ -652,13 +170,18 @@ export default function FailureReportsForm() {
   const submit = async (e) => {
     e.preventDefault();
     if (viewMode) return;
-    if (!form.code.trim()) return alert("Código es obligatorio");
-    if (!form.name.trim()) return alert("Nombre es obligatorio");
+
+    const codeNorm = normCode(form.code);
+    if (!codeNorm) return alert("Código es obligatorio");
+    if (codeCheck.duplicate) return alert("Este código ya existe.");
+    if (!String(form.name || "").trim()) return alert("Nombre es obligatorio");
     if (!form.systemKey) return alert("Sistema principal es obligatorio");
 
+    if (id && !isDirty) return alert("No hay cambios por guardar");
+
     const payload = {
-      code: form.code.trim().toUpperCase(),
-      name: form.name.trim(),
+      code: codeNorm,
+      name: String(form.name || "").trim(),
       description: form.description,
       systemKey: form.systemKey,
       zoneKey: form.zoneKey || "",
@@ -666,7 +189,10 @@ export default function FailureReportsForm() {
         ? form.suggestedQuestions
         : [],
       tags: Array.isArray(form.tags) ? form.tags : [],
-      isActive: form.isActive !== false,
+      // ✅ Enviar boolean real (si está desmarcado debe ir false sí o sí)
+      // isActive: Boolean(form.isActive),
+      isActive: form.isActive === true,
+
     };
 
     setSaving(true);
@@ -675,12 +201,11 @@ export default function FailureReportsForm() {
         await FailureReportsAPI.update(id, payload);
         alert("Reporte de falla actualizado");
       } else {
-        const { data } = await FailureReportsAPI.create(payload);
-        const createdId = data?.item?._id || data?._id;
+        await FailureReportsAPI.create(payload);
         alert("Reporte de falla creado");
-        if (createdId) nav(`/config/catalogs/failure-reports/${createdId}`);
       }
-      setInitial(payload); // marca como limpio
+      setInitial(payload);
+      nav("/config/catalogs/failure-reports");
     } catch (err) {
       console.error(err);
       alert(err?.response?.data?.message || "No fue posible guardar");
@@ -689,57 +214,24 @@ export default function FailureReportsForm() {
     }
   };
 
-  const helpTags = useMemo(() => {
-    const t = vehicleTaxonomy?.reportTags || {};
-    const all = [
-      ...(t.phenomenon || []),
-      ...(t.condition || []),
-      ...(t.impact || []),
-    ];
-    return Array.from(new Set(all));
-  }, []);
+  const codeHasError = !viewMode && !loading && Boolean(normCode(form.code)) && codeCheck.duplicate;
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
+    <div>
+      <div className="mb-4">
         <h1 className="text-xl font-bold">
-          {id ? "Editar Reporte de Falla" : "Nuevo Reporte de Falla"}
+          {id ? (viewMode ? "Ver Reporte de Falla" : "Editar Reporte de Falla") : "Nuevo Reporte de Falla"}
         </h1>
         <p className="text-sm text-gray-600">
-          Estructura pensada para usuarios sin expertiz mecánica (no
-          diagnóstico).
+          Estructura pensada para usuarios sin expertiz mecánica (no diagnóstico).
         </p>
       </div>
 
-      <form onSubmit={submit} className="bg-white border rounded-2xl shadow-sm">
-        {/* Header interno (para cerrar esquinas superiores) */}
+      <form onSubmit={submit} className="bg-white border rounded-2xl shadow-sm overflow-hidden">
+        {/* Header interno (sin línea de “código disponible”) */}
         <div className="flex items-center justify-between gap-3 px-4 py-3 border-b">
           <div className="text-sm text-gray-500">
-            {loading
-              ? "Cargando…"
-              : viewMode
-                ? "Modo ver"
-                : isDirty
-                  ? "Cambios sin guardar"
-                  : "Sin cambios"}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="btn border rounded px-4 py-2"
-              onClick={onBack}
-            >
-              {!viewMode && isDirty ? "Cancelar" : "Volver"}
-            </button>
-            {!viewMode && (
-              <button
-                type="submit"
-                className="btn btn-primary rounded px-4 py-2 text-white"
-                disabled={saving || loading}
-              >
-                {saving ? "Guardando…" : "Guardar"}
-              </button>
-            )}
+            {loading ? "Cargando…" : viewMode ? "Modo ver" : ""}
           </div>
         </div>
 
@@ -748,12 +240,18 @@ export default function FailureReportsForm() {
           <label className="text-sm">
             <div className="text-gray-600 mb-1">Código *</div>
             <input
-              className="border rounded px-3 py-2 w-full"
+              className={
+                "border rounded px-3 py-2 w-full " +
+                (codeHasError ? "border-red-500 ring-1 ring-red-200" : "")
+              }
               value={form.code}
               disabled={viewMode || loading}
               onChange={(e) => setForm((s) => ({ ...s, code: e.target.value }))}
               placeholder="Ej: FR-FREN-001"
             />
+            {codeHasError && (
+              <div className="text-xs text-red-600 mt-1">Este código ya existe</div>
+            )}
           </label>
 
           <label className="text-sm">
@@ -773,9 +271,7 @@ export default function FailureReportsForm() {
               className="border rounded px-3 py-2 w-full min-h-24"
               value={form.description}
               disabled={viewMode || loading}
-              onChange={(e) =>
-                setForm((s) => ({ ...s, description: e.target.value }))
-              }
+              onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
               placeholder="Describe el síntoma observable (sin diagnóstico)."
             />
           </label>
@@ -786,9 +282,7 @@ export default function FailureReportsForm() {
               className="border rounded px-3 py-2 w-full"
               value={form.systemKey}
               disabled={viewMode || loading}
-              onChange={(e) =>
-                setForm((s) => ({ ...s, systemKey: e.target.value }))
-              }
+              onChange={(e) => setForm((s) => ({ ...s, systemKey: e.target.value }))}
             >
               <option value="">Seleccione…</option>
               {systemOptions.map((x) => (
@@ -808,9 +302,7 @@ export default function FailureReportsForm() {
               className="border rounded px-3 py-2 w-full"
               value={form.zoneKey}
               disabled={viewMode || loading}
-              onChange={(e) =>
-                setForm((s) => ({ ...s, zoneKey: e.target.value }))
-              }
+              onChange={(e) => setForm((s) => ({ ...s, zoneKey: e.target.value }))}
             >
               <option value="">(Sin zona)</option>
               {zoneOptions.map((x) => (
@@ -825,9 +317,7 @@ export default function FailureReportsForm() {
           </label>
 
           <label className="text-sm md:col-span-1">
-            <div className="text-gray-600 mb-1">
-              Preguntas sugeridas (1 por línea)
-            </div>
+            <div className="text-gray-600 mb-1">Preguntas sugeridas (1 por línea)</div>
             <textarea
               className="border rounded px-3 py-2 w-full min-h-32"
               value={toLines(form.suggestedQuestions)}
@@ -838,15 +328,14 @@ export default function FailureReportsForm() {
                   suggestedQuestions: fromLines(e.target.value),
                 }))
               }
-              placeholder={
-                "Ej:\n- ¿Ocurre al frenar?\n- ¿Se carga hacia un lado?\n- ¿Hay ruido metálico?"
-              }
+              placeholder={"Ej:\n- ¿Ocurre al frenar?\n- ¿Se carga hacia un lado?\n- ¿Hay ruido metálico?"}
             />
             <div className="text-xs text-gray-500 mt-1">
               Mejora la calidad del reporte sin pedir diagnóstico.
             </div>
           </label>
 
+          {/* Tags textarea */}
           <label className="text-sm md:col-span-1">
             <div className="text-gray-600 mb-1">Tags (1 por línea)</div>
             <textarea
@@ -861,23 +350,133 @@ export default function FailureReportsForm() {
               }
               placeholder={"Ej:\nRUIDO\nEN_FRENADA\nSEGURIDAD"}
             />
-            <div className="text-xs text-gray-500 mt-1">
-              Sugeridos: {helpTags.slice(0, 10).join(", ")}
-              {helpTags.length > 10 ? "…" : ""}
-            </div>
           </label>
 
-          <label className="text-sm flex items-center gap-2 md:col-span-2 mt-1">
+          {/* ✅ Sugeridos DESPUÉS del box Tags (a todo lo ancho) */}
+          <div className="md:col-span-2">
+            <div className="text-xs text-gray-500">
+              Mejora la calidad del reporte sin pedir diagnóstico
+            </div>
+            <div className="mt-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full border bg-gray-50 text-xs text-gray-700">
+                Sugeridos
+              </span>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {helpTags.slice(0, 30).map((t) => {
+                  const next = String(t).toUpperCase();
+                  const selected = (form.tags || [])
+                    .map(String)
+                    .map((x) => x.toUpperCase())
+                    .includes(next);
+
+                  return (
+                    <button
+                      type="button"
+                      key={t}
+                      className={
+                        "px-3 py-1.5 rounded-full border text-xs " +
+                        (selected
+                          ? "bg-blue-50 border-blue-300 text-blue-700"
+                          : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50")
+                      }
+                      onClick={() =>
+                        setForm((s) => {
+                          const cur = Array.isArray(s.tags)
+                            ? s.tags.map((x) => String(x).toUpperCase())
+                            : [];
+                          const has = cur.includes(next);
+                          return { ...s, tags: has ? cur.filter((x) => x !== next) : [...cur, next] };
+                        })
+                      }
+                      disabled={viewMode || loading}
+                      title={selected ? "Quitar" : "Agregar"}
+                    >
+                      {selected ? "✓ " : ""}
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Activo */}
+          {/* <label className="text-sm flex items-center gap-2 md:col-span-2 mt-1">
             <input
               type="checkbox"
-              checked={form.isActive}
+              checked={Boolean(form.isActive)}
               disabled={viewMode || loading}
-              onChange={(e) =>
-                setForm((s) => ({ ...s, isActive: e.target.checked }))
-              }
+              onChange={(e) => setForm((s) => ({ ...s, isActive: e.target.checked }))}
             />
             <span>Activo</span>
+          </label> */}
+          <label className="text-sm flex items-center gap-2 md:col-span-2 mt-1 select-none">
+            <input
+              type="checkbox"
+              className="h-4 w-4"
+              checked={form.isActive === true}
+              disabled={viewMode || loading || saving}
+              onChange={(e) => {
+                const next = e.target.checked;
+                setForm((s) => ({ ...s, isActive: next }));
+              }}
+            />
+            <span>Activo</span>
+
+            {!viewMode && (
+              <span className="text-xs text-gray-500">
+                ({form.isActive === true ? "Sí" : "No"})
+              </span>
+            )}
           </label>
+
+        </div>
+
+        {/* Footer acciones a la derecha */}
+        <div className="flex items-center justify-end gap-2 px-4 py-3 border-t">
+          <button
+            type="button"
+            className="btn border rounded px-4 py-2"
+            onClick={onBack}
+            disabled={saving || loading}
+          >
+            {!viewMode && isDirty ? "Cancelar" : "Volver"}
+          </button>
+
+          {id && viewMode && (
+            <button
+              type="button"
+              className="btn btn-primary rounded px-4 py-2 text-white"
+              onClick={onEdit}
+            >
+              Editar
+            </button>
+          )}
+
+          {!viewMode && (
+            <button
+              type="submit"
+              className="btn btn-primary rounded px-4 py-2 text-white"
+              disabled={
+                saving ||
+                loading ||
+                codeCheck.duplicate ||
+                !normCode(form.code) ||
+                !String(form.name || "").trim() ||
+                !String(form.systemKey || "").trim() ||
+                (id ? !isDirty : false)
+              }
+              title={
+                codeCheck.duplicate
+                  ? "Este código ya existe"
+                  : id && !isDirty
+                    ? "No hay cambios por guardar"
+                    : ""
+              }
+            >
+              {saving ? (id ? "Guardando…" : "Creando…") : id ? "Actualizar" : "Crear"}
+            </button>
+          )}
         </div>
       </form>
     </div>
