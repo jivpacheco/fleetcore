@@ -1,396 +1,137 @@
-// // // // front/src/pages/Repairs/List.jsx
-// // // // -----------------------------------------------------------------------------
-// // // // Catálogo Reparaciones (Taller)
-// // // // - List server-side: contrato { items, total, page, limit, pages }
-// // // // - Estándar FleetCore v1.0: pages/X/{List.jsx, Form.jsx}
-// // // // -----------------------------------------------------------------------------
-
-// // // import { useEffect } from 'react'
-// // // import { useNavigate } from 'react-router-dom'
-// // // import { useTableState } from '../../store/useTableState'
-// // // import { usePagedQuery } from '../../hooks/usePagedQuery'
-// // // import { RepairsAPI } from '../../api/repairs.api'
-// // // import Paginator from '../../components/table/Paginator'
-// // // import LimitSelect from '../../components/table/LimitSelect'
-
-// // // const KEY = 'repairs'
-
-// // // export default function RepairsList() {
-// // //     const navigate = useNavigate()
-// // //     const getState = useTableState((s) => s.getState)
-// // //     const setPage = useTableState((s) => s.setPage)
-// // //     const setLimit = useTableState((s) => s.setLimit)
-// // //     const setQuery = useTableState((s) => s.setQuery)
-// // //     const { page, limit, q } = getState(KEY)
-
-// // //     const { data, isLoading, error, refetch } = usePagedQuery(
-// // //         KEY,
-// // //         { page, limit, q },
-// // //         RepairsAPI.list
-// // //     )
-
-// // //     useEffect(() => {
-// // //         refetch()
-// // //     }, [page, limit, q, refetch])
-
-// // //     return (
-// // //         <div className="p-6 space-y-6">
-// // //             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-// // //                 <div>
-// // //                     <h1 className="text-xl font-bold">Catálogo de Reparaciones</h1>
-// // //                     <p className="text-gray-500 text-sm">
-// // //                         Base técnica para diagnósticos, KPI (tiempo estándar) e informes
-// // //                     </p>
-// // //                 </div>
-// // //                 <div className="flex items-center gap-2">
-// // //                     <input
-// // //                         className="input border rounded px-3 py-2"
-// // //                         placeholder="Buscar por nombre/código"
-// // //                         defaultValue={q}
-// // //                         onChange={(e) => setQuery(KEY, e.target.value)}
-// // //                     />
-// // //                     <LimitSelect value={limit} onChange={(val) => setLimit(KEY, val)} />
-// // //                     <button
-// // //                         className="btn btn-primary px-3 py-2 rounded text-white"
-// // //                         onClick={() => navigate('/config/catalogs/repairs/new')}
-// // //                     >
-// // //                         Nuevo
-// // //                     </button>
-// // //                 </div>
-// // //             </div>
-
-// // //             <div className="bg-white rounded-2xl shadow-sm border">
-// // //                 <div className="overflow-x-auto">
-// // //                     <table className="min-w-full text-sm">
-// // //                         <thead className="bg-gray-50 text-gray-600">
-// // //                             <tr>
-// // //                                 <th className="text-left px-4 py-2">Código</th>
-// // //                                 <th className="text-left px-4 py-2">Nombre</th>
-// // //                                 <th className="text-left px-4 py-2">Sistema</th>
-// // //                                 <th className="text-left px-4 py-2">Tipo</th>
-// // //                                 <th className="text-left px-4 py-2">Std (min)</th>
-// // //                                 <th className="text-left px-4 py-2">Estado</th>
-// // //                                 <th className="text-right px-4 py-2">Acciones</th>
-// // //                             </tr>
-// // //                         </thead>
-// // //                         <tbody>
-// // //                             {isLoading && (
-// // //                                 <tr>
-// // //                                     <td colSpan={7} className="px-4 py-6 text-center text-gray-500">
-// // //                                         Cargando…
-// // //                                     </td>
-// // //                                 </tr>
-// // //                             )}
-// // //                             {error && (
-// // //                                 <tr>
-// // //                                     <td colSpan={7} className="px-4 py-6 text-center text-red-600">
-// // //                                         Error al cargar
-// // //                                     </td>
-// // //                                 </tr>
-// // //                             )}
-// // //                             {data?.items?.map((r) => (
-// // //                                 <tr key={r._id} className="border-t hover:bg-gray-50">
-// // //                                     <td className="px-4 py-2">{r.code || '-'}</td>
-// // //                                     <td className="px-4 py-2">{r.name || '-'}</td>
-// // //                                     <td className="px-4 py-2">{r.systemKey || '-'}</td>
-// // //                                     <td className="px-4 py-2">{r.repairType || '-'}</td>
-// // //                                     <td className="px-4 py-2">{Number(r.standardLaborMinutes || 0)}</td>
-// // //                                     <td className="px-4 py-2">{r.active ? 'Activo' : 'Inactivo'}</td>
-// // //                                     <td className="px-4 py-2 text-right">
-// // //                                         <button
-// // //                                             className="text-[var(--fc-primary)] mr-3"
-// // //                                             onClick={() => navigate(`/config/catalogs/repairs/${r._id}?mode=view`)}
-// // //                                         >
-// // //                                             Ver
-// // //                                         </button>
-// // //                                         <button
-// // //                                             className="text-[var(--fc-primary)]"
-// // //                                             onClick={() => navigate(`/config/catalogs/repairs/${r._id}`)}
-// // //                                         >
-// // //                                             Editar
-// // //                                         </button>
-// // //                                     </td>
-// // //                                 </tr>
-// // //                             ))}
-// // //                             {!isLoading && !error && (data?.items?.length ?? 0) === 0 && (
-// // //                                 <tr>
-// // //                                     <td colSpan={7} className="px-4 py-6 text-center text-gray-500">
-// // //                                         Sin resultados
-// // //                                     </td>
-// // //                                 </tr>
-// // //                             )}
-// // //                         </tbody>
-// // //                     </table>
-// // //                 </div>
-
-// // //                 <div className="flex items-center justify-between px-4 py-3">
-// // //                     <div className="text-xs text-gray-500">Total: {data?.total ?? 0}</div>
-// // //                     <Paginator
-// // //                         page={data?.page ?? page}
-// // //                         pages={data?.pages ?? 1}
-// // //                         onPage={(p) => setPage(KEY, p)}
-// // //                     />
-// // //                 </div>
-// // //             </div>
-// // //         </div>
-// // //     )
-// // // }
-
-// // // //v2 29012026
-// // // // front/src/pages/Repairs/List.jsx
-// // // // -----------------------------------------------------------------------------
-// // // // Catálogo → Reparaciones (Taller / Técnico)
-// // // // - Lista paginada (items/total/page/limit)
-// // // // - Búsqueda por código/nombre/sistema
-// // // // -----------------------------------------------------------------------------
-
-// // // import { useEffect, useMemo, useState } from 'react'
-// // // import { Link, useSearchParams } from 'react-router-dom'
-// // // import { RepairsAPI } from '../../api/repairs.api'
-// // // import Paginator from '../../components/table/Paginator'
-// // // import LimitSelect from '../../components/table/LimitSelect'
-// // // import vehicleTaxonomy from '../../data/fleetcore/vehicle-taxonomy.json'
-
-// // // export default function RepairsList(){
-// // //   const [sp, setSp] = useSearchParams()
-// // //   const page = Number(sp.get('page') || 1)
-// // //   const limit = Number(sp.get('limit') || 20)
-// // //   const q = sp.get('q') || ''
-// // //   const active = sp.get('active') || ''
-
-// // //   const [loading, setLoading] = useState(false)
-// // //   const [items, setItems] = useState([])
-// // //   const [total, setTotal] = useState(0)
-
-// // //   const systemsMap = useMemo(() => {
-// // //     const m = new Map()
-// // //     ;(vehicleTaxonomy?.systems || []).forEach(s => m.set(s.key, s.label))
-// // //     return m
-// // //   }, [])
-
-// // //   const load = async () => {
-// // //     setLoading(true)
-// // //     try{
-// // //       const { data } = await RepairsAPI.list({ page, limit, q, active })
-// // //       setItems(data?.items || [])
-// // //       setTotal(Number(data?.total || 0))
-// // //     }catch(err){
-// // //       console.error(err)
-// // //       alert(err?.response?.data?.message || 'No fue posible cargar el catálogo')
-// // //       setItems([])
-// // //       setTotal(0)
-// // //     }finally{
-// // //       setLoading(false)
-// // //     }
-// // //   }
-
-// // //   useEffect(() => { load() }, [page, limit, q, active]) // eslint-disable-line react-hooks/exhaustive-deps
-
-// // //   const pages = Math.max(1, Math.ceil((total || 0) / (limit || 1)))
-
-// // //   return (
-// // //     <div>
-// // //       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-// // //         <div>
-// // //           <h1 className="text-xl font-bold">Catálogo · Reparaciones</h1>
-// // //           <p className="text-gray-500 text-sm">Estándares técnicos para OT, KPI y análisis de costos/fallas.</p>
-// // //         </div>
-
-// // //         <div className="flex items-center gap-2">
-// // //           <input
-// // //             className="input border rounded px-3 py-2"
-// // //             placeholder="Buscar por código/nombre/sistema"
-// // //             value={q}
-// // //             onChange={(e) => setSp(prev => { prev.set('q', e.target.value); prev.set('page','1'); return prev }, { replace: true })}
-// // //           />
-// // //           <select
-// // //             className="border rounded px-3 py-2 text-sm"
-// // //             value={active}
-// // //             onChange={(e)=> setSp(prev => { prev.set('active', e.target.value); prev.set('page','1'); return prev }, { replace:true })}
-// // //           >
-// // //             <option value="">Todos</option>
-// // //             <option value="true">Activos</option>
-// // //             <option value="false">Inactivos</option>
-// // //           </select>
-// // //           <LimitSelect value={limit} onChange={(val) => setSp(prev => { prev.set('limit', String(val)); prev.set('page','1'); return prev }, { replace:true })} />
-// // //           <Link className="btn btn-primary px-3 py-2 rounded text-white" to="/config/catalogs/repairs/new">
-// // //             Nuevo
-// // //           </Link>
-// // //         </div>
-// // //       </div>
-
-// // //       <div className="bg-white rounded-2xl shadow-sm border">
-// // //         <div className="overflow-x-auto">
-// // //           <table className="min-w-full text-sm">
-// // //             <thead className="bg-gray-50 text-gray-600">
-// // //               <tr>
-// // //                 <th className="text-left px-4 py-2">Código</th>
-// // //                 <th className="text-left px-4 py-2">Nombre</th>
-// // //                 <th className="text-left px-4 py-2">Sistema</th>
-// // //                 <th className="text-left px-4 py-2">Tipo</th>
-// // //                 <th className="text-left px-4 py-2">Impacto</th>
-// // //                 <th className="text-left px-4 py-2">Std (min)</th>
-// // //                 <th className="text-left px-4 py-2">Activo</th>
-// // //                 <th className="text-right px-4 py-2">Acciones</th>
-// // //               </tr>
-// // //             </thead>
-// // //             <tbody>
-// // //               {loading && (
-// // //                 <tr><td colSpan={8} className="px-4 py-6 text-gray-500">Cargando…</td></tr>
-// // //               )}
-
-// // //               {!loading && !items.length && (
-// // //                 <tr><td colSpan={8} className="px-4 py-6 text-gray-500">Sin resultados</td></tr>
-// // //               )}
-
-// // //               {!loading && items.map((it) => (
-// // //                 <tr key={it._id} className="border-t">
-// // //                   <td className="px-4 py-2 font-mono text-xs text-gray-700">{it.code}</td>
-// // //                   <td className="px-4 py-2">{it.name}</td>
-// // //                   <td className="px-4 py-2 text-gray-700">{systemsMap.get(it.systemKey) || it.systemKey || '—'}</td>
-// // //                   <td className="px-4 py-2">{it.type || '—'}</td>
-// // //                   <td className="px-4 py-2">{it.operationalImpact || '—'}</td>
-// // //                   <td className="px-4 py-2">{Number(it.standardLaborMinutes || 0)}</td>
-// // //                   <td className="px-4 py-2">{it.isActive !== false ? 'Sí' : 'No'}</td>
-// // //                   <td className="px-4 py-2 text-right">
-// // //                     <div className="inline-flex items-center gap-2">
-// // //                       <Link className="underline text-blue-700" to={`/config/catalogs/repairs/${it._id}?mode=view`}>Ver</Link>
-// // //                       <Link className="underline text-blue-700" to={`/config/catalogs/repairs/${it._id}`}>Editar</Link>
-// // //                     </div>
-// // //                   </td>
-// // //                 </tr>
-// // //               ))}
-// // //             </tbody>
-// // //           </table>
-// // //         </div>
-
-// // //         <div className="flex items-center justify-between px-4 py-3 border-t">
-// // //           <div className="text-sm text-gray-600">Total: <span className="font-medium">{total}</span></div>
-// // //           <Paginator page={page} pages={pages} onPage={(p)=> setSp(prev => { prev.set('page', String(p)); return prev }, { replace:true })} />
-// // //         </div>
-// // //       </div>
-// // //     </div>
-// // //   )
-// // // }
-
 // // // front/src/pages/Repairs/List.jsx
 // // // -----------------------------------------------------------------------------
-// // // Catálogo → Reparaciones (Taller / Técnico)
+// // // Catálogo → Reparaciones (Taller)
 // // // - Lista paginada (items/total/page/limit)
-// // // - Filtro principal por CÓDIGO (pensado para uso rápido en OT/KPI)
-// // // - Look & feel alineado con RRHH/Usuarios (card + header interno + footer)
+// // // - Filtros: código + estado
+// // // - UI alineada al estándar FleetCore (FailureReports)
 // // // -----------------------------------------------------------------------------
 
-// // import { useEffect, useMemo, useState } from 'react'
-// // import { Link, useSearchParams } from 'react-router-dom'
-// // import { RepairsAPI } from '../../api/repairs.api'
-// // import Paginator from '../../components/table/Paginator'
-// // import LimitSelect from '../../components/table/LimitSelect'
-// // import vehicleTaxonomy from '../../data/fleetcore/vehicle-taxonomy.json'
+// // import { useEffect, useMemo, useState } from "react";
+// // import { Link, useSearchParams } from "react-router-dom";
+// // import { RepairsAPI } from "../../api/repairs.api";
+// // import Paginator from "../../components/table/Paginator";
+// // import LimitSelect from "../../components/table/LimitSelect";
+// // import vehicleTaxonomy from "../../data/fleetcore/vehicle-taxonomy.json";
 
-// // export default function RepairsList(){
-// //   const [sp, setSp] = useSearchParams()
-// //   const page = Number(sp.get('page') || 1)
-// //   const limit = Number(sp.get('limit') || 20)
-// //   // Para evitar ambigüedades: usamos "code" en URL, pero lo enviamos como q al backend.
-// //   const code = sp.get('code') || ''
-// //   const active = sp.get('active') || ''
+// // export default function RepairsList() {
+// //   const [sp, setSp] = useSearchParams();
 
-// //   const [loading, setLoading] = useState(false)
-// //   const [items, setItems] = useState([])
-// //   const [total, setTotal] = useState(0)
+// //   const page = Number(sp.get("page") || 1);
+// //   const limit = Number(sp.get("limit") || 20);
+// //   const code = sp.get("code") || "";
+// //   const active = sp.get("active") ?? "";
+
+// //   const [loading, setLoading] = useState(false);
+// //   const [items, setItems] = useState([]);
+// //   const [total, setTotal] = useState(0);
 
 // //   const systemsMap = useMemo(() => {
-// //     const m = new Map()
-// //     ;(vehicleTaxonomy?.systems || []).forEach(s => m.set(s.key, s.label))
-// //     return m
-// //   }, [])
+// //     const m = new Map();
+// //     (vehicleTaxonomy?.systems || []).forEach((s) => m.set(s.key, s.label));
+// //     return m;
+// //   }, []);
+
+// //   const rowIsActive = (it) => {
+// //     if (typeof it?.isActive === "boolean") return it.isActive;
+// //     if (typeof it?.active === "boolean") return it.active;
+// //     return true;
+// //   };
 
 // //   const load = async () => {
-// //     setLoading(true)
-// //     try{
-// //       const { data } = await RepairsAPI.list({ page, limit, q: code, active })
-// //       setItems(data?.items || [])
-// //       setTotal(Number(data?.total || 0))
-// //     }catch(err){
-// //       console.error(err)
-// //       alert(err?.response?.data?.message || 'No fue posible cargar el catálogo')
-// //       setItems([])
-// //       setTotal(0)
-// //     }finally{
-// //       setLoading(false)
+// //     setLoading(true);
+// //     try {
+// //       const { data } = await RepairsAPI.list({ page, limit, q: code, active });
+// //       setItems(data?.items || []);
+// //       setTotal(Number(data?.total || 0));
+// //     } catch (err) {
+// //       console.error(err);
+// //       alert(err?.response?.data?.message || "No fue posible cargar el catálogo");
+// //       setItems([]);
+// //       setTotal(0);
+// //     } finally {
+// //       setLoading(false);
 // //     }
-// //   }
+// //   };
 
-// //   useEffect(() => { load() }, [page, limit, code, active]) // eslint-disable-line react-hooks/exhaustive-deps
+// //   useEffect(() => {
+// //     load();
+// //   }, [page, limit, code, active]); // eslint-disable-line react-hooks/exhaustive-deps
 
-// //   const pages = Math.max(1, Math.ceil((total || 0) / (limit || 1)))
+// //   const pages = Math.max(1, Math.ceil((total || 0) / (limit || 1)));
+
+// //   const sortedItems = useMemo(() => {
+// //     const arr = Array.isArray(items) ? [...items] : [];
+// //     arr.sort((a, b) => {
+// //       const ac = String(a?.code || "").trim().toUpperCase();
+// //       const bc = String(b?.code || "").trim().toUpperCase();
+// //       return ac.localeCompare(bc, "es", { numeric: true });
+// //     });
+// //     return arr;
+// //   }, [items]);
 
 // //   return (
-// //     <div className="p-6">
-// //       <div className="mb-4">
-// //         <h1 className="text-xl font-bold">Catálogo · Reparaciones</h1>
-// //         <p className="text-gray-500 text-sm">Estándares técnicos para OT, KPI y análisis de costos/fallas.</p>
-// //       </div>
-
-// //       <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-// //         {/* Header interno: cierra esquinas superiores */}
-// //         <div className="px-4 py-3 border-b bg-white">
-// //           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
-// //             <div className="text-sm text-gray-500">
-// //               {loading ? 'Cargando…' : `Registros: ${total}`}
-// //             </div>
-
-// //             <div className="flex flex-col md:flex-row md:items-center gap-2">
-// //               <div className="flex items-center gap-2">
-// //                 <label className="text-sm text-gray-600">Código</label>
-// //                 <input
-// //                   className="border rounded px-3 py-2 text-sm w-72"
-// //                   placeholder="Ej: REP-FREN-001"
-// //                   value={code}
-// //                   onChange={(e) =>
-// //                     setSp(prev => {
-// //                       const v = e.target.value
-// //                       if (v) prev.set('code', v); else prev.delete('code')
-// //                       prev.set('page', '1')
-// //                       return prev
-// //                     }, { replace: true })
-// //                   }
-// //                 />
-// //               </div>
-
-// //               <div className="flex items-center gap-2">
-// //                 <label className="text-sm text-gray-600">Estado</label>
-// //                 <select
-// //                   className="border rounded px-3 py-2 text-sm"
-// //                   value={active}
-// //                   onChange={(e)=> setSp(prev => {
-// //                     const v = e.target.value
-// //                     if (v !== '') prev.set('active', v); else prev.delete('active')
-// //                     prev.set('page','1')
-// //                     return prev
-// //                   }, { replace:true })}
-// //                 >
-// //                   <option value="">Todos</option>
-// //                   <option value="true">Activos</option>
-// //                   <option value="false">Inactivos</option>
-// //                 </select>
-// //               </div>
-
-// //               <LimitSelect
-// //                 value={limit}
-// //                 onChange={(val) =>
-// //                   setSp(prev => {
-// //                     prev.set('limit', String(val))
-// //                     prev.set('page', '1')
-// //                     return prev
-// //                   }, { replace:true })
-// //                 }
-// //               />
-// //             </div>
-// //           </div>
+// //     <div className="p-6 space-y-6">
+// //       {/* Franja superior */}
+// //       <div className="flex items-start justify-between gap-3 flex-wrap">
+// //         <div>
+// //           <h1 className="text-xl font-bold">Catálogo · Reparaciones</h1>
+// //           <p className="text-gray-500 text-sm">
+// //             Estándares técnicos para OT, KPI y análisis de costos/fallas.
+// //           </p>
 // //         </div>
 
+// //         {/* TODO EN UNA LÍNEA (código + estado + nuevo) */}
+// //         <div className="flex items-center gap-2 flex-wrap justify-end">
+// //           <input
+// //             className="border rounded-md px-3 py-2 text-sm w-56"
+// //             placeholder="Buscar por código"
+// //             value={code}
+// //             onChange={(e) =>
+// //               setSp(
+// //                 (prev) => {
+// //                   const v = e.target.value;
+// //                   if (v) prev.set("code", v);
+// //                   else prev.delete("code");
+// //                   prev.set("page", "1");
+// //                   return prev;
+// //                 },
+// //                 { replace: true }
+// //               )
+// //             }
+// //           />
+
+// //           <select
+// //             className="border rounded-md px-3 py-2 text-sm w-44"
+// //             value={active}
+// //             onChange={(e) =>
+// //               setSp(
+// //                 (prev) => {
+// //                   const v = e.target.value;
+// //                   if (v !== "") prev.set("active", v);
+// //                   else prev.delete("active");
+// //                   prev.set("page", "1");
+// //                   return prev;
+// //                 },
+// //                 { replace: true }
+// //               )
+// //             }
+// //           >
+// //             <option value="">Activo (todos)</option>
+// //             <option value="true">Activos</option>
+// //             <option value="false">Inactivos</option>
+// //           </select>
+
+// //           <Link
+// //             className="px-5 py-2 rounded-md bg-[var(--fc-primary)] hover:opacity-95 text-white whitespace-nowrap"
+// //             to="/config/catalogs/repairs/new"
+// //           >
+// //             Nueva reparación
+// //           </Link>
+// //         </div>
+// //       </div>
+
+// //       {/* Tabla */}
+// //       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
 // //         <div className="overflow-x-auto">
 // //           <table className="min-w-full text-sm">
 // //             <thead className="bg-gray-50 text-gray-600">
@@ -405,62 +146,110 @@
 // //                 <th className="text-right px-4 py-2">Acciones</th>
 // //               </tr>
 // //             </thead>
+
 // //             <tbody>
 // //               {loading && (
-// //                 <tr><td colSpan={8} className="px-4 py-6 text-gray-500">Cargando…</td></tr>
-// //               )}
-
-// //               {!loading && !items.length && (
-// //                 <tr><td colSpan={8} className="px-4 py-6 text-gray-500">Sin resultados</td></tr>
-// //               )}
-
-// //               {!loading && items.map((it) => (
-// //                 <tr key={it._id} className="border-t">
-// //                   <td className="px-4 py-2 font-mono text-xs text-gray-700">{it.code}</td>
-// //                   <td className="px-4 py-2">{it.name}</td>
-// //                   <td className="px-4 py-2 text-gray-700">{systemsMap.get(it.systemKey) || it.systemKey || '—'}</td>
-// //                   <td className="px-4 py-2">{it.type || it.repairType || '—'}</td>
-// //                   <td className="px-4 py-2">{it.operationalImpact || it.operationalImpactDefault || '—'}</td>
-// //                   <td className="px-4 py-2">{Number(it.standardLaborMinutes || 0)}</td>
-// //                   <td className="px-4 py-2">{(it.isActive ?? it.active) !== false ? 'Sí' : 'No'}</td>
-// //                   <td className="px-4 py-2 text-right">
-// //                     <div className="inline-flex items-center gap-2">
-// //                       <Link className="underline text-blue-700" to={`/config/catalogs/repairs/${it._id}?mode=view`}>Ver</Link>
-// //                       <Link className="underline text-blue-700" to={`/config/catalogs/repairs/${it._id}`}>Editar</Link>
-// //                     </div>
+// //                 <tr>
+// //                   <td colSpan={8} className="px-4 py-6 text-gray-500">
+// //                     Cargando…
 // //                   </td>
 // //                 </tr>
-// //               ))}
+// //               )}
+
+// //               {!loading && !sortedItems.length && (
+// //                 <tr>
+// //                   <td colSpan={8} className="px-4 py-6 text-gray-500">
+// //                     Sin resultados
+// //                   </td>
+// //                 </tr>
+// //               )}
+
+// //               {!loading &&
+// //                 sortedItems.map((it) => (
+// //                   <tr key={it._id} className="border-t">
+// //                     <td className="px-4 py-2 font-mono text-xs text-gray-700">
+// //                       {it.code}
+// //                     </td>
+// //                     <td className="px-4 py-2">{it.name}</td>
+// //                     <td className="px-4 py-2 text-gray-700">
+// //                       {systemsMap.get(it.systemKey) || it.systemKey || "—"}
+// //                     </td>
+// //                     <td className="px-4 py-2">
+// //                       {it.type || it.repairType || "—"}
+// //                     </td>
+// //                     <td className="px-4 py-2">
+// //                       {it.operationalImpact ||
+// //                         it.operationalImpactDefault ||
+// //                         "—"}
+// //                     </td>
+// //                     <td className="px-4 py-2">
+// //                       {Number(it.standardLaborMinutes || 0)}
+// //                     </td>
+// //                     <td className="px-4 py-2">{rowIsActive(it) ? "Sí" : "No"}</td>
+
+// //                     <td className="px-4 py-2">
+// //                       <div className="flex justify-end">
+// //                         <div className="inline-flex items-center gap-2">
+// //                           <Link
+// //                             className="border border-[var(--fc-primary)] text-[var(--fc-primary)] rounded-md px-4 py-1.5 text-sm hover:bg-[color:var(--fc-primary)] hover:text-white"
+// //                             to={`/config/catalogs/repairs/${it._id}?mode=view`}
+// //                           >
+// //                             Ver
+// //                           </Link>
+// //                           <Link
+// //                             className="border border-[var(--fc-primary)] text-[var(--fc-primary)] rounded-md px-4 py-1.5 text-sm hover:bg-[color:var(--fc-primary)] hover:text-white"
+// //                             to={`/config/catalogs/repairs/${it._id}`}
+// //                           >
+// //                             Editar
+// //                           </Link>
+// //                         </div>
+// //                       </div>
+// //                     </td>
+// //                   </tr>
+// //                 ))}
 // //             </tbody>
 // //           </table>
 // //         </div>
 
-// //         {/* Footer interno */}
-// //         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-4 py-3 border-t bg-white">
+// //         {/* Footer */}
+// //         <div className="flex items-center justify-between px-4 py-3 border-t">
+// //           <div className="text-sm text-gray-600">
+// //             Total: <span className="font-medium">{total}</span>
+// //           </div>
+
 // //           <div className="flex items-center gap-3">
-// //             <div className="text-sm text-gray-600">
-// //               Página <span className="font-medium">{page}</span> de <span className="font-medium">{pages}</span>
-// //             </div>
 // //             <Paginator
 // //               page={page}
 // //               pages={pages}
-// //               onPage={(p)=> setSp(prev => { prev.set('page', String(p)); return prev }, { replace:true })}
+// //               onPage={(p) =>
+// //                 setSp(
+// //                   (prev) => {
+// //                     prev.set("page", String(p));
+// //                     return prev;
+// //                   },
+// //                   { replace: true }
+// //                 )
+// //               }
 // //             />
-// //           </div>
 
-// //           {/* Botón al pie: "Crear" (patrón FleetCore) */}
-// //           <div className="flex items-center justify-end">
-// //             <Link
-// //               className="btn btn-primary rounded px-4 py-2 text-white"
-// //               to="/config/catalogs/repairs/new"
-// //             >
-// //               Crear
-// //             </Link>
+// //             <LimitSelect
+// //               value={limit}
+// //               onChange={(val) =>
+// //                 setSp(
+// //                   (prev) => {
+// //                     prev.set("limit", String(val));
+// //                     prev.set("page", "1");
+// //                     return prev;
+// //                   },
+// //                   { replace: true }
+// //                 )
+// //               }
+// //             />
 // //           </div>
 // //         </div>
 // //       </div>
 // //     </div>
-// //   )
+// //   );
 // // }
 
 // // front/src/pages/Repairs/List.jsx
@@ -477,6 +266,7 @@
 // import Paginator from "../../components/table/Paginator";
 // import LimitSelect from "../../components/table/LimitSelect";
 // import vehicleTaxonomy from "../../data/fleetcore/vehicle-taxonomy.json";
+// import repairTaxonomy from "../../data/fleetcore/repair-taxonomy.json";
 
 // export default function RepairsList() {
 //   const [sp, setSp] = useSearchParams();
@@ -495,6 +285,68 @@
 //     (vehicleTaxonomy?.systems || []).forEach((s) => m.set(s.key, s.label));
 //     return m;
 //   }, []);
+
+
+//   const normalizeOptions = (opt) => {
+//     // Opción B: [{ v, l }]
+//     if (Array.isArray(opt) && opt.length && typeof opt[0] === "object") {
+//       return opt
+//         .filter(Boolean)
+//         .map((o) => ({ v: String(o.v || ""), l: String(o.l || o.v || "") }))
+//         .filter((o) => o.v);
+//     }
+//     // Opción A: ["X", "Y"] => label=value
+//     if (Array.isArray(opt) && opt.length && typeof opt[0] === "string") {
+//       return opt.map((v) => ({ v: String(v), l: String(v) }));
+//     }
+//     return [];
+//   };
+
+//   const typeLabelMap = useMemo(() => {
+//     const m = new Map();
+//     normalizeOptions(repairTaxonomy?.options?.types).forEach((o) =>
+//       m.set(String(o.v).toUpperCase(), o.l)
+//     );
+//     return m;
+//   }, []);
+
+//   const severityLabelMap = useMemo(() => {
+//     const m = new Map();
+//     normalizeOptions(repairTaxonomy?.options?.severities).forEach((o) =>
+//       m.set(String(o.v).toUpperCase(), o.l)
+//     );
+//     return m;
+//   }, []);
+
+//   const impactLabelMap = useMemo(() => {
+//     const m = new Map();
+//     normalizeOptions(repairTaxonomy?.options?.operationalImpacts).forEach((o) =>
+//       m.set(String(o.v).toUpperCase(), o.l)
+//     );
+//     return m;
+//   }, []);
+
+//   const typeLabel = (it) => {
+//     const raw = it?.type || it?.repairType || "";
+//     const key = String(raw || "").trim().toUpperCase();
+//     return typeLabelMap.get(key) || raw || "—";
+//   };
+
+//   const severityLabel = (it) => {
+//     const raw = it?.severityDefault || it?.severity || "";
+//     const key = String(raw || "").trim().toUpperCase();
+//     return severityLabelMap.get(key) || raw || "—";
+//   };
+
+//   const impactLabel = (it) => {
+//     const raw =
+//       it?.operationalImpact ||
+//       it?.operationalImpactDefault ||
+//       it?.operationalImpactDefaultKey ||
+//       "";
+//     const key = String(raw || "").trim().toUpperCase();
+//     return impactLabelMap.get(key) || raw || "—";
+//   };
 
 //   const rowIsActive = (it) => {
 //     if (typeof it?.isActive === "boolean") return it.isActive;
@@ -537,8 +389,7 @@
 //   return (
 //     <div className="p-6 space-y-6">
 //       {/* Franja superior */}
-//       {/* flex items-start justify-between gap-3 flex-wrap */}
-//       <div className="flex flex-start justify-between gap-3 flex-wrap">
+//       <div className="flex items-start justify-between gap-3 flex-wrap">
 //         <div>
 //           <h1 className="text-xl font-bold">Catálogo · Reparaciones</h1>
 //           <p className="text-gray-500 text-sm">
@@ -549,7 +400,7 @@
 //         {/* TODO EN UNA LÍNEA (código + estado + nuevo) */}
 //         <div className="flex items-center gap-2 flex-wrap justify-end">
 //           <input
-//             className="border rounded px-3 py-2 text-sm w-56"
+//             className="border rounded-md px-3 py-2 text-sm w-56"
 //             placeholder="Buscar por código"
 //             value={code}
 //             onChange={(e) =>
@@ -567,7 +418,7 @@
 //           />
 
 //           <select
-//             className="border rounded px-3 py-2 text-sm w-44"
+//             className="border rounded-md px-3 py-2 text-sm w-44"
 //             value={active}
 //             onChange={(e) =>
 //               setSp(
@@ -588,7 +439,7 @@
 //           </select>
 
 //           <Link
-//             className="px-5 py-2 rounded bg-[var(--fc-primary)] hover:opacity-95 text-white whitespace-nowrap"
+//             className="px-5 py-2 rounded-md bg-[var(--fc-primary)] hover:opacity-95 text-white whitespace-nowrap"
 //             to="/config/catalogs/repairs/new"
 //           >
 //             Nueva reparación
@@ -597,7 +448,7 @@
 //       </div>
 
 //       {/* Tabla */}
-//       <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+//       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
 //         <div className="overflow-x-auto">
 //           <table className="min-w-full text-sm">
 //             <thead className="bg-gray-50 text-gray-600">
@@ -606,6 +457,7 @@
 //                 <th className="text-left px-4 py-2">Nombre</th>
 //                 <th className="text-left px-4 py-2">Sistema</th>
 //                 <th className="text-left px-4 py-2">Tipo</th>
+//                 <th className="text-left px-4 py-2">Severidad</th>
 //                 <th className="text-left px-4 py-2">Impacto</th>
 //                 <th className="text-left px-4 py-2">Std (min)</th>
 //                 <th className="text-left px-4 py-2">Activo</th>
@@ -616,7 +468,7 @@
 //             <tbody>
 //               {loading && (
 //                 <tr>
-//                   <td colSpan={8} className="px-4 py-6 text-gray-500">
+//                   <td colSpan={9} className="px-4 py-6 text-gray-500">
 //                     Cargando…
 //                   </td>
 //                 </tr>
@@ -624,7 +476,7 @@
 
 //               {!loading && !sortedItems.length && (
 //                 <tr>
-//                   <td colSpan={8} className="px-4 py-6 text-gray-500">
+//                   <td colSpan={9} className="px-4 py-6 text-gray-500">
 //                     Sin resultados
 //                   </td>
 //                 </tr>
@@ -641,31 +493,26 @@
 //                       {systemsMap.get(it.systemKey) || it.systemKey || "—"}
 //                     </td>
 //                     <td className="px-4 py-2">
-//                       {it.type || it.repairType || "—"}
+//                       {typeLabel(it)}
 //                     </td>
-//                     <td className="px-4 py-2">
-//                       {it.operationalImpact ||
-//                         it.operationalImpactDefault ||
-//                         "—"}
-//                     </td>
+//                     <td className="px-4 py-2">{severityLabel(it)}</td>
+//                     <td className="px-4 py-2">{impactLabel(it)}</td>
 //                     <td className="px-4 py-2">
 //                       {Number(it.standardLaborMinutes || 0)}
 //                     </td>
-//                     <td className="px-4 py-2">
-//                       {rowIsActive(it) ? "Sí" : "No"}
-//                     </td>
+//                     <td className="px-4 py-2">{rowIsActive(it) ? "Sí" : "No"}</td>
 
 //                     <td className="px-4 py-2">
 //                       <div className="flex justify-end">
 //                         <div className="inline-flex items-center gap-2">
 //                           <Link
-//                             className="border border-[var(--fc-primary)] text-[var(--fc-primary)] rounded px-4 py-1.5 text-sm hover:bg-[color:var(--fc-primary)] hover:text-white"
+//                             className="border border-[var(--fc-primary)] text-[var(--fc-primary)] rounded-md px-4 py-1.5 text-sm hover:bg-[color:var(--fc-primary)] hover:text-white"
 //                             to={`/config/catalogs/repairs/${it._id}?mode=view`}
 //                           >
 //                             Ver
 //                           </Link>
 //                           <Link
-//                             className="border border-[var(--fc-primary)] text-[var(--fc-primary)] rounded px-4 py-1.5 text-sm hover:bg-[color:var(--fc-primary)] hover:text-white"
+//                             className="border border-[var(--fc-primary)] text-[var(--fc-primary)] rounded-md px-4 py-1.5 text-sm hover:bg-[color:var(--fc-primary)] hover:text-white"
 //                             to={`/config/catalogs/repairs/${it._id}`}
 //                           >
 //                             Editar
@@ -720,7 +567,6 @@
 //   );
 // }
 
-
 // front/src/pages/Repairs/List.jsx
 // -----------------------------------------------------------------------------
 // Catálogo → Reparaciones (Taller)
@@ -735,6 +581,7 @@ import { RepairsAPI } from "../../api/repairs.api";
 import Paginator from "../../components/table/Paginator";
 import LimitSelect from "../../components/table/LimitSelect";
 import vehicleTaxonomy from "../../data/fleetcore/vehicle-taxonomy.json";
+import repairTaxonomy from "../../data/fleetcore/repair-taxonomy.json";
 
 export default function RepairsList() {
   const [sp, setSp] = useSearchParams();
@@ -753,6 +600,68 @@ export default function RepairsList() {
     (vehicleTaxonomy?.systems || []).forEach((s) => m.set(s.key, s.label));
     return m;
   }, []);
+
+
+  const normalizeOptions = (opt) => {
+    // Opción B: [{ v, l }]
+    if (Array.isArray(opt) && opt.length && typeof opt[0] === "object") {
+      return opt
+        .filter(Boolean)
+        .map((o) => ({ v: String(o.v || ""), l: String(o.l || o.v || "") }))
+        .filter((o) => o.v);
+    }
+    // Opción A: ["X", "Y"] => label=value
+    if (Array.isArray(opt) && opt.length && typeof opt[0] === "string") {
+      return opt.map((v) => ({ v: String(v), l: String(v) }));
+    }
+    return [];
+  };
+
+  const typeLabelMap = useMemo(() => {
+    const m = new Map();
+    normalizeOptions(repairTaxonomy?.options?.types).forEach((o) =>
+      m.set(String(o.v).toUpperCase(), o.l)
+    );
+    return m;
+  }, []);
+
+  const severityLabelMap = useMemo(() => {
+    const m = new Map();
+    normalizeOptions(repairTaxonomy?.options?.severities).forEach((o) =>
+      m.set(String(o.v).toUpperCase(), o.l)
+    );
+    return m;
+  }, []);
+
+  const impactLabelMap = useMemo(() => {
+    const m = new Map();
+    normalizeOptions(repairTaxonomy?.options?.operationalImpacts).forEach((o) =>
+      m.set(String(o.v).toUpperCase(), o.l)
+    );
+    return m;
+  }, []);
+
+  const typeLabel = (it) => {
+    const raw = it?.type || it?.repairType || "";
+    const key = String(raw || "").trim().toUpperCase();
+    return typeLabelMap.get(key) || raw || "—";
+  };
+
+  const severityLabel = (it) => {
+    const raw = it?.severityDefault || it?.severity || "";
+    const key = String(raw || "").trim().toUpperCase();
+    return severityLabelMap.get(key) || raw || "—";
+  };
+
+  const impactLabel = (it) => {
+    const raw =
+      it?.operationalImpact ||
+      it?.operationalImpactDefault ||
+      it?.operationalImpactDefaultKey ||
+      "";
+    const key = String(raw || "").trim().toUpperCase();
+    return impactLabelMap.get(key) || raw || "—";
+  };
 
   const rowIsActive = (it) => {
     if (typeof it?.isActive === "boolean") return it.isActive;
@@ -806,7 +715,7 @@ export default function RepairsList() {
         {/* TODO EN UNA LÍNEA (código + estado + nuevo) */}
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <input
-            className="border rounded px-3 py-2 text-sm w-56"
+            className="border rounded-md px-3 py-2 text-sm w-56"
             placeholder="Buscar por código"
             value={code}
             onChange={(e) =>
@@ -824,7 +733,7 @@ export default function RepairsList() {
           />
 
           <select
-            className="border rounded px-3 py-2 text-sm w-44"
+            className="border rounded-md px-3 py-2 text-sm w-44"
             value={active}
             onChange={(e) =>
               setSp(
@@ -845,7 +754,7 @@ export default function RepairsList() {
           </select>
 
           <Link
-            className="px-5 py-2 rounded bg-[var(--fc-primary)] hover:opacity-95 text-white whitespace-nowrap"
+            className="px-5 py-2 rounded-md bg-[var(--fc-primary)] hover:opacity-95 text-white whitespace-nowrap"
             to="/config/catalogs/repairs/new"
           >
             Nueva reparación
@@ -854,7 +763,7 @@ export default function RepairsList() {
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-gray-600">
@@ -863,6 +772,7 @@ export default function RepairsList() {
                 <th className="text-left px-4 py-2">Nombre</th>
                 <th className="text-left px-4 py-2">Sistema</th>
                 <th className="text-left px-4 py-2">Tipo</th>
+                <th className="text-left px-4 py-2">Severidad</th>
                 <th className="text-left px-4 py-2">Impacto</th>
                 <th className="text-left px-4 py-2">Std (min)</th>
                 <th className="text-left px-4 py-2">Activo</th>
@@ -873,7 +783,7 @@ export default function RepairsList() {
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-6 text-gray-500">
+                  <td colSpan={9} className="px-4 py-6 text-gray-500">
                     Cargando…
                   </td>
                 </tr>
@@ -881,7 +791,7 @@ export default function RepairsList() {
 
               {!loading && !sortedItems.length && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-6 text-gray-500">
+                  <td colSpan={9} className="px-4 py-6 text-gray-500">
                     Sin resultados
                   </td>
                 </tr>
@@ -898,31 +808,26 @@ export default function RepairsList() {
                       {systemsMap.get(it.systemKey) || it.systemKey || "—"}
                     </td>
                     <td className="px-4 py-2">
-                      {it.type || it.repairType || "—"}
+                      {typeLabel(it)}
                     </td>
-                    <td className="px-4 py-2">
-                      {it.operationalImpact ||
-                        it.operationalImpactDefault ||
-                        "—"}
-                    </td>
+                    <td className="px-4 py-2">{severityLabel(it)}</td>
+                    <td className="px-4 py-2">{impactLabel(it)}</td>
                     <td className="px-4 py-2">
                       {Number(it.standardLaborMinutes || 0)}
                     </td>
-                    <td className="px-4 py-2">
-                      {rowIsActive(it) ? "Sí" : "No"}
-                    </td>
+                    <td className="px-4 py-2">{rowIsActive(it) ? "Sí" : "No"}</td>
 
                     <td className="px-4 py-2">
                       <div className="flex justify-end">
                         <div className="inline-flex items-center gap-2">
                           <Link
-                            className="border border-[var(--fc-primary)] text-[var(--fc-primary)] rounded px-4 py-1.5 text-sm hover:bg-[color:var(--fc-primary)] hover:text-white"
+                            className="border border-[var(--fc-primary)] text-[var(--fc-primary)] rounded-md px-4 py-1.5 text-sm hover:bg-[color:var(--fc-primary)] hover:text-white"
                             to={`/config/catalogs/repairs/${it._id}?mode=view`}
                           >
                             Ver
                           </Link>
                           <Link
-                            className="border border-[var(--fc-primary)] text-[var(--fc-primary)] rounded px-4 py-1.5 text-sm hover:bg-[color:var(--fc-primary)] hover:text-white"
+                            className="border border-[var(--fc-primary)] text-[var(--fc-primary)] rounded-md px-4 py-1.5 text-sm hover:bg-[color:var(--fc-primary)] hover:text-white"
                             to={`/config/catalogs/repairs/${it._id}`}
                           >
                             Editar

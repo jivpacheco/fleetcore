@@ -288,5 +288,57 @@
       "SENALIZACION",
       "BOMBERIL"
     ]
+  },
+  "options": {
+    "types": [
+      {
+        "v": "CORRECTIVE",
+        "l": "Correctiva"
+      },
+      {
+        "v": "PREVENTIVE",
+        "l": "Preventiva"
+      },
+      {
+        "v": "INSPECTION",
+        "l": "Inspección"
+      },
+      {
+        "v": "UPGRADE",
+        "l": "Mejora / U"
+      }
+    ],
+    "severities": [
+      {
+        "v": "LOW",
+        "l": "Baja"
+      },
+      {
+        "v": "MEDIUM",
+        "l": "Media"
+      },
+      {
+        "v": "HIGH",
+        "l": "Alta"
+      },
+      {
+        "v": "CRITICAL",
+        "l": "Crítica"
+      }
+    ],
+    "operationalImpacts": [
+      {
+        "v": "NO_STOP",
+        "l": "Sin detención"
+      },
+      {
+        "v": "LIMITED",
+        "l": "Operación limitada"
+      },
+      {
+        "v": "OUT_OF_SERVICE",
+        "l": "Fuera de servicio"
+      }
+    ]
   }
 }
