@@ -395,7 +395,7 @@ const coreMenu = [
 const catalogsMenu = [
     {
         to: '/config/catalogs/vehicle-statuses',
-        label: 'Estados de vehículo',
+        label: 'Estados vehículo',
         fullLabel: 'Catálogos · Estados de vehículo',
         icon: '📚',
     },
@@ -516,7 +516,8 @@ export default function Sidebar({ mobile = false, className = '' }) {
         <aside
             className={[
                 'bg-white dark:bg-slate-800 border-r dark:border-slate-700 h-full flex flex-col',
-                mobile ? 'w-72' : collapsed ? 'w-16' : 'w-64',
+                mobile ? 'w-[85vw] max-w-[360px]' : collapsed ? 'w-16' : 'w-64',
+                // mobile ? 'w-72' : collapsed ? 'w-16' : 'w-64',
                 'transition-all duration-200',
                 className,
             ].join(' ')}
