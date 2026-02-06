@@ -113,26 +113,228 @@ export const VehicleStatusesAPI = {
         return { items: pickItems(data), ...pickMeta(data) };
     },
 
-    async get(id) {
-        const { data } = await api.get("/api/v1/catalogs", { params: { key: KEY, id } });
-        // back puede devolver item suelto o items[]
-        const items = pickItems(data);
-        const item = data?.item ?? data?.result?.item ?? data?.data?.item ?? items?.[0] ?? null;
-        return item;
+    // async get(id) {
+    //     const { data } = await api.get("/api/v1/catalogs", { params: { key: KEY, id } });
+    //     // back puede devolver item suelto o items[]
+    //     const items = pickItems(data);
+    //     const item = data?.item ?? data?.result?.item ?? data?.data?.item ?? items?.[0] ?? null;
+    //     return item;
+    // },
+
+    async get(idOrKey) {
+        // 1) Intento: pedir “detalle” por params (si el backend lo soporta)
+        try {
+            const { data } = await api.get("/api/v1/catalogs", {
+                params: { key: KEY, id: idOrKey },
+            })
+            const items = pickItems(data)
+            const direct = data?.item ?? data?.result?.item ?? data?.data?.item ?? items?.[0]
+            if (direct && (
+                String(direct?._id || "") === String(idOrKey) ||
+                String(direct?.id || "") === String(idOrKey) ||
+                String(direct?.key || "") === String(idOrKey) ||
+                String(direct?.code || "") === String(idOrKey)
+            )) {
+                return direct
+            }
+        } catch {
+            // seguimos al fallback
+        }
+
+        // 2) Fallback (definitivo): traer lista y encontrar el registro correcto
+        const { data } = await api.get("/api/v1/catalogs", {
+            params: { key: KEY, page: 1, limit: 500 },
+        })
+        const items = pickItems(data)
+
+        const found = items.find((it) =>
+            String(it?._id || "") === String(idOrKey) ||
+            String(it?.id || "") === String(idOrKey) ||
+            String(it?.key || "") === String(idOrKey) ||
+            String(it?.code || "") === String(idOrKey)
+        )
+
+        return found ?? null
     },
+
+
+    // async create(payload) {
+    //     const { data } = await api.post("/api/v1/catalogs", { key: KEY, ...payload });
+    //     return data;
+    // },
+
+    // async update(id, payload) {
+    //     const { data } = await api.post("/api/v1/catalogs", { key: KEY, id, ...payload });
+    //     return data;
+    // },
+
+    // async remove(id) {
+    //     const { data } = await api.post("/api/v1/catalogs", { key: KEY, id, _action: "delete" });
+    //     return data;
+    // },
 
     async create(payload) {
-        const { data } = await api.post("/api/v1/catalogs", { key: KEY, ...payload });
-        return data;
+        const code = String(payload?.code || "").trim()
+        const name = String(payload?.name || "").trim()
+        const active = payload?.active !== false
+
+        // Enviamos varias llaves típicas para cubrir el backend:
+        const body = {
+            // catálogo
+            key: KEY,               // tu backend lo usa en list/get
+            catalogKey: KEY,        // variante común
+            catalog: KEY,           // variante común
+
+            // item (lo que el error exige)
+            label: name,
+            name,                   // compat
+            itemLabel: name,        // compat
+
+            // "código del item": algunos backends le llaman key / itemKey / code
+            itemKey: code,
+            code,
+            itemCode: code,
+
+            // por si el backend usa key como "código del item"
+            // (pero sin perder el key del catálogo):
+            item: { key: code, label: name, active },
+
+            active,
+        }
+
+        const { data } = await api.post("/api/v1/catalogs", body)
+        return data
     },
+
+    // async update(id, payload) {
+    //     const code = String(payload?.code || "").trim()
+    //     const name = String(payload?.name || "").trim()
+    //     const active = payload?.active !== false
+
+    //     const body = {
+    //         id,
+
+    //         // catálogo
+    //         key: KEY,
+    //         catalogKey: KEY,
+    //         catalog: KEY,
+
+    //         // item
+    //         label: name,
+    //         name,
+    //         itemLabel: name,
+
+    //         itemKey: code,
+    //         code,
+    //         itemCode: code,
+
+    //         item: { key: code, label: name, active },
+
+    //         active,
+    //     }
+
+    //     const { data } = await api.post("/api/v1/catalogs", body)
+    //     return data
+    // },
+
+    // async update(id, payload) {
+    //     const code = String(payload?.code || "").trim()
+    //     const name = String(payload?.name || "").trim()
+    //     const active = payload?.active !== false
+
+    //     const body = {
+    //         // id en todas las variantes comunes (para que el back NO lo ignore)
+    //         id,
+    //         _id: id,
+    //         itemId: id,
+
+    //         // catálogo
+    //         key: KEY,
+    //         catalogKey: KEY,
+    //         catalog: KEY,
+
+    //         // item
+    //         label: name,
+    //         name,
+    //         itemLabel: name,
+
+    //         itemKey: code,
+    //         code,
+    //         itemCode: code,
+
+    //         // item completo (algunos backends validan desde aquí)
+    //         item: { id, _id: id, key: code, label: name, active },
+
+    //         active,
+    //     }
+
+    //     const { data } = await api.post("/api/v1/catalogs", body)
+    //     return data
+    // },
 
     async update(id, payload) {
-        const { data } = await api.post("/api/v1/catalogs", { key: KEY, id, ...payload });
-        return data;
+        const code = String(payload?.code || "").trim()
+        const name = String(payload?.name || "").trim()
+        const active = payload?.active !== false
+
+        // Cuerpo estándar de item
+        const item = { id, _id: id, key: code, label: name, active }
+
+        // 1) Intento PATCH (muchos backends lo soportan y aquí sí excluyen por :id)
+        try {
+            const { data } = await api.patch(`/api/v1/catalogs/${id}`, {
+                catalogKey: KEY,
+                key: KEY,
+                itemKey: code,
+                label: name,
+                active,
+                item,
+            })
+            return data
+        } catch (err) {
+            // Si el backend no tiene PATCH para catalogs/:id, caeremos al POST (legacy)
+            if (err?.response?.status && err.response.status !== 404 && err.response.status !== 405) {
+                // Si es 409 u otro, seguimos a fallback porque puede ser bug del endpoint POST
+            }
+        }
+
+        // 2) Fallback POST (lo que usas hoy), pero enviando id de todas las formas
+        const body = {
+            id,
+            _id: id,
+            itemId: id,
+
+            // catálogo
+            key: KEY,
+            catalogKey: KEY,
+            catalog: KEY,
+
+            // item (campos exigidos por backend)
+            label: name,
+            itemKey: code,
+            code,
+            active,
+
+            // item completo
+            item,
+        }
+
+        const { data } = await api.post("/api/v1/catalogs", body)
+        return data
     },
 
+
+
     async remove(id) {
-        const { data } = await api.post("/api/v1/catalogs", { key: KEY, id, _action: "delete" });
-        return data;
+        const body = {
+            id,
+            key: KEY,
+            catalogKey: KEY,
+            catalog: KEY,
+            _action: "delete",
+        }
+        const { data } = await api.post("/api/v1/catalogs", body)
+        return data
     },
+
 };
