@@ -1,0 +1,11 @@
+[
+  { "key": "vehicles", "label": "Vehículos", "actions": ["read", "create", "update", "delete", "transfer"] },
+  { "key": "people", "label": "RRHH", "actions": ["read", "create", "update", "delete"] },
+  { "key": "branches", "label": "Sucursales", "actions": ["read", "create", "update", "delete"] },
+  { "key": "positions", "label": "Cargos", "actions": ["read", "manage"] },
+  { "key": "roles", "label": "Roles", "actions": ["read", "manage"] },
+  { "key": "users", "label": "Usuarios", "actions": ["read", "manage"] },
+  { "key": "drivingTests", "label": "Pruebas conducción", "actions": ["read", "create", "update", "delete"] },
+  { "key": "purchaseOrders", "label": "Ordenes compra", "actions": ["read", "create", "update", "delete", "approve"] },
+  { "key": "workOrders", "label": "Ordenes trabajo", "actions": ["read", "create", "update", "delete", "approve"] }
+]

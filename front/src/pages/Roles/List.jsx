@@ -1,185 +1,240 @@
 // front/src/pages/Roles/List.jsx
-// -----------------------------------------------------------------------------
-// Catálogo → Roles (FleetCore Standard v1.0)
-// - List paginado (items/total/page/limit) sobre RolesAPI.list
-// - Filtros inline (estándar tipo Repairs)
-// -----------------------------------------------------------------------------
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Paginator from "../../components/table/Paginator";
 import LimitSelect from "../../components/table/LimitSelect";
 import { RolesAPI } from "../../api/roles.api";
 
-function pickItems(data) {
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data.items)) return data.items;
-    if (Array.isArray(data.result?.items)) return data.result.items;
-    if (Array.isArray(data.data?.items)) return data.data.items;
-    if (Array.isArray(data.data)) return data.data;
-    return [];
-}
-function pickMeta(data) {
-    const total = data?.total ?? data?.result?.total ?? data?.data?.total ?? (Array.isArray(data?.items) ? data.items.length : undefined) ?? 0;
-    const page = data?.page ?? data?.result?.page ?? data?.data?.page ?? 1;
-    const limit = data?.limit ?? data?.result?.limit ?? data?.data?.limit ?? 20;
-    return { total: Number(total || 0), page: Number(page || 1), limit: Number(limit || 20) };
-}
+const BASE = "/config/catalogs/roles";
 
 export default function RolesList() {
-    const navigate = useNavigate();
-    const [sp, setSp] = useSearchParams();
+  const navigate = useNavigate();
+  const [sp, setSp] = useSearchParams();
 
-    const page = Number(sp.get("page") || 1);
-    const limit = Number(sp.get("limit") || 20);
-    const q = sp.get("q") || "";
-    const active = sp.get("active") ?? "";
+  const page = Number(sp.get("page") || 1);
+  const limit = Number(sp.get("limit") || 20);
+  const q = sp.get("q") || "";
+  const active = sp.get("active") ?? "";
+  const scope = sp.get("scope") ?? "";
+  const isSystem = sp.get("isSystem") ?? "";
 
-    const [loading, setLoading] = useState(false);
-    const [items, setItems] = useState([]);
-    const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [itemsRaw, setItemsRaw] = useState([]);
+  const [total, setTotal] = useState(0);
 
-    const load = async () => {
-        setLoading(true);
-        try {
-            const { data } = await RolesAPI.list({ q, active, page, limit });
-            const list = pickItems(data);
-            const sorted = [...list].sort((a, b) => String(a?.name || "").localeCompare(String(b?.name || ""), "es", { numeric: true }));
-            setItems(sorted);
-            setTotal(pickMeta(data).total);
-        } catch (e) {
-            console.error(e);
-            setItems([]);
-            setTotal(0);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const items = useMemo(() => {
+    const list = [...(itemsRaw || [])];
+    list.sort((a, b) => String(a?.name || "").localeCompare(String(b?.name || ""), "es", { numeric: true }));
+    return list;
+  }, [itemsRaw]);
 
-    useEffect(() => { load(); /* eslint-disable-next-line */ }, [q, active, page, limit]);
+  useEffect(() => {
+    let alive = true;
 
-    const rowIsActive = (it) => {
-        if (typeof it?.isActive === "boolean") return it.isActive;
-        if (typeof it?.active === "boolean") return it.active;
-        return true;
-    };
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await RolesAPI.list({ q, active, scope, isSystem, page, limit });
+        if (!alive) return;
+        setItemsRaw(res?.items || []);
+        setTotal(res?.total ?? 0);
+      } catch (e) {
+        console.error(e);
+        if (!alive) return;
+        setItemsRaw([]);
+        setTotal(0);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
 
-    const onDelete = async (it) => {
-        const name = it?.name || "rol";
-        const ok = window.confirm(`¿Eliminar "${name}"? Esta acción no se puede deshacer.`);
-        if (!ok) return;
-        try {
-            await RolesAPI.remove(it?._id || it?.id);
-            await load();
-        } catch (e) {
-            console.error(e);
-            alert("No se pudo eliminar. Revisa la consola.");
-        }
-    };
+    load();
+    return () => { alive = false; };
+  }, [q, active, scope, isSystem, page, limit]);
 
-    return (
-        <div className="p-6 space-y-6">
-            <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div>
-                    <h1 className="text-xl font-bold">Catálogo · Roles</h1>
-                    <p className="text-gray-500 text-sm">Define roles y permisos (RBAC).</p>
-                </div>
+  const rowIsActive = (it) => (typeof it?.active === "boolean" ? it.active : true);
+  const isProtected = (it) => Boolean(it?.isSystem) || String(it?.code || "").toUpperCase() === "SUPERADMIN";
 
-                <div className="flex items-center gap-2 flex-wrap justify-end">
-                    <input
-                        className="border rounded-md px-3 py-2 text-sm w-56"
-                        placeholder="Buscar por nombre"
-                        value={q}
-                        onChange={(e) =>
-                            setSp((prev) => {
-                                const v = e.target.value;
-                                if (v) prev.set("q", v);
-                                else prev.delete("q");
-                                prev.set("page", "1");
-                                return prev;
-                            }, { replace: true })
-                        }
-                    />
+  const onDelete = async (it) => {
+    if (isProtected(it)) return alert("Rol protegido: no se elimina.");
+    const ok = window.confirm(`¿Eliminar "${it?.name || it?.code || "rol"}"? Esta acción no se puede deshacer.`);
+    if (!ok) return;
 
-                    <select
-                        className="border rounded-md px-3 py-2 text-sm w-48"
-                        value={active}
-                        onChange={(e) =>
-                            setSp((prev) => {
-                                const v = e.target.value;
-                                if (v === "") prev.delete("active");
-                                else prev.set("active", v);
-                                prev.set("page", "1");
-                                return prev;
-                            }, { replace: true })
-                        }
-                    >
-                        <option value="">Activo (todos)</option>
-                        <option value="true">Solo activos</option>
-                        <option value="false">Solo inactivos</option>
-                    </select>
+    try {
+      await RolesAPI.remove(it?._id || it?.id);
+      const res = await RolesAPI.list({ q, active, scope, isSystem, page, limit });
+      setItemsRaw(res?.items || []);
+      setTotal(res?.total ?? 0);
+      alert("Rol eliminado con éxito");
+    } catch (err) {
+      const status = err?.response?.status;
+      if (status !== 409) console.error(err);
+      alert(
+        err?.response?.data?.message ||
+          (status === 409
+            ? "No se puede eliminar: el rol está asignado a uno o más usuarios."
+            : "No fue posible eliminar")
+      );
+    }
+  };
 
-                    <Link to="new" className="px-4 py-2 rounded-md bg-[#0B3A6E] text-white text-sm font-medium hover:opacity-95">
-                        Nuevo rol
-                    </Link>
-                </div>
-            </div>
+  const setParam = (k, v) =>
+    setSp((prev) => {
+      const next = new URLSearchParams(prev);
+      if (v === "" || v == null) next.delete(k);
+      else next.set(k, v);
+      next.set("page", "1");
+      return next;
+    }, { replace: true });
 
-            <div className="bg-white border rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-[900px] w-full text-sm">
-                        <thead className="bg-gray-50 border-b">
-                            <tr className="text-left text-gray-700">
-                                <th className="px-4 py-3">Código</th>
-                                <th className="px-4 py-3">Nombre</th>
-                                <th className="px-4 py-3">Scope</th>
-                                <th className="px-4 py-3">Activo</th>
-                                <th className="px-4 py-3 text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loading ? (
-                                <tr><td className="px-4 py-6 text-gray-500" colSpan={5}>Cargando…</td></tr>
-                            ) : items.length === 0 ? (
-                                <tr><td className="px-4 py-6 text-gray-500" colSpan={5}>Sin registros.</td></tr>
-                            ) : (
-                                items.map((it) => {
-                                    const id = it?._id || it?.id;
-                                    return (
-                                        <tr key={id} className="border-t">
-                                            <td className="px-4 py-3 font-mono text-xs">{it?.code || "—"}</td>
-                                            <td className="px-4 py-3">{it?.name || "—"}</td>
-                                            <td className="px-4 py-3">{it?.scope || "—"}</td>
-                                            <td className="px-4 py-3">{rowIsActive(it) ? "Sí" : "No"}</td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <button className="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50" onClick={() => navigate(`${id}?mode=view`)}>
-                                                        Ver
-                                                    </button>
-                                                    <button className="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50" onClick={() => navigate(`${id}`)}>
-                                                        Editar
-                                                    </button>
-                                                    <button className="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50" onClick={() => onDelete(it)}>
-                                                        Eliminar
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="p-4 flex items-center justify-between gap-3 flex-wrap">
-                    <div className="text-sm text-gray-600">Total: {total}</div>
-                    <div className="flex items-center gap-3 flex-wrap justify-end">
-                        <Paginator page={page} limit={limit} total={total} onPage={(p) => setSp(prev => { prev.set("page", String(p)); return prev; }, { replace: true })} />
-                        <LimitSelect value={limit} onChange={(v) => setSp(prev => { prev.set("limit", String(v)); prev.set("page", "1"); return prev; }, { replace: true })} />
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-xl font-bold">Catálogo · Roles</h1>
+          <p className="text-gray-500 text-sm">Define roles y permisos del sistema.</p>
         </div>
-    );
+
+        <div className="flex items-center gap-2 justify-end flex-nowrap overflow-x-auto">
+          <input
+            className="shrink-0 border rounded-md px-3 py-2 text-sm w-56"
+            placeholder="Buscar por nombre"
+            value={q}
+            onChange={(e) => setParam("q", e.target.value)}
+          />
+
+          <select
+            className="shrink-0 border rounded-md px-3 py-2 text-sm w-44"
+            value={active}
+            onChange={(e) => setParam("active", e.target.value)}
+          >
+            <option value="">Activo (todos)</option>
+            <option value="true">Solo activos</option>
+            <option value="false">Solo inactivos</option>
+          </select>
+
+          <select
+            className="shrink-0 border rounded-md px-3 py-2 text-sm w-44"
+            value={scope}
+            onChange={(e) => setParam("scope", e.target.value)}
+          >
+            <option value="">Scope (todos)</option>
+            <option value="BRANCH">BRANCH</option>
+            <option value="GLOBAL">GLOBAL</option>
+          </select>
+
+          <select
+            className="shrink-0 border rounded-md px-3 py-2 text-sm w-44"
+            value={isSystem}
+            onChange={(e) => setParam("isSystem", e.target.value)}
+          >
+            <option value="">Sistema (todos)</option>
+            <option value="true">Solo sistema</option>
+            <option value="false">No sistema</option>
+          </select>
+
+          <Link
+            to={`${BASE}/new`}
+            className="shrink-0 px-4 py-2 rounded-md bg-[#0B3A6E] text-white text-sm font-medium hover:opacity-95"
+          >
+            Nuevo rol
+          </Link>
+        </div>
+      </div>
+
+      <div className="bg-white border rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-[900px] w-full text-sm">
+            <thead className="bg-gray-50 border-b">
+              <tr className="text-left text-gray-700">
+                <th className="px-4 py-2">Código</th>
+                <th className="px-4 py-2">Nombre</th>
+                <th className="px-4 py-2">Scope</th>
+                <th className="px-4 py-2">Activo</th>
+                <th className="px-4 py-2 text-right">Acciones</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y">
+              {loading ? (
+                <tr><td colSpan={5} className="px-4 py-6 text-gray-500">Cargando…</td></tr>
+              ) : items.length === 0 ? (
+                <tr><td colSpan={5} className="px-4 py-6 text-gray-500">Sin registros.</td></tr>
+              ) : (
+                items.map((it) => {
+                  const id = it?._id || it?.id;
+                  const locked = isProtected(it);
+                  return (
+                    <tr key={id} className="align-middle">
+                      <td className="px-4 py-2">{String(it?.code || "—").toUpperCase()}</td>
+                      <td className="px-4 py-2">{String(it?.name || "—").toUpperCase()}</td>
+                      <td className="px-4 py-2">{it?.scope || "—"}</td>
+                      <td className="px-4 py-2">{rowIsActive(it) ? "Sí" : "No"}</td>
+
+                      <td className="px-4 py-2">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            className="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50"
+                            onClick={() => navigate(`${BASE}/${id}?mode=view`)}
+                          >
+                            Ver
+                          </button>
+
+                          <button
+                            className="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={locked}
+                            onClick={() => navigate(`${BASE}/${id}`)}
+                          >
+                            Editar
+                          </button>
+
+                          <button
+                            className="px-3 py-1.5 rounded-md border text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={locked}
+                            onClick={() => onDelete(it)}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* ✅ Cierre visual como VehicleStatuses */}
+        <div className="p-4 border-t flex items-center justify-between gap-3 flex-wrap bg-white">
+          <div className="text-sm text-gray-600">Total: {total}</div>
+          <div className="flex items-center gap-3 flex-wrap justify-end">
+            <Paginator
+              page={page}
+              limit={limit}
+              total={total}
+              onPage={(p) =>
+                setSp((prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set("page", String(p));
+                  return next;
+                }, { replace: true })
+              }
+            />
+            <LimitSelect
+              value={limit}
+              onChange={(v) =>
+                setSp((prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set("limit", String(v));
+                  next.set("page", "1");
+                  return next;
+                }, { replace: true })
+              }
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

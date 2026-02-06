@@ -112,15 +112,7 @@ export const VehicleStatusesAPI = {
         });
         return { items: pickItems(data), ...pickMeta(data) };
     },
-
-    // async get(id) {
-    //     const { data } = await api.get("/api/v1/catalogs", { params: { key: KEY, id } });
-    //     // back puede devolver item suelto o items[]
-    //     const items = pickItems(data);
-    //     const item = data?.item ?? data?.result?.item ?? data?.data?.item ?? items?.[0] ?? null;
-    //     return item;
-    // },
-
+   
     async get(idOrKey) {
         // 1) Intento: pedir “detalle” por params (si el backend lo soporta)
         try {
@@ -157,22 +149,6 @@ export const VehicleStatusesAPI = {
         return found ?? null
     },
 
-
-    // async create(payload) {
-    //     const { data } = await api.post("/api/v1/catalogs", { key: KEY, ...payload });
-    //     return data;
-    // },
-
-    // async update(id, payload) {
-    //     const { data } = await api.post("/api/v1/catalogs", { key: KEY, id, ...payload });
-    //     return data;
-    // },
-
-    // async remove(id) {
-    //     const { data } = await api.post("/api/v1/catalogs", { key: KEY, id, _action: "delete" });
-    //     return data;
-    // },
-
     async create(payload) {
         const code = String(payload?.code || "").trim()
         const name = String(payload?.name || "").trim()
@@ -205,72 +181,6 @@ export const VehicleStatusesAPI = {
         const { data } = await api.post("/api/v1/catalogs", body)
         return data
     },
-
-    // async update(id, payload) {
-    //     const code = String(payload?.code || "").trim()
-    //     const name = String(payload?.name || "").trim()
-    //     const active = payload?.active !== false
-
-    //     const body = {
-    //         id,
-
-    //         // catálogo
-    //         key: KEY,
-    //         catalogKey: KEY,
-    //         catalog: KEY,
-
-    //         // item
-    //         label: name,
-    //         name,
-    //         itemLabel: name,
-
-    //         itemKey: code,
-    //         code,
-    //         itemCode: code,
-
-    //         item: { key: code, label: name, active },
-
-    //         active,
-    //     }
-
-    //     const { data } = await api.post("/api/v1/catalogs", body)
-    //     return data
-    // },
-
-    // async update(id, payload) {
-    //     const code = String(payload?.code || "").trim()
-    //     const name = String(payload?.name || "").trim()
-    //     const active = payload?.active !== false
-
-    //     const body = {
-    //         // id en todas las variantes comunes (para que el back NO lo ignore)
-    //         id,
-    //         _id: id,
-    //         itemId: id,
-
-    //         // catálogo
-    //         key: KEY,
-    //         catalogKey: KEY,
-    //         catalog: KEY,
-
-    //         // item
-    //         label: name,
-    //         name,
-    //         itemLabel: name,
-
-    //         itemKey: code,
-    //         code,
-    //         itemCode: code,
-
-    //         // item completo (algunos backends validan desde aquí)
-    //         item: { id, _id: id, key: code, label: name, active },
-
-    //         active,
-    //     }
-
-    //     const { data } = await api.post("/api/v1/catalogs", body)
-    //     return data
-    // },
 
     async update(id, payload) {
         const code = String(payload?.code || "").trim()
