@@ -65,8 +65,30 @@ export default function RolesForm() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [dirty]);
 
+  useEffect(() => {
+    try {
+      window.__FLEETCORE_UNSAVED__ = Boolean(dirty);
+      window.__FLEETCORE_UNSAVED_MESSAGE__ = "Hay cambios sin guardar. ¿Deseas salir sin guardar?";
+    } catch { }
+    return () => {
+      try {
+        window.__FLEETCORE_UNSAVED__ = false;
+        window.__FLEETCORE_UNSAVED_MESSAGE__ = "";
+      } catch { }
+    };
+  }, [dirty]);
+
+  const goBack = () => {
+  if (!dirty) return navigate("/config/catalogs/roles");
+  const ok = window.confirm("Tienes cambios sin guardar. ¿Salir sin guardar?");
+  if (!ok) return;
+  window.__FLEETCORE_UNSAVED__ = false;
+  navigate("/config/catalogs/roles");
+};
+
+
   const backLabel = dirty && !isView ? "Cancelar" : "Volver";
-  const onBack = () => navigate(BASE);
+  // const onBack = () => navigate(BASE);
 
   const permsSet = useMemo(() => new Set(parsePermissionsText(form.permissionsText)), [form.permissionsText]);
 
@@ -320,7 +342,7 @@ export default function RolesForm() {
               <button
                 type="button"
                 className="px-4 py-2 rounded-md border text-sm hover:bg-gray-50"
-                onClick={onBack}
+                onClick={goBack}
               >
                 {backLabel}
               </button>
