@@ -88,23 +88,23 @@ export default function RolesList() {
     }, { replace: true });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
+    <div className="p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-xl font-bold">Catálogo · Roles</h1>
           <p className="text-gray-500 text-sm">Define roles y permisos del sistema.</p>
         </div>
 
-        <div className="flex items-center gap-2 justify-end flex-nowrap overflow-x-auto">
+        <div className="w-full sm:w-auto flex flex-col sm:flex-row sm:items-center gap-2">
           <input
-            className="shrink-0 border rounded-md px-3 py-2 text-sm w-56"
+            className="shrink-0 border rounded-md px-3 py-2 text-sm w-full sm:w-56"
             placeholder="Buscar por nombre"
             value={q}
             onChange={(e) => setParam("q", e.target.value)}
           />
 
           <select
-            className="shrink-0 border rounded-md px-3 py-2 text-sm w-44"
+            className="shrink-0 border rounded-md px-3 py-2 text-sm w-full sm:w-44"
             value={active}
             onChange={(e) => setParam("active", e.target.value)}
           >
@@ -114,7 +114,7 @@ export default function RolesList() {
           </select>
 
           <select
-            className="shrink-0 border rounded-md px-3 py-2 text-sm w-44"
+            className="shrink-0 border rounded-md px-3 py-2 text-sm w-full sm:w-44"
             value={scope}
             onChange={(e) => setParam("scope", e.target.value)}
           >
@@ -124,7 +124,7 @@ export default function RolesList() {
           </select>
 
           <select
-            className="shrink-0 border rounded-md px-3 py-2 text-sm w-44"
+            className="shrink-0 border rounded-md px-3 py-2 text-sm w-full sm:w-44"
             value={isSystem}
             onChange={(e) => setParam("isSystem", e.target.value)}
           >
@@ -238,3 +238,5 @@ export default function RolesList() {
     </div>
   );
 }
+
+
