@@ -35,12 +35,6 @@
 //         icon: '🧩',
 //     },
 //     {
-//         to: '/config/catalogs/roles',
-//         label: 'Roles',
-//         fullLabel: 'Catálogos · Roles',
-//         icon: '🛡️',
-//     },
-//     {
 //         to: '/config/catalogs/failure-reports',
 //         label: 'Fallas',
 //         fullLabel: 'Catálogos · Reporte de fallas',
@@ -57,6 +51,7 @@
 // // Administración
 // const adminMenu = [
 //     // { to: '/config/users', label: 'Usuarios', fullLabel: 'Administración · Usuarios', icon: '👤' },
+//     { to: '/config/roles', label: 'Roles', fullLabel: 'Administración · Roles', icon: '🛡️' },
 //     { to: '/config/users', label: 'Usuarios', fullLabel: 'Administración · Usuarios', icon: '🧑‍💼' },
 
 // ]
@@ -435,15 +430,27 @@ export default function Sidebar({ mobile = false, className = '' }) {
                     {!collapsed && (
                         <span className="font-semibold text-slate-700 dark:text-slate-200">Menú</span>
                     )}
+                    <div className="flex items-center gap-2 ml-auto">
                     <button
-                        className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 ml-auto"
+                        type="button"
+                        className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-100"
+                        onClick={() => setIconMode((m) => (m === "icons" ? "bullets" : "icons"))}
+                        title={iconMode === "icons" ? "Cambiar a viñetas" : "Cambiar a íconos"}
+                        aria-label="Alternar íconos/viñetas"
+                    >
+                        {iconMode === "icons" ? "•" : "😶"}
+                    </button>
+
+                    <button
+                        className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-100"
                         onClick={toggleSidebarCollapsed}
-                        aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
-                        title={collapsed ? 'Expandir' : 'Colapsar'}
+                        aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+                        title={collapsed ? "Expandir" : "Colapsar"}
                         type="button"
                     >
-                        {collapsed ? '»' : '«'}
+                        {collapsed ? "»" : "«"}
                     </button>
+                </div>
                 </div>
             )}
 
