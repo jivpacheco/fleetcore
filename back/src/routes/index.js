@@ -41,6 +41,7 @@ import positionsRoutes from './positions.routes.js';
 import repairsRoutes from './repairs.routes.js';
 import repairsMediaRoutes from './repairsMedia.routes.js';
 import failureReportsRoutes from './failureReports.routes.js';
+import drivingTestsRoutes from './drivingTests.routes.js';
 
 const api = express.Router();
 api.use(requireAuth);
@@ -62,6 +63,7 @@ api.use('/failure-reports', failureReportsRoutes);
 
 // ✅ RRHH custom: NO uses makeRoutes(Person)
 api.use('/people', peopleRoutes);
+api.use('/driving-tests', drivingTestsRoutes);
 
 // ✅ Media RRHH montado donde corresponde
 api.use('/people/:personId/media', peopleMediaRoutes);
