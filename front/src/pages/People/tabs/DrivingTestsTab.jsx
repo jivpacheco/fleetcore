@@ -11,10 +11,13 @@ const hasRole = (user, role) => {
   return roles.some((r) => String(r).toUpperCase() === needle)
 }
 
-export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange }) {
+export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange, canEdit = true, isView = false }) {
+  const readOnly = Boolean(isView || !canEdit);
+
   const user = useAppStore((s) => s.user)
   // Requerimiento: para realizar prueba de conducción debe tener rol EXAMINER.
   const canOperate = hasRole(user, 'ADMIN') || hasRole(user, 'EXAMINER')
+  const canOperateNow = Boolean(canOperate && !readOnly);
 
   const [items, setItems] = useState([])
   const [people, setPeople] = useState([])
@@ -160,7 +163,7 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
     const onFinish = async (payload) => {
       if (!person?._id) return
 
-      if (!canOperate) {
+      if (!canOperateNow) {
         alert('No tienes permisos para registrar/autorizar pruebas. Requiere rol ADMIN o EXAMINER.')
         return
       }
@@ -201,8 +204,9 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
     }
 
     const saveAuthorization = async () => {
+    if (readOnly) return;
       if (!person?._id) return
-      if (!canOperate) {
+      if (!canOperateNow) {
         alert('No autorizado como examinador')
         return
       }
@@ -255,7 +259,7 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
           </div>
         )}
 
-        {!canOperate && (
+        {!canOperateNow && (
           <div className="border border-amber-200 bg-amber-50 text-amber-800 rounded p-3 text-sm">
             Este apartado está deshabilitado. Requiere rol <b>ADMIN</b> o <b>EXAMINER</b>.
           </div>
@@ -274,7 +278,7 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
                     name="driverAuth"
                     checked={isAuthorized === true}
                     onChange={() => setIsAuthorized(true)}
-                    disabled={!canOperate}
+                    disabled={!canOperateNow}
                   />
                   Conductor autorizado
                 </label>
@@ -284,7 +288,7 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
                     name="driverAuth"
                     checked={isAuthorized === false}
                     onChange={() => setIsAuthorized(false)}
-                    disabled={!canOperate}
+                    disabled={!canOperateNow}
                   />
                   Conductor no autorizado
                 </label>
@@ -298,7 +302,7 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
                 className="border rounded px-3 py-2 w-full"
                 value={authorizedAt}
                 onChange={(e) => setAuthorizedAt(e.target.value)}
-                disabled={!canOperate}
+                disabled={!canOperateNow}
               />
             </label>
 
@@ -310,7 +314,7 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
                 value={authNote}
                 onChange={(e) => setAuthNote(e.target.value)}
                 placeholder="Ej: sanción, condicionantes, observaciones de RRHH…"
-                disabled={!canOperate}
+                disabled={!canOperateNow}
               />
             </label>
           </div>
@@ -321,7 +325,7 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
               className="px-3 py-2 text-white rounded-md disabled:opacity-50"
               style={{ background: 'var(--fc-primary)' }}
               onClick={saveAuthorization}
-              disabled={authSaving || !canOperate || !authDirty}
+              disabled={authSaving || !canOperateNow || !authDirty}
             >
               Guardar autorización
             </button>
@@ -339,7 +343,7 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
                 className="w-full border rounded px-3 py-2"
                 value={branchId}
                 onChange={(e) => setBranchId(e.target.value)}
-                disabled={!canOperate}
+                disabled={!canOperateNow}
               >
                 <option value="">— Selecciona sucursal —</option>
                 {branches.map((b) => (
@@ -368,7 +372,7 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
                 className="w-full border rounded px-3 py-2"
                 value={vehicleId}
                 onChange={(e) => setVehicleId(e.target.value)}
-                disabled={!canOperate}
+                disabled={!canOperateNow}
               >
                 <option value="">— Selecciona vehículo —</option>
                 {vehicles.map((v) => (
@@ -386,14 +390,14 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange 
                 rows={3}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                disabled={!canOperate}
+                disabled={!canOperateNow}
               />
             </label>
           </div>
 
           <div className="mt-3">
             {canOperate ? (
-              <MapRecorder onFinish={onFinish} />
+              <MapRecorder disabled={readOnly}  onFinish={onFinish} />
             ) : (
               <div className="text-sm text-gray-500">MapRecorder deshabilitado por permisos.</div>
             )}

@@ -47,9 +47,11 @@ function toPayload(draft) {
   };
 }
 
-export default function LicensesTab({ person, onChange, onDirtyChange }) {
+export default function LicensesTab({ person, onChange, onDirtyChange, onEditingChange, canEdit = true, isView = false }) {
   const personId = person?._id;
   const licenses = person?.licenses || [];
+
+  const readOnly = Boolean(isView || !canEdit);
 
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -57,6 +59,10 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
   const [draft, setDraft] = useState(emptyForm);
 
   const editing = Boolean(editId);
+
+  useEffect(() => {
+    onEditingChange?.(Boolean(creating || editing));
+  }, [creating, editing, onEditingChange]);
   const isDirty = useMemo(() => {
     if (creating) return JSON.stringify(draft) !== JSON.stringify(emptyForm);
     if (!editing) return false;
@@ -82,6 +88,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
   }, [isDirty, onDirtyChange]);
 
   const startCreate = () => {
+    if (readOnly) return;
     setCreating(true);
     setEditId(null);
     setDraft(emptyForm);
@@ -162,6 +169,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
   };
 
   const remove = async (licenseId) => {
+    if (readOnly) return;
     if (!personId) return;
     const ok = window.confirm("¿Eliminar licencia?");
     if (!ok) return;
@@ -197,7 +205,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
           type="button"
           className="px-3 py-2 rounded-md text-white disabled:opacity-50"
           style={{ background: "var(--fc-primary)" }}
-          disabled={saving || creating || editing}
+          disabled={readOnly || saving || creating || editing}
           onClick={startCreate}
         >
           Nueva licencia
@@ -231,7 +239,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
                   <button
                     type="button"
                     className="px-2 py-1 border rounded"
-                    disabled={saving || creating || editing}
+                    disabled={readOnly || saving || creating || editing}
                     onClick={() => startEdit(l)}
                   >
                     Editar
@@ -239,7 +247,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
                   <button
                     type="button"
                     className="px-2 py-1 border rounded"
-                    disabled={saving || creating || editing}
+                    disabled={readOnly || saving || creating || editing}
                     onClick={() => remove(l._id)}
                   >
                     Eliminar
@@ -270,6 +278,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
               <select
                 className="border rounded px-3 h-[38px] w-full"
                 value={draft.type}
+              disabled={readOnly || saving}
                 onChange={(e) =>
                   setDraft((s) => ({ ...s, type: e.target.value }))
                 }
@@ -289,6 +298,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
                 className="border rounded px-3 h-[38px] w-full"
                 placeholder="Ej: 123456 / Folio de licencia"
                 value={draft.folioNumber}
+              disabled={readOnly || saving}
                 onChange={(e) =>
                   setDraft((s) => ({ ...s, folioNumber: e.target.value }))
                 }
@@ -301,6 +311,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
                 className="border rounded px-3 h-[38px] w-full"
                 placeholder="Ej: Registro Civil / Municipalidad"
                 value={draft.issuer}
+              disabled={readOnly || saving}
                 onChange={(e) =>
                   setDraft((s) => ({ ...s, issuer: e.target.value }))
                 }
@@ -314,6 +325,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
                 className="border rounded px-3 h-[38px] w-full"
                 placeholder="AAAA-MM-DD"
                 value={draft.firstIssuedAt}
+              disabled={readOnly || saving}
                 onChange={(e) =>
                   setDraft((s) => ({ ...s, firstIssuedAt: e.target.value }))
                 }
@@ -327,6 +339,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
                 className="border rounded px-3 h-[38px] w-full"
                 placeholder="AAAA-MM-DD"
                 value={draft.issuedAt}
+              disabled={readOnly || saving}
                 onChange={(e) =>
                   setDraft((s) => ({ ...s, issuedAt: e.target.value }))
                 }
@@ -340,6 +353,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
                 className="border rounded px-3 h-[38px] w-full"
                 placeholder="AAAA-MM-DD"
                 value={draft.nextControlAt}
+              disabled={readOnly || saving}
                 onChange={(e) =>
                   setDraft((s) => ({ ...s, nextControlAt: e.target.value }))
                 }
@@ -351,7 +365,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
               type="button"
               className="px-3 py-2 rounded-md border border-gray-400"
               onClick={cancel}
-              disabled={saving}
+              disabled={readOnly || saving}
             >
               Cancelar
             </button>
@@ -360,7 +374,7 @@ export default function LicensesTab({ person, onChange, onDirtyChange }) {
               className="px-3 py-2 rounded-md text-white disabled:opacity-50"
               style={{ background: "var(--fc-primary)" }}
               onClick={save}
-              disabled={saving}
+              disabled={readOnly || saving}
             >
               Guardar
             </button>

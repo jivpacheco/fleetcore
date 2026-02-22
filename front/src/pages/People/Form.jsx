@@ -16,6 +16,14 @@ import { BranchesAPI } from "../../api/branches.api";
 // Datos Chile (regiones/comunas)
 import regionesComunas from "../../data/chile/comunas-regiones.json";
 
+
+import LicensesTab from "./tabs/LicensesTab";
+
+import FilesTab from "./tabs/FilesTab";
+
+import DrivingTestsTab from "./tabs/DrivingTestsTab";
+
+
 const REGIONES_CATALOGO = Array.isArray(regionesComunas?.regiones)
   ? regionesComunas.regiones
   : [];
@@ -40,13 +48,6 @@ const normalizeComuna = (regionValue, comunaValue) => {
   const hit = comunas.find((c) => String(c).toUpperCase() === s.toUpperCase());
   return hit || s;
 };
-
-
-import LicensesTab from "./tabs/LicensesTab";
-import FilesTab from "./tabs/FilesTab";
-import DrivingTestsTab from "./tabs/DrivingTestsTab";
-
-// import regionesComunas from '../../data/chile/comunas-regiones.json'
 
 const TABS = [
   { key: "basic", label: "Básico" },
@@ -137,9 +138,8 @@ export default function PeopleForm() {
   const [positions, setPositions] = useState([]);
   const [branches, setBranches] = useState([]);
 
-  const [personDoc, setPersonDoc] = useState(null); // versión completa desde ba
+  const [personDoc, setPersonDoc] = useState(null); // versión completa desde backend
   const [initialSnapshot, setInitialSnapshot] = useState(null);
-// ckend
   const [initial, setInitial] = useState(null);
 
   const [form, setForm] = useState({
@@ -653,6 +653,7 @@ export default function PeopleForm() {
                   type="date"
                   className="border rounded px-3 h-[38px] w-full"
                   value={form.birthDate}
+                  disabled={isView}
                   onChange={(e) =>
                     setForm((s) => ({ ...s, birthDate: e.target.value }))
                   }
@@ -664,6 +665,7 @@ export default function PeopleForm() {
                 <input
                   className="border rounded px-3 h-[38px] w-full"
                   value={form.birthPlace}
+                  disabled={isView}
                   onChange={(e) =>
                     setForm((s) => ({ ...s, birthPlace: e.target.value }))
                   }
@@ -676,6 +678,7 @@ export default function PeopleForm() {
                 <input
                   className="border rounded px-3 h-[38px] w-full"
                   value={form.nationality}
+                  disabled={isView}
                   onChange={(e) =>
                     setForm((s) => ({ ...s, nationality: e.target.value }))
                   }
@@ -689,6 +692,7 @@ export default function PeopleForm() {
                 <input
                   className="border rounded px-3 h-[38px] w-full"
                   value={form.addressLine1}
+                  disabled={isView}
                   onChange={(e) =>
                     setForm((s) => ({ ...s, addressLine1: e.target.value }))
                   }
@@ -701,6 +705,7 @@ export default function PeopleForm() {
                 <select
                   className="border rounded px-3 h-[38px] w-full"
                   value={form.addressRegion || ""}
+                  disabled={isView}
                   onChange={(e) => {
                     const nextRegion = e.target.value;
                     setForm((s) => ({
@@ -725,7 +730,7 @@ export default function PeopleForm() {
                   className="border rounded px-3 h-[38px] w-full"
                   value={form.addressComuna || ""}
                   onChange={(e) => setForm((s) => ({ ...s, addressComuna: e.target.value }))}
-                  disabled={!form.addressRegion}
+                  disabled={isView || !form.addressRegion}
                 >
                   <option value="">— Selecciona comuna —</option>
                   {comunasForSelectedRegion.map((c) => (
@@ -744,6 +749,7 @@ export default function PeopleForm() {
                 <input
                   className="border rounded px-3 h-[38px] w-full"
                   value={form.addressCity}
+                  disabled={isView}
                   onChange={(e) =>
                     setForm((s) => ({ ...s, addressCity: e.target.value }))
                   }
@@ -755,6 +761,7 @@ export default function PeopleForm() {
                 <select
                   className="border rounded px-3 h-[38px] w-full"
                   value={form.addressCountry}
+                  disabled={isView}
                   onChange={(e) =>
                     setForm((s) => ({ ...s, addressCountry: e.target.value }))
                   }
@@ -767,6 +774,7 @@ export default function PeopleForm() {
                 <input
                   type="checkbox"
                   checked={form.active}
+                  disabled={isView}
                   onChange={(e) =>
                     setForm((s) => ({ ...s, active: e.target.checked }))
                   }
@@ -783,6 +791,7 @@ export default function PeopleForm() {
                 <select
                   className="border rounded px-3 py-2 w-full"
                   value={form.branchId}
+                  disabled={isView}
                   onChange={(e) =>
                     setForm((s) => ({ ...s, branchId: e.target.value }))
                   }
@@ -834,6 +843,7 @@ export default function PeopleForm() {
             <LicensesTab
               person={personDoc || { _id: isNew ? null : id, licenses: [] }}
               canEdit={canEdit}
+              isView={isView}
               onDirtyChange={setSubDirty}
               onEditingChange={setSubEditing}
               onChange={(updater) => {

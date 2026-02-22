@@ -2,13 +2,22 @@ import { useRef, useState } from "react";
 import { PeopleAPI } from "../../../api/people.api";
 import { api } from "../../../services/http";
 
-export default function FilesTab({ person, onPersonReload }) {
+export default function FilesTab({
+    person,
+    onPersonReload,
+    canEdit = true,
+    isView = false,
+}) {
     const photoInputRef = useRef(null);
     const docInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [preview, setPreview] = useState(null); // { kind, url, title, objectUrl }
 
+    // En modo view SOLO permitimos Ver/Descargar. No permitimos subir/eliminar.
+    const canManage = Boolean(canEdit && !isView);
+
     const uploadPhoto = async (file) => {
+        if (!canManage) return;
         if (!person?._id) return alert("Primero guarda la persona");
         setUploading(true);
         try {
@@ -20,6 +29,7 @@ export default function FilesTab({ person, onPersonReload }) {
     };
 
     const uploadDoc = async (file) => {
+        if (!canManage) return;
         if (!person?._id) return alert("Primero guarda la persona");
         setUploading(true);
         try {
@@ -31,6 +41,7 @@ export default function FilesTab({ person, onPersonReload }) {
     };
 
     const removeDoc = async (docId) => {
+        if (!canManage) return;
         if (!person?._id) return;
         const ok = window.confirm("¿Eliminar documento?");
         if (!ok) return;
@@ -44,6 +55,7 @@ export default function FilesTab({ person, onPersonReload }) {
     };
 
     const removePhoto = async () => {
+        if (!canManage) return;
         if (!person?._id) return;
         if (!person?.photo?.url) return;
         const ok = window.confirm("¿Eliminar foto de la persona?");
@@ -106,7 +118,9 @@ export default function FilesTab({ person, onPersonReload }) {
     const closePreview = () => {
         try {
             if (preview?.objectUrl && preview?.url) URL.revokeObjectURL(preview.url);
-        } catch { }
+        } catch {
+            // noop
+        }
         setPreview(null);
     };
 
@@ -190,15 +204,18 @@ export default function FilesTab({ person, onPersonReload }) {
                                         })
                                     }
                                 />
-                                <button
-                                    type="button"
-                                    title="Eliminar foto"
-                                    className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-white border text-xs leading-none"
-                                    onClick={removePhoto}
-                                    disabled={uploading}
-                                >
-                                    ×
-                                </button>
+
+                                {canManage && (
+                                    <button
+                                        type="button"
+                                        title="Eliminar foto"
+                                        className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-white border text-xs leading-none"
+                                        onClick={removePhoto}
+                                        disabled={uploading}
+                                    >
+                                        ×
+                                    </button>
+                                )}
                             </>
                         ) : (
                             <div className="w-28 h-28 rounded border flex items-center justify-center text-xs text-gray-500">
@@ -219,15 +236,18 @@ export default function FilesTab({ person, onPersonReload }) {
                                 e.target.value = "";
                             }}
                         />
-                        <button
-                            type="button"
-                            className="px-3 py-2 rounded-md text-white"
-                            style={{ background: "var(--fc-primary)" }}
-                            disabled={uploading}
-                            onClick={() => photoInputRef.current?.click()}
-                        >
-                            Subir / Reemplazar
-                        </button>
+
+                        {canManage && (
+                            <button
+                                type="button"
+                                className="px-3 py-2 rounded-md text-white"
+                                style={{ background: "var(--fc-primary)" }}
+                                disabled={uploading}
+                                onClick={() => photoInputRef.current?.click()}
+                            >
+                                Subir / Reemplazar
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -246,14 +266,17 @@ export default function FilesTab({ person, onPersonReload }) {
                                 e.target.value = "";
                             }}
                         />
-                        <button
-                            type="button"
-                            className="px-3 py-2 rounded-md border border-gray-400"
-                            disabled={uploading}
-                            onClick={() => docInputRef.current?.click()}
-                        >
-                            Subir documento
-                        </button>
+
+                        {canManage && (
+                            <button
+                                type="button"
+                                className="px-3 py-2 rounded-md border border-gray-400"
+                                disabled={uploading}
+                                onClick={() => docInputRef.current?.click()}
+                            >
+                                Subir documento
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -292,18 +315,22 @@ export default function FilesTab({ person, onPersonReload }) {
                                                 >
                                                     Descargar
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    className="px-2 py-1 border rounded"
-                                                    onClick={() => removeDoc(d._id)}
-                                                    disabled={uploading}
-                                                >
-                                                    Eliminar
-                                                </button>
+
+                                                {canManage && (
+                                                    <button
+                                                        type="button"
+                                                        className="px-2 py-1 border rounded"
+                                                        onClick={() => removeDoc(d._id)}
+                                                        disabled={uploading}
+                                                    >
+                                                        Eliminar
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
+
                                 {!(person?.documents || []).length && (
                                     <tr>
                                         <td className="p-3 text-gray-500" colSpan="4">
@@ -327,20 +354,38 @@ export default function FilesTab({ person, onPersonReload }) {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between px-4 py-3 border-b">
-                            <div className="font-semibold text-sm truncate">{preview.title}</div>
-                            <button type="button" className="px-2 py-1 border rounded" onClick={closePreview}>
+                            <div className="font-semibold text-sm truncate">
+                                {preview.title}
+                            </div>
+                            <button
+                                type="button"
+                                className="px-2 py-1 border rounded"
+                                onClick={closePreview}
+                            >
                                 Cerrar
                             </button>
                         </div>
                         <div className="p-4 overflow-auto max-h-[75vh]">
                             {preview.kind === "image" && (
-                                <img src={preview.url} alt={preview.title} className="max-w-full h-auto rounded" />
+                                <img
+                                    src={preview.url}
+                                    alt={preview.title}
+                                    className="max-w-full h-auto rounded"
+                                />
                             )}
                             {preview.kind === "pdf" && (
-                                <iframe title={preview.title} src={preview.url} className="w-full h-[70vh] border rounded" />
+                                <iframe
+                                    title={preview.title}
+                                    src={preview.url}
+                                    className="w-full h-[70vh] border rounded"
+                                />
                             )}
                             {preview.kind === "video" && (
-                                <video src={preview.url} className="w-full max-h-[70vh] rounded" controls />
+                                <video
+                                    src={preview.url}
+                                    className="w-full max-h-[70vh] rounded"
+                                    controls
+                                />
                             )}
                             {preview.kind === "other" && (
                                 <div className="text-sm text-gray-600">
