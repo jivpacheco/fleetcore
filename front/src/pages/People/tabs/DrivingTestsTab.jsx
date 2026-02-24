@@ -397,7 +397,8 @@ export default function DrivingTestsTab({ person, onPersonReload, onDirtyChange,
 
           <div className="mt-3">
             {canOperate ? (
-              <MapRecorder disabled={readOnly}  onFinish={onFinish} />
+              // <MapRecorder disabled={readOnly}  onFinish={onFinish} />
+              <MapRecorder onFinish={onFinish} disabled={isView || !canEdit} />
             ) : (
               <div className="text-sm text-gray-500">MapRecorder deshabilitado por permisos.</div>
             )}
