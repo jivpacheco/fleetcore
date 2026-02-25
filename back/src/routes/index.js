@@ -42,6 +42,9 @@ import repairsRoutes from './repairs.routes.js';
 import repairsMediaRoutes from './repairsMedia.routes.js';
 import failureReportsRoutes from './failureReports.routes.js';
 import drivingTestsRoutes from './drivingTests.routes.js';
+import vmrsRoutes from './vmrs.routes.js';
+import serviceRequestsRoutes from './serviceRequests.routes.js'
+import triageRoutes from './triage.routes.js'
 
 const api = express.Router();
 api.use(requireAuth);
@@ -60,6 +63,11 @@ api.use('/positions', positionsRoutes);
 api.use('/repairs', repairsRoutes);
 api.use('/repairs/:repairId/media', repairsMediaRoutes);
 api.use('/failure-reports', failureReportsRoutes);
+
+api.use('/vmrs', vmrsRoutes);
+api.use('/service-requests', serviceRequestsRoutes)
+api.use('/triage', triageRoutes)
+
 
 // ✅ RRHH custom: NO uses makeRoutes(Person)
 api.use('/people', peopleRoutes);
