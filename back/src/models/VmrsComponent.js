@@ -8,8 +8,8 @@ function normStr(v) {
 
 const VmrsComponentSchema = new mongoose.Schema(
     {
-        systemCode: { type: String, required: true, trim: true, uppercase: true, index: true }, // "013"
-        code: { type: String, required: true, trim: true, uppercase: true, index: true },       // "013-02"
+        systemCode: { type: String, required: true, trim: true, uppercase: true }, // "013"
+        code: { type: String, required: true, trim: true, uppercase: true },       // "013-02"
         nameEs: { type: String, required: true, trim: true, index: true },
         nameEn: { type: String, trim: true, default: '' },
         active: { type: Boolean, default: true, index: true },

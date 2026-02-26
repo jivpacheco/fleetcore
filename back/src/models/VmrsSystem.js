@@ -8,7 +8,7 @@ function normStr(v) {
 
 const VmrsSystemSchema = new mongoose.Schema(
     {
-        code: { type: String, required: true, trim: true, uppercase: true, index: true }, // "013"
+        code: { type: String, required: true, trim: true, uppercase: true }, // "013"
         nameEs: { type: String, required: true, trim: true, index: true },               // "Sistema de frenos"
         nameEn: { type: String, trim: true, default: '' },                               // opcional
         active: { type: Boolean, default: true, index: true },

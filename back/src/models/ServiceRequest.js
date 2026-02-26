@@ -15,7 +15,8 @@ const EvidenceSchema = new Schema(
 
 const ServiceRequestSchema = new Schema(
     {
-        code: { type: String, required: true, trim: true, uppercase: true, index: true },
+        // code: { type: String, required: true, trim: true, uppercase: true, index: true },
+        code: { type: String, required: true, trim: true, uppercase: true },
 
         vehicleId: { type: Schema.Types.ObjectId, ref: 'Vehicle', required: true, index: true },
         branchId: { type: Schema.Types.ObjectId, ref: 'Branch', default: null, index: true }, // opcional (auto-asignable)

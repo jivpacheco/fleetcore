@@ -95,8 +95,8 @@ const WorkOrderSchema = new Schema(
     folio: { type: String, trim: true, default: '' },
 
     // Origen del flujo (NUEVO)
-    serviceRequestId: { type: Schema.Types.ObjectId, ref: 'ServiceRequest', default: null, index: true },
-    triageId: { type: Schema.Types.ObjectId, ref: 'Triage', default: null, index: true },
+    serviceRequestId: { type: Schema.Types.ObjectId, ref: 'ServiceRequest', default: null},
+    triageId: { type: Schema.Types.ObjectId, ref: 'Triage', default: null},
 
     vehicleId: { type: Schema.Types.ObjectId, ref: 'Vehicle', index: true },
     branchId: { type: Schema.Types.ObjectId, ref: 'Branch', index: true },

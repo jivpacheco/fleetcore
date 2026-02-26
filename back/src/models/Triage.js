@@ -6,7 +6,8 @@ const { Schema } = mongoose
 
 const TriageSchema = new Schema(
     {
-        serviceRequestId: { type: Schema.Types.ObjectId, ref: 'ServiceRequest', required: true, index: true },
+        // serviceRequestId: { type: Schema.Types.ObjectId, ref: 'ServiceRequest', required: true, index: true },
+        serviceRequestId: { type: Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
 
         technicianId: { type: Schema.Types.ObjectId, ref: 'Person', default: null, index: true },
 

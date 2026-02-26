@@ -9,7 +9,9 @@
     "seed:admin:fix": "node ../seeds/fixAdminPassword.js",
     "fix:indexes:vehicles": "node ./scripts/fixes/20251010_drop_legacy_indexes.js",
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "seed:vmrs": "node src/scripts/seedVmrs.js",
+    "extract:srm": "node src/scripts/extractSrm.js"
   },
   "repository": {
     "type": "git",
@@ -33,7 +35,8 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
-    "openid-client": "^5.7.1"
+    "openid-client": "^5.7.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
