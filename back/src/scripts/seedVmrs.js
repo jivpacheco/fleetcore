@@ -3,6 +3,7 @@ import fs from 'fs'
 import xlsx from 'xlsx'
 import { fileURLToPath } from 'url'
 import { connectDb, disconnectDb } from './_lib/db.js'
+import mongoose from 'mongoose'
 
 import VmrsSystem from '../models/VmrsSystem.js'
 import VmrsComponent from '../models/VmrsComponent.js'
@@ -159,11 +160,20 @@ async function bulkUpsertSystems(items) {
         },
     }))
 
+    // const r = await VmrsSystem.bulkWrite(ops, { ordered: false })
+    // return {
+    //     inserted: r.upsertedCount || 0,
+    //     updated: r.modifiedCount || 0,
+    // }
+
     const r = await VmrsSystem.bulkWrite(ops, { ordered: false })
-    return {
-        inserted: r.upsertedCount || 0,
-        updated: r.modifiedCount || 0,
-    }
+
+    console.log('[VmrsSystem bulkWrite]', {
+        inserted: r.upsertedCount,
+        matched: r.matchedCount,
+        modified: r.modifiedCount,
+        upsertedIds: r.upsertedIds,
+    })
 }
 
 async function bulkUpsertComponents(items) {
@@ -187,11 +197,20 @@ async function bulkUpsertComponents(items) {
             },
         }))
 
-    const r = await VmrsComponent.bulkWrite(ops, { ordered: false })
-    return {
-        inserted: r.upsertedCount || 0,
-        updated: r.modifiedCount || 0,
-    }
+    // const r = await VmrsComponent.bulkWrite(ops, { ordered: false })
+    // return {
+    //     inserted: r.upsertedCount || 0,
+    //     updated: r.modifiedCount || 0,
+    // }
+
+    const r = await VmrsSystem.bulkWrite(ops, { ordered: false })
+
+    console.log('[VmrsSystem bulkWrite]', {
+        inserted: r.upsertedCount,
+        matched: r.matchedCount,
+        modified: r.modifiedCount,
+        upsertedIds: r.upsertedIds,
+    })
 }
 
 async function bulkUpsertJobs(items) {
@@ -233,6 +252,20 @@ async function main() {
 
     await connectDb()
 
+
+
+    console.log('==============================')
+    console.log('DB NAME  :', mongoose.connection.name)
+    console.log('HOST     :', mongoose.connection.host)
+    console.log('URI      :', process.env.MONGO_URI)
+    console.log('==============================')
+
+    console.log('COLLECTION VmrsSystem   :', VmrsSystem.collection.name)
+    console.log('COLLECTION VmrsComponent:', VmrsComponent.collection.name)
+
+    console.log('BEFORE count systems    :', await VmrsSystem.countDocuments())
+    console.log('BEFORE count components :', await VmrsComponent.countDocuments())
+
     // FULL
     const full = readSheetRows(FILE_FULL)
     console.log(`FULL sheet: ${full.sheetName} | rows: ${full.rows.length}`)
@@ -269,6 +302,9 @@ async function main() {
     console.log('Systems  :', r1)
     console.log('Components:', r2)
     console.log('Jobs     :', r3)
+
+    console.log('AFTER count systems     :', await VmrsSystem.countDocuments())
+    console.log('AFTER count components  :', await VmrsComponent.countDocuments())
 
     await disconnectDb()
     console.log('== done ==')
