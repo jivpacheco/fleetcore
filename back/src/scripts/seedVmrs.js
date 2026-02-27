@@ -8,6 +8,11 @@ import mongoose from 'mongoose'
 import VmrsSystem from '../models/VmrsSystem.js'
 import VmrsComponent from '../models/VmrsComponent.js'
 
+// const ACTOR_OID = new mongoose.Types.ObjectId('000000000000000000000000') // dummy válido para seed
+const ACTOR_OID = new mongoose.Types.ObjectId(
+  process.env.SEED_ACTOR_OID || '000000000000000000000000'
+)
+
 // Si ya tienes/crearás VmrsJob model, lo conectamos aquí.
 // Por ahora lo dejamos opcional (si el model no existe, solo loguea).
 let VmrsJob = null
@@ -144,27 +149,17 @@ function parseRta(rows) {
 
 async function bulkUpsertSystems(items) {
     if (!items.length) return { inserted: 0, updated: 0 }
+
     const ops = items.map((it) => ({
         updateOne: {
             filter: { code: it.code },
             update: {
-                $set: {
-                    code: it.code,
-                    nameEs: it.nameEs,
-                    active: true,
-                    updatedBy: ACTOR,
-                },
-                $setOnInsert: { createdBy: ACTOR },
+                $set: { code: it.code, nameEs: it.nameEs, active: true, updatedBy: ACTOR_OID },
+                $setOnInsert: { createdBy: ACTOR_OID },
             },
             upsert: true,
         },
     }))
-
-    // const r = await VmrsSystem.bulkWrite(ops, { ordered: false })
-    // return {
-    //     inserted: r.upsertedCount || 0,
-    //     updated: r.modifiedCount || 0,
-    // }
 
     const r = await VmrsSystem.bulkWrite(ops, { ordered: false })
 
@@ -172,12 +167,48 @@ async function bulkUpsertSystems(items) {
         inserted: r.upsertedCount,
         matched: r.matchedCount,
         modified: r.modifiedCount,
-        upsertedIds: r.upsertedIds,
     })
+
+    return { inserted: r.upsertedCount || 0, updated: r.modifiedCount || 0 }
 }
+
+// async function bulkUpsertSystems(items) {
+//     if (!items.length) return { inserted: 0, updated: 0 }
+//     const ops = items.map((it) => ({
+//         updateOne: {
+//             filter: { code: it.code },
+//             update: {
+//                 $set: {
+//                     code: it.code,
+//                     nameEs: it.nameEs,
+//                     active: true,
+//                     updatedBy: ACTOR_OID,
+//                 },
+//                 $setOnInsert: { createdBy: ACTOR_OID },
+//             },
+//             upsert: true,
+//         },
+//     }))
+
+//     // const r = await VmrsSystem.bulkWrite(ops, { ordered: false })
+//     // return {
+//     //     inserted: r.upsertedCount || 0,
+//     //     updated: r.modifiedCount || 0,
+//     // }
+
+//     const r = await VmrsSystem.bulkWrite(ops, { ordered: false })
+
+//     console.log('[VmrsSystem bulkWrite]', {
+//         inserted: r.upsertedCount,
+//         matched: r.matchedCount,
+//         modified: r.modifiedCount,
+//         upsertedIds: r.upsertedIds,
+//     })
+// }
 
 async function bulkUpsertComponents(items) {
     if (!items.length) return { inserted: 0, updated: 0 }
+
     const ops = items
         .filter((it) => it.systemCode && it.code && it.nameEs)
         .map((it) => ({
@@ -189,29 +220,64 @@ async function bulkUpsertComponents(items) {
                         code: it.code,
                         nameEs: it.nameEs,
                         active: true,
-                        updatedBy: ACTOR,
+                        updatedBy: ACTOR_OID,
                     },
-                    $setOnInsert: { createdBy: ACTOR },
+                    $setOnInsert: { createdBy: ACTOR_OID },
                 },
                 upsert: true,
             },
         }))
 
-    // const r = await VmrsComponent.bulkWrite(ops, { ordered: false })
-    // return {
-    //     inserted: r.upsertedCount || 0,
-    //     updated: r.modifiedCount || 0,
-    // }
+    const r = await VmrsComponent.bulkWrite(ops, { ordered: false })
 
-    const r = await VmrsSystem.bulkWrite(ops, { ordered: false })
-
-    console.log('[VmrsSystem bulkWrite]', {
+    console.log('[VmrsComponent bulkWrite]', {
         inserted: r.upsertedCount,
         matched: r.matchedCount,
         modified: r.modifiedCount,
-        upsertedIds: r.upsertedIds,
     })
+
+    return { inserted: r.upsertedCount || 0, updated: r.modifiedCount || 0 }
 }
+
+
+// async function bulkUpsertComponents(items) {
+//     if (!items.length) return { inserted: 0, updated: 0 }
+//     const ops = items
+//         .filter((it) => it.systemCode && it.code && it.nameEs)
+//         .map((it) => ({
+//             updateOne: {
+//                 filter: { systemCode: it.systemCode, code: it.code },
+//                 update: {
+//                     $set: {
+//                         systemCode: it.systemCode,
+//                         code: it.code,
+//                         nameEs: it.nameEs,
+//                         active: true,
+//                         updatedBy: ACTOR_OID,
+//                     },
+//                     $setOnInsert: { createdBy: ACTOR_OID },
+//                 },
+//                 upsert: true,
+//             },
+//         }))
+
+
+
+//     // const r = await VmrsComponent.bulkWrite(ops, { ordered: false })
+//     // return {
+//     //     inserted: r.upsertedCount || 0,
+//     //     updated: r.modifiedCount || 0,
+//     // }
+
+//     const r = await VmrsSystem.bulkWrite(ops, { ordered: false })
+
+//     console.log('[VmrsSystem bulkWrite]', {
+//         inserted: r.upsertedCount,
+//         matched: r.matchedCount,
+//         modified: r.modifiedCount,
+//         upsertedIds: r.upsertedIds,
+//     })
+// }
 
 async function bulkUpsertJobs(items) {
     if (!VmrsJob) return { skipped: true }
@@ -230,9 +296,9 @@ async function bulkUpsertJobs(items) {
                         nameEs: it.nameEs,
                         stdLaborHours: it.stdLaborHours || 0,
                         active: true,
-                        updatedBy: ACTOR,
+                        updatedBy: ACTOR_OID,
                     },
-                    $setOnInsert: { createdBy: ACTOR },
+                    $setOnInsert: { createdBy: ACTOR_OID },
                 },
                 upsert: true,
             },
@@ -250,9 +316,21 @@ async function main() {
     console.log('FULL:', FILE_FULL)
     console.log('RTA :', FILE_RTA)
 
+
+
     await connectDb()
 
+    // await VmrsSystem.deleteOne({ code: 'ZZZ' })
 
+    console.log('[MODEL] VmrsSystem modelName:', VmrsSystem.modelName)
+    console.log('[MODEL] VmrsSystem schema createdBy type:', VmrsSystem.schema.path('createdBy')?.instance)
+    console.log('[MODEL] VmrsSystem schema updatedBy type:', VmrsSystem.schema.path('updatedBy')?.instance)
+    console.log('[MODEL] VmrsSystem collection:', VmrsSystem.collection.name)
+
+
+    // await VmrsSystem.create({ code: 'ZZZ', nameEs: 'PRUEBA SEED', active: true, createdBy: ACTOR_OID, updatedBy: ACTOR_OID })
+    // const z = await VmrsSystem.findOne({ code: 'ZZZ' }).lean()
+    // console.log('[TEST] insertOne OK?', !!z)
 
     console.log('==============================')
     console.log('DB NAME  :', mongoose.connection.name)

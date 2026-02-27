@@ -1,0 +1,1184 @@
+{
+  "source": "C:\\Dev\\fleetcore\\back\\src\\data\\2026 01 27 SRM Historicas.xlsx",
+  "sheetName": "Datos SRM",
+  "items": [
+    {
+      "text": "REVISION Y REGULACION DE FRENOS",
+      "count": 2,
+      "examples": [
+        "(s/f)  Q-12 FRENOS",
+        "(s/f)  RX-12 FRENOS"
+      ]
+    },
+    {
+      "text": "Instalación DE SOSPORTES PARA LINTERNAS (ENVIADO POR CIA.)",
+      "count": 2,
+      "examples": [
+        "(s/f)  B-13 OTROS",
+        "(s/f)  BM-13 OTROS"
+      ]
+    },
+    {
+      "text": "Instalacion de luces perimetrales",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-19 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Instalacion cargadores base radio portatiles y de linternas",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-19 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Se solicito cambio de neumaticos de BX19 en abril de 2024, los cuales fueron cambiados por los neumaticos reemplazado a RX19 los cuales se encotraban en regulares condiciones",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-19 NEUMATICOS"
+      ]
+    },
+    {
+      "text": "Revision alzavidrios (Ruido al subir)",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-19 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Revisar Chapa de encendido de BX19 (Da encendido pero no permipte utilizxar os alzavidrios de la maquina debido a que hace mal contacto y hay que mover la llave para que funcionen)",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-19 ACCESORIOS E INSTRUMENTOS"
+      ]
+    },
+    {
+      "text": "Instalacion de un estanque de combustible de mayor capacidad. Pendiente del 2023",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-19 OTROS"
+      ]
+    },
+    {
+      "text": "Pendiente cambio tambores delanteros. Pendiente 2025, los cuales llegaron y no corresponden al modelo del camion",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-19 FRENOS"
+      ]
+    },
+    {
+      "text": "Instalacion de AC pendiente de 2023 el cual fue presupuestado por CML",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-19 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Tapices de asientos rotos y lona protectora de material de techo, se enuenrta en CML desde 2023 para su reparacion o fabricacion.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-19 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Mantencion de geerador",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-19 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "Cambio d Burletes de puertas de cabina (se encuentran malas)",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-19 OTROS"
+      ]
+    },
+    {
+      "text": "instalacion bases de cargador de radios portatiles",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-19 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Puerta abatible de materia primera cortina lado derecho (Se encuentra caida y raspa el soporte de esta misma), pendiente 2025",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-19 CHASSIS"
+      ]
+    },
+    {
+      "text": "Valvula de aire principal cuerpo bomba, se encuentra con perdida desde noviembre del 2024",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-19 CUERPO BOMBA"
+      ]
+    },
+    {
+      "text": "Falta cadena de enrrollado para si mismo del pollo, pendiente de 2021 (Implica el no aseguramieto del pollo)",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-19 OTROS"
+      ]
+    },
+    {
+      "text": "faltan tapas plasticas en el tablero, tapa con hilo del techo y una en el tablero",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-1 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Reparacion de ambos pollos, el del lado derecho no enrrolla las tiras",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-1 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Reparacion luz estrodoscopica del lado derecho no funciona",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-1 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Cable con contra tuerca desconectada en comando manual de torre de iluminacion peligro de corte de los cables",
+      "count": 1,
+      "examples": [
+        "(s/f)  RH-1 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "foco superior derecho de torre de iluminacion quebarado desde la base, cambio y reemplazo por focos led",
+      "count": 1,
+      "examples": [
+        "(s/f)  RH-1 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "CAMBIO SOPORTE DE MOTOR",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-20 DIRECCION"
+      ]
+    },
+    {
+      "text": "MANTENCION DE FRENO DE MOTOR CON POCA EFECTIVIDAD",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-20 FRENOS"
+      ]
+    },
+    {
+      "text": "REVISION SISTEMA TRASERO, REAPRIETE",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-20 SUSPENSION"
+      ]
+    },
+    {
+      "text": "CAMBIO DE NEUMATICOS , ESTABA PROGRAMADO PARA FEBRERO 2025",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-20 NEUMATICOS"
+      ]
+    },
+    {
+      "text": "Revisión de piolas asienrtos ERA",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-20 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "REVISION VALVULAS SISTEMA CON FILTRACIONES.",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-20 CUERPO BOMBA"
+      ]
+    },
+    {
+      "text": "Filtracion de agua por valvulas (Valvula de estanque no cierra bien y queda pasando agua/ Valvula de 3\" descarga derecha no cierra/ Sello del eje de la bomba con exceso de perdida de agua/ Sello del eje de la bomba con exceso de perdida de agua)",
+      "count": 1,
+      "examples": [
+        "(s/f)  BM-20 CUERPO BOMBA"
+      ]
+    },
+    {
+      "text": "Panel de bomba costado izquierdo mal montado esto está generando que todas las manillas de las válvulas no cierren por completo.",
+      "count": 1,
+      "examples": [
+        "(s/f)  BM-20 CUERPO BOMBA"
+      ]
+    },
+    {
+      "text": "Mantencion completa torre y al sistema hidraulico para mejor velocidad de funcionamiento",
+      "count": 1,
+      "examples": [
+        "(s/f)  BM-20 OTROS"
+      ]
+    },
+    {
+      "text": "Revisión de relleno de butacas",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-10 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Revisión de soporte ERA en general, varios equipos quedan sueltos",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-10 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Manómetros perdieron líquido interior (Pitón monitor, Salida alta presión, salida frontal y cama cruzada #2)",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-10 CUERPO BOMBA"
+      ]
+    },
+    {
+      "text": "Mantención de torre de luz",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-10 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "Revisión de generador hidraulico",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-10 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "Revisar alineación y orientación del volante, en tramos largos no se siente firme",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-10 DIRECCION"
+      ]
+    },
+    {
+      "text": "Cinturón de seguridad OBAC no engancha correctamente, fue reparado y no esta 100%",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-10 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Ajustar bisagras ambas puertas traseras, puertas rozan con carrocería al abrir o cerrar",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-9 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "REVISION DE LUCES Y REPOSICION LUCES PERIMETRALES POR 6-12",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-16 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "REVISION MANTENEDOR ENCHUFE EN MAQUINA NO ENCIENDE",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-16 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "REVISION DE FUGAS BAJA EN NIVEL DE PULMONES",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-16 FRENOS"
+      ]
+    },
+    {
+      "text": "REPARACION VALVULA DE ASIENTO CONDUCTOR",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-16 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "REVISION DE NIVELES",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-16 MANTENCION"
+      ]
+    },
+    {
+      "text": "REPARACION DE BOTON CARRETE MANGUERIN PRIMERA INTERVENCION",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-16 MANTENCION"
+      ]
+    },
+    {
+      "text": "REPARACION FUGA AGUA MANGUERIN CERCA DE COPLA PITON",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-16 OTROS"
+      ]
+    },
+    {
+      "text": "INSTALACION DE BANCADA DE BATERIAS ADICIONAL POR SOBRE CONSUMO",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-16 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "REVISION DE VOLTAJE DE ENCHUFE MANTENEDOR Y PERDIDA CARGA",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-16 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "revision tren delantero",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-21 DIRECCION"
+      ]
+    },
+    {
+      "text": "revision frenos (chillido)",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-21 FRENOS"
+      ]
+    },
+    {
+      "text": "lubricacion puertas cajoneras",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-21 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "revision por perdida de potencia en carretera",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-21 MOTOR"
+      ]
+    },
+    {
+      "text": "PINTURA REPARACION CAJONERA TRASERA DERECHA",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-21 CHASSIS"
+      ]
+    },
+    {
+      "text": "MANTENCION GENERADOR",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-21 OTROS"
+      ]
+    },
+    {
+      "text": "INSTALACION ARRANQUE ELCTRICO PERMANENTE PARA TABLET (IGUAL A B21 Y BX21)",
+      "count": 1,
+      "examples": [
+        "(s/f)  Z-21 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Revisión Sistema De Frenos",
+      "count": 1,
+      "examples": [
+        "(s/f)  Z-21 FRENOS"
+      ]
+    },
+    {
+      "text": "LIMPIEZA DE ALUMINIOS OXIDADOS",
+      "count": 1,
+      "examples": [
+        "(s/f)  Z-21 CHASSIS"
+      ]
+    },
+    {
+      "text": "Cambio O Reposición De Fluidos (aceite, Líquidos Refrigerantes), Recambio De Filtros.",
+      "count": 1,
+      "examples": [
+        "(s/f)  Z-21 MANTENCION"
+      ]
+    },
+    {
+      "text": "Cambio Correa De Transmisión",
+      "count": 1,
+      "examples": [
+        "(s/f)  Z-21 MANTENCION"
+      ]
+    },
+    {
+      "text": "REVISION LED FOCO TRASERO REVERSA QUEMADOS",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-12 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "REPARACION PARACHOQUE TRASERO",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-12 CHASSIS"
+      ]
+    },
+    {
+      "text": "REVISION CHECK ENGINE MOTOR ENCENDIDO",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-12 MOTOR"
+      ]
+    },
+    {
+      "text": "REVISION BOCINA CARRO",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-12 SISTEMAS DE ALARMAS"
+      ]
+    },
+    {
+      "text": "REVISION DE NIVELES (ACEITE E HIDRAULICO)",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-12 MANTENCION"
+      ]
+    },
+    {
+      "text": "REVISION ACTUADORES DE ESTABILIZADORES",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-12 MANTENCION"
+      ]
+    },
+    {
+      "text": "REPARACION FUGA DE AIRE",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-12 FRENOS"
+      ]
+    },
+    {
+      "text": "MANTENCION Y ENGRASE A CORTINAS, REVISION Y REPARACION DE CINTURONES DE SEGURIDAD",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-12 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "REPARACION SEGURO CORTINA IZQUIERDA N°1",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-12 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "CAMBIO DE CREMALLERA VENTANA DERECHA TRASERA (SE ENCUENTRA FUERA DE SERVICIO)",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-12 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "REVISION SISTEMA ELECTRICO",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-12 MOTOR"
+      ]
+    },
+    {
+      "text": "REPARACION DE PITON MANGUERIN",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-12 CUERPO BOMBA"
+      ]
+    },
+    {
+      "text": "REVISION DE NIVELES (ACEITE E HIDRAULICOS)",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-12 MANTENCION"
+      ]
+    },
+    {
+      "text": "BATERIA DEL SISTEMA ADICIONAL DE 12V, YA NO RETIENE CARGA (TIENE MAS DE 3 AÑOS, REEMPLAZAR)",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-2 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "REPARACION SIRENA FEDERAL, FALLA NUEVAMENTE, YA REPARADA ANTERIORMENTE",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-8 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "CAMBIO INTERRUPTOR DE CONTACTO DE IGNICION, YA ESTABA SOLICITADO Y EN ESPERA DE IMPORTACIÓN",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-8 MOTOR"
+      ]
+    },
+    {
+      "text": "PERDIDA DE AIRE, BAJA CONSIDERABLEMENTE EL NIVEL DE AIRE EN POCAS HORAS, POSIBLEMENTE PERDIDA DE AIRE EN ASIENTO CONDUCTOR QUEDA BAJO DE 6 BAR EN MENOS DE 3 HRS.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-8 FRENOS"
+      ]
+    },
+    {
+      "text": "REVISION DE AIRE ACONDICIONADO SOLO AIRE CALIENTE",
+      "count": 1,
+      "examples": [
+        "(s/f)  M-8 MOTOR"
+      ]
+    },
+    {
+      "text": "SISTEMAS DE TENSIÓN DE CABLES Y MANGUERAS, REQUIERE REPARACIÓN (PENDIENTE DE RECIBIR COTIZACIÓN DE MAGIRUS)",
+      "count": 1,
+      "examples": [
+        "(s/f)  M-8 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "REVISION DE SISTEMA ELECTRICO",
+      "count": 1,
+      "examples": [
+        "(s/f)  M-8 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "REVISION DE SISTEMA DE FRENOS",
+      "count": 1,
+      "examples": [
+        "(s/f)  M-8 FRENOS"
+      ]
+    },
+    {
+      "text": "REVISION DE CARROCERIA Y EQUIPAMIENTO BOMBERIL",
+      "count": 1,
+      "examples": [
+        "(s/f)  M-8 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "CAMBIO DE FLUIDOS (ACEITE, LIQUIDOS REFRIGERANTES)",
+      "count": 1,
+      "examples": [
+        "(s/f)  M-8 MANTENCION"
+      ]
+    },
+    {
+      "text": "revision escala mecanica",
+      "count": 1,
+      "examples": [
+        "(s/f)  M-8 OTROS"
+      ]
+    },
+    {
+      "text": "Cambio de luces frontales de camino ya que no alumbran por ser luces normales y no led. En las noches muy poca vicibilidad.",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-3 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Problemas en el gobernador según diagnostico del personal del cml perdida de aire constante",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-3 OTROS"
+      ]
+    },
+    {
+      "text": "REPARACION MOLDURA DE PUERTA DERECHA E IZQUIERDA TRASERA (REF. SMR 137)",
+      "count": 1,
+      "examples": [
+        "(s/f)  BX-22 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Cambio de chapulines",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-22 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Reparación suspensión trasera",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-22 SUSPENSION"
+      ]
+    },
+    {
+      "text": "Revision cuerpo de bomba, enfriador de motor y enfriador de cuerpo de bomba",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-22 CUERPO BOMBA"
+      ]
+    },
+    {
+      "text": "Revision de luces perimetrales",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-22 SISTEMAS DE ALARMAS"
+      ]
+    },
+    {
+      "text": "Revision de papi por mal funcionamiento",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-22 SISTEMAS DE ALARMAS"
+      ]
+    },
+    {
+      "text": "Cambio de intercooler por roptura de este",
+      "count": 1,
+      "examples": [
+        "(s/f)  Z-22 MOTOR"
+      ]
+    },
+    {
+      "text": "REVISION DE FRENOS YA QUE SUENAN CONSTANTEMENTE Y RESBALAN EN OPORTUNIDADES",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-6 FRENOS"
+      ]
+    },
+    {
+      "text": "REVISION COMPLETA DE TREN DELANTERO, PAQUETE DE RESORTES Y AMORTIGUADORES (CRUJE)",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-6 SUSPENSION"
+      ]
+    },
+    {
+      "text": "REVISION DE MASAS DELANTERAS Y TRASERAS",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-6 SUSPENSION"
+      ]
+    },
+    {
+      "text": "REPARACION TAPICES ASIENTOS, PULMON NEUMATICO ASIENTO CONDUCTOR",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-6 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "FILTRACION DE ACEITE DE MOTOR, FILTRACION LIQUIDO HIDRAULICO ESTABILIZADOR TRASERO IZQ",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-6 MOTOR"
+      ]
+    },
+    {
+      "text": "MANTENCION Y LIMPIEZA ESCALA MECANICA",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-6 OTROS"
+      ]
+    },
+    {
+      "text": "MANTENCION GENERADOR ELECTRICO",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-6 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "REVISION TABLERO LECTURA YA QUE NO ENCIENDE EN ALGUNAS OPORTUNIDADES",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-6 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "RECAMBIO DE LUCES ESTROBOSCOPICAS ROJAS, YA VARIAS ESTAN CUMPLIENDO SU VIDA UTIL Y SE ENCUENTRAN CON AREAS QUEMADAS",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "FALTA DE INSTALACION DE CARGADOR DE BATERIAS KUSSMAUL PENDIENTE 2023 (ENCHUFE AUTO EYECTABLE)",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "REVISION COMPLETA TREN DELANTERO, PAQUETE DE RESORTES Y AMORTIGUADORES, GOLPEA FUERTE",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 SUSPENSION"
+      ]
+    },
+    {
+      "text": "REVISION MASAS DELANTERAS Y TRASERAS",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 SUSPENSION"
+      ]
+    },
+    {
+      "text": "CAMBIO DE CINTURONES DE SEGURIDAD, GASTADOS Y DAÑADOS POR USO",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "REPARACION TAPICES ASIENTO Y MURO TRASERO CABINA",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "CIERRE DE LOS COMPARTIMIENTOS, CORTINAS ENROLLANDO DE MANERA DEFECTUOSAS, SOBRE TODO EN C1.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "REVISION TRANSMISION ALLISON YA QUE GENERA AN ALGUNAS OPORTUNIDADES SOBRE MARCHA",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 MOTOR"
+      ]
+    },
+    {
+      "text": "MANTENCION GENERADOR HIDRAULICO",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "REVISION CARDAN TOMA DE FUERZA GENERADOR",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "REVISION Y MANTENCION, LUBRICACION DE BANDEJAS ABATIBLES Y EXTRAIBLES EN COMPARTIMIENTOS",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-6 OTROS"
+      ]
+    },
+    {
+      "text": "Problemas de encendido y detencion con el boton Start/Stop (INFORMADO SRM 2025-16)",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-13 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "REPARACION A/C",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-13 OTROS"
+      ]
+    },
+    {
+      "text": "Problemas de encendido y detencion con el boton Start/Stop (INFORMADO SRM 2025-17)",
+      "count": 1,
+      "examples": [
+        "(s/f)  BM-13 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Instalación DE SOSPORTES PARA LINTERNAS (ENVIADO POR CIA.) (INFORMADO SRM 2025-23)",
+      "count": 1,
+      "examples": [
+        "(s/f)  BM-13 OTROS"
+      ]
+    },
+    {
+      "text": "Revisión de \"Chapulines\", ambos parpadean, posible problema eléctrico.",
+      "count": 1,
+      "examples": [
+        "(s/f)  MX-15 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Revisión preventiva del sistema de frenos de disco.",
+      "count": 1,
+      "examples": [
+        "(s/f)  MX-15 FRENOS"
+      ]
+    },
+    {
+      "text": "Revisión y arreglo definitivo de pulmones (máquina torcida)",
+      "count": 1,
+      "examples": [
+        "(s/f)  MX-15 SUSPENSION"
+      ]
+    },
+    {
+      "text": "Cambio de neumaticos a los correctos, son de distinta medida y topan.",
+      "count": 1,
+      "examples": [
+        "(s/f)  MX-15 NEUMATICOS"
+      ]
+    },
+    {
+      "text": "Cambio de parlante de sirena, parlante de mínimo 100 watts (hoy 50 watts)",
+      "count": 1,
+      "examples": [
+        "(s/f)  MX-15 SISTEMAS DE ALARMAS"
+      ]
+    },
+    {
+      "text": "Revisión de \"Fallo orden de a bordo\"",
+      "count": 1,
+      "examples": [
+        "(s/f)  MX-15 OTROS"
+      ]
+    },
+    {
+      "text": "Cambio de baterias por problemas recientes en encendido",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-15 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Instalación urgente de \"Chapulines\" por extensión de la máquina.",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-15 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Revisión frenos de disco de las 6 ruedas.",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-15 FRENOS"
+      ]
+    },
+    {
+      "text": "Mantención en MAN o CML de Pri-tarder.",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-15 FRENOS"
+      ]
+    },
+    {
+      "text": "Instalación de jaula de protección para mástil, por altura de la máquina.",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-15 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "Instalación de barqueta de rescate en el lugar del pack de escalas.",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-15 OTROS"
+      ]
+    },
+    {
+      "text": "Instalación de pedestal accesorio (costado derecho, atrás de las escalas).",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-15 OTROS"
+      ]
+    },
+    {
+      "text": "Instalación de corta cables en cuerpo de brazo de Q15.",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-15 OTROS"
+      ]
+    },
+    {
+      "text": "Instalación de un nuevo chevron con mejor visualizacion en el canasto de Q15.",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-15 OTROS"
+      ]
+    },
+    {
+      "text": "Revisión del ramal completo de la máquina.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Revisión de sobrecarga de elementos en el camión (evaluar 2a Bateria)",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Cambio y reposición de todo el sistema de freno complementario del Camión.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 DIRECCION"
+      ]
+    },
+    {
+      "text": "Mantención en MAN o CML de retardador.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 DIRECCION"
+      ]
+    },
+    {
+      "text": "Revisión general de suspensión de máquina.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 SUSPENSION"
+      ]
+    },
+    {
+      "text": "Revisión y posible cambio de parabrisas, por piquete.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Revisión de manivela de ventanas cabina tripulación.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Mantención en MAN de la caja de cambio, con problemas.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 MOTOR"
+      ]
+    },
+    {
+      "text": "Revisión de acoples, gomas de acoples y tablero de bomba RX15.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 CUERPO BOMBA"
+      ]
+    },
+    {
+      "text": "Cambio pendiente (de la 15) de los estroboscópicos de RX-15 con proveedor.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 SISTEMAS DE ALARMAS"
+      ]
+    },
+    {
+      "text": "Instalación de sistema sonoro claxon en la máquina",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 OTROS"
+      ]
+    },
+    {
+      "text": "Revisión de correcto funcionamiento de los cargadores indicados.",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 OTROS"
+      ]
+    },
+    {
+      "text": "Revisión y cambio de seguros de gavetas (seguros manuales, los que bajan los bomberos)",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 OTROS"
+      ]
+    },
+    {
+      "text": "Revisión y arreglo de abatible en G1 para material",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 OTROS"
+      ]
+    },
+    {
+      "text": "Las plataformas que se bajan para lograr una mejor altura tiene pasadores que se salen",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-15 OTROS"
+      ]
+    },
+    {
+      "text": "sensores de pisaderas y cortinas derecha malos. Sensores de asiento/cinturo malos",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-14 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "Radios: Principal Pendiente de instalar / Secundaria: Conexión faltante / Cargador de radios portatiles de 03 radios no carga",
+      "count": 1,
+      "examples": [
+        "(s/f)  RX-14 OTROS"
+      ]
+    },
+    {
+      "text": "CAMBIO DE CLAXON - INSTALACION SIRENA TIPO PAPI",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-7 SISTEMAS DE ALARMAS"
+      ]
+    },
+    {
+      "text": "REPARACION DE DAÑOS DE ACCIDENTES PENDIENTES 2023 - 2024",
+      "count": 1,
+      "examples": [
+        "(s/f)  Q-7 OTROS"
+      ]
+    },
+    {
+      "text": "Cambio de claxon desde BX17 a B17",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-17 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Reparacion luz de posicion delantera Izq",
+      "count": 1,
+      "examples": [
+        "(s/f)  H-18 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Reparacion Luz de escena delantera Izq",
+      "count": 1,
+      "examples": [
+        "(s/f)  H-18 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "MANTENCION GENERADOR HARRISON ( 500 HORAS , LIQUIDO HIDRAULICO Y FILTRO)",
+      "count": 1,
+      "examples": [
+        "(s/f)  BT-18 LUCES Y SISTEMA ELECTRICO"
+      ]
+    },
+    {
+      "text": "Revisión torre de iluminación, sube y problemas para bajar.",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-11 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "PERDIDA DE AIRE DEL SISTEMA, EL CUAL OBLIGA A ESPERAR APROX. 1 MINUTO CADA 3 HORAS DE FUNCIONAMIENTO PARA DESBLOQUEAR LA MAQUINA",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-4 FRENOS"
+      ]
+    },
+    {
+      "text": "REPARACION DE SALIDA DE 75MM POR FILTRACION",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-4 CUERPO BOMBA"
+      ]
+    },
+    {
+      "text": "REPARACION DE FOCO QUEMADO",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-4 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "REVISION DE AMBAS UNIDOADES POR CONSTANTES FALLAS",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-4 OTROS"
+      ]
+    },
+    {
+      "text": "REPARACION DE BRAZO HIDRAULICO",
+      "count": 1,
+      "examples": [
+        "(s/f)  H-4 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "REPARACION DE SIRENA",
+      "count": 1,
+      "examples": [
+        "(s/f)  H-4 SISTEMAS DE ALARMAS"
+      ]
+    },
+    {
+      "text": "REPARACION DE SISTEMA HIDRAULICO DE ASEGURAMIENTO DE TORRE CUANDO SE DESPLIEGA",
+      "count": 1,
+      "examples": [
+        "(s/f)  UD-4 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "REPARACION DE GENERADOR ELECTRICO",
+      "count": 1,
+      "examples": [
+        "(s/f)  UD-4 TORRE DE ILUMINACION"
+      ]
+    },
+    {
+      "text": "INSTALACION DEE SOPORTE EN PARTE TRASERA PARA GENERADOR DE ESPUMA DE ALTA EXPANSION",
+      "count": 1,
+      "examples": [
+        "(s/f)  UD-4 OTROS"
+      ]
+    },
+    {
+      "text": "REPARACIÓN DE BARRA DE LA CORTINA ENROLLABLE LADO IZQUIERDO ATRÁS.",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-5 CABINA Y CARROCERIA"
+      ]
+    },
+    {
+      "text": "EL PORTA ESCALAS QUE TIENE INCORPORADO NO ES DE LA MEDIDA DE LAS ESCALAS DISPONIBLES. SE SOLICITA AJUSTAR O REEMPLAZAR PARA PODER SER USADO.",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-5 OTROS"
+      ]
+    },
+    {
+      "text": "INSTALACIÓN DE SEGUNDA RADIO BASE EN ESPACIO DISPONIBLE EN CABINA.",
+      "count": 1,
+      "examples": [
+        "(s/f)  B-5 OTROS"
+      ]
+    },
+    {
+      "text": "MANTENCIÓN GENERAL. SE HACE CADA 5 AÑOS Y CORRESPONDE HACERLO AHORA. INCLUYE CAMBIO DE",
+      "count": 1,
+      "examples": [
+        "(s/f)  M-5 MANTENCION"
+      ]
+    },
+    {
+      "text": "SOLICITUD DE GRASA PARA MANTENCIÓN DE TORRE, TORNAMESA Y JACKS. ESTA MANTENCIÓN SE HACE CADA",
+      "count": 1,
+      "examples": [
+        "(s/f)  M-5 MANTENCION"
+      ]
+    }
+  ]
+}
