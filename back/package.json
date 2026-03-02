@@ -11,7 +11,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed:vmrs": "node src/scripts/seedVmrs.js",
-    "extract:srm": "node src/scripts/extractSrm.js"
+    "extract:srm": "node src/scripts/extractSrm.js",
+    "sync:indexes": "node src/scripts/syncIndexes.js"
   },
   "repository": {
     "type": "git",
